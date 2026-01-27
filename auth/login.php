@@ -1,1 +1,325 @@
- 
+<?php
+// =========================================================
+// 1. INCLUDE LANGUAGE LOGIC
+// =========================================================
+// We include this to get translations ($t), but we won't show the switcher UI.
+require __DIR__ . '/../includes/lang.php';
+
+// =========================================================
+// 2. DATABASE CONNECTION
+// =========================================================
+$dbPath = __DIR__ . '/../config/db.php';
+if (file_exists($dbPath)) {
+    require $dbPath;
+} else {
+    $conn = false;
+}
+
+// =========================================================
+// 3. LOGIN LOGIC
+// =========================================================
+$error = "";
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && $conn) {
+
+    $email = trim($_POST['email'] ?? '');
+    $password = trim($_POST['password'] ?? '');
+
+    // Basic Validation
+    if ($email === '' || $password === '') {
+        $error = ($lang === 'mr')
+            ? 'कृपया ई-मेल आणि पासवर्ड भरा.'
+            : 'Please enter both email and password.';
+    } else {
+        // Prepare Query
+        $stmt = $conn->prepare("SELECT id, first_name, last_name, password, role_id FROM users WHERE email = ? LIMIT 1");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows === 1) {
+            $user = $result->fetch_assoc();
+
+            // Verify Password
+            if (password_verify($password, $user['password'])) {
+                // Success: Set Session
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
+                $_SESSION['role_id'] = $user['role_id'];
+
+                // Redirect
+                header("Location: ../index.php");
+                exit;
+            } else {
+                $error = ($lang === 'mr') ? 'चुकीचा पासवर्ड.' : 'Invalid password.';
+            }
+        } else {
+            $error = ($lang === 'mr') ? 'हे खाते अस्तित्वात नाही.' : 'No account found with that email.';
+        }
+        $stmt->close();
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang="<?php echo $lang; ?>">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo $t['login']; ?> - <?php echo $t['title']; ?></title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        /* ===============================
+           THEME VARIABLES
+        =============================== */
+        :root {
+            --shiva-blue-light: #e3f2fd;
+            --shiva-blue-deep: #1565c0;
+            --shiva-saffron: #ff9800;
+            --shiva-saffron-hover: #f57c00;
+            --text-dark: #2c3e50;
+            --text-muted: #607d8b;
+            --bg-body: #fdfbf7;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #ffffff 0%, var(--shiva-blue-light) 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: var(--text-dark);
+        }
+
+        /* Typography */
+        h1,
+        h2,
+        h3,
+        h4,
+        .navbar-brand {
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: #ffffff;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.04);
+            padding: 1rem 0;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--shiva-saffron) !important;
+            font-size: 1.5rem;
+        }
+
+        .nav-link-back {
+            color: var(--text-muted);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-link-back:hover {
+            color: var(--shiva-saffron);
+        }
+
+        /* Main Content */
+        .main-wrapper {
+            flex: 1;
+            /* Pushes footer down */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        /* Login Card */
+        .login-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 420px;
+            padding: 2.5rem;
+            border-radius: 20px;
+            /* Modern rounded corners */
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+            border-top: 6px solid var(--shiva-saffron);
+            /* Spiritual accent */
+            position: relative;
+        }
+
+        .icon-circle {
+            width: 70px;
+            height: 70px;
+            background-color: var(--shiva-saffron-light);
+            color: var(--shiva-saffron);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 1.5rem auto;
+        }
+
+        /* Form Controls */
+        .form-control {
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+            font-size: 0.95rem;
+        }
+
+        .form-control:focus {
+            border-color: var(--shiva-saffron);
+            box-shadow: 0 0 0 4px rgba(255, 152, 0, 0.1);
+        }
+
+        .input-group-text {
+            background-color: #f8f9fa;
+            border-radius: 10px 0 0 10px;
+            border: 1px solid #dee2e6;
+            color: var(--text-muted);
+        }
+
+        .form-control {
+            border-radius: 0 10px 10px 0;
+        }
+
+        /* Buttons */
+        .btn-saffron {
+            background-color: var(--shiva-saffron);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-saffron:hover {
+            background-color: var(--shiva-saffron-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
+            color: white;
+        }
+
+        /* Links */
+        .link-saffron {
+            color: var(--shiva-saffron);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .link-saffron:hover {
+            text-decoration: underline;
+        }
+
+        /* Footer */
+        footer {
+            background-color: #263238;
+            color: #cfd8dc;
+            padding: 1.5rem 0;
+            font-size: 0.85rem;
+            margin-top: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="container">
+            <a class="navbar-brand" href="../index.php">
+                <i class="bi bi-brightness-high-fill me-2"></i><?php echo $t['title']; ?>
+            </a>
+            <a href="../index.php" class="nav-link-back text-decoration-none">
+                <i class="bi bi-arrow-left me-1"></i> <?php echo $t['home']; ?>
+            </a>
+        </div>
+    </nav>
+
+    <div class="main-wrapper">
+        <div class="login-card fade-in">
+
+            <div class="text-center">
+                <div class="icon-circle">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                <h2 class="fw-bold mb-2"><?php echo $t['login']; ?></h2>
+                <p class="text-muted small mb-4">
+                    <?php echo ($lang === 'mr')
+                        ? 'प्रवेश करण्यासाठी आपली माहिती भरा'
+                        : 'Enter your credentials to access your account'; ?>
+                </p>
+            </div>
+
+            <?php if ($error): ?>
+                <div class="alert alert-danger text-center small py-2 rounded-3 mb-4">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> <?php echo htmlspecialchars($error); ?>
+                </div>
+            <?php endif; ?>
+
+            <form method="POST" action="">
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted ps-1"><?php echo $t['email']; ?></label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                        <input type="email" name="email" class="form-control" placeholder="name@example.com" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between">
+                        <label class="form-label small fw-bold text-muted ps-1"><?php echo $t['password']; ?></label>
+                        <a href="#" class="small link-saffron fw-normal">
+                            <?php echo ($lang === 'mr') ? 'पासवर्ड विसरलात?' : 'Forgot Password?'; ?>
+                        </a>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                    </div>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-saffron">
+                        <?php echo $t['login']; ?>
+                    </button>
+                </div>
+
+            </form>
+
+            <div class="text-center mt-4 pt-2 border-top">
+                <p class="small text-muted mb-0 mt-3">
+                    <?php echo ($lang === 'mr') ? 'खाते नाही?' : "Don't have an account?"; ?>
+                    <a href="register.php" class="link-saffron ms-1">
+                        <?php echo ($lang === 'mr') ? 'नोंदणी करा' : 'Create Account'; ?>
+                    </a>
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <footer class="text-center">
+        <div class="container">
+            <small>
+                &copy; <?php echo date("Y"); ?> <?php echo $t['title']; ?> |
+                <span class="text-white-50"><?php echo $t['copyright']; ?></span>
+            </small>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>
