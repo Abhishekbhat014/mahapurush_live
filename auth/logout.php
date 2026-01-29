@@ -7,28 +7,47 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // ------------------------------------
-// 2. Preserve language (optional)
+// 2. Preserve language
 // ------------------------------------
 $lang = $_SESSION['lang'] ?? ($_COOKIE['lang'] ?? 'en');
 
 // ------------------------------------
-// 3. Clear all session data
+// 3. Unset all session variables
 // ------------------------------------
 $_SESSION = [];
 
 // ------------------------------------
-// 4. Destroy session
+// 4. Delete session cookie
+// ------------------------------------
+if (ini_get("session.use_cookies")) {
+    $params = session_get_cookie_params();
+    setcookie(
+        session_name(),
+        '',
+        time() - 42000,
+        $params['path'],
+        $params['domain'],
+        $params['secure'],
+        $params['httponly']
+    );
+}
+
+// ------------------------------------
+// 5. Destroy session
 // ------------------------------------
 session_destroy();
 
 // ------------------------------------
-// 5. Restore language in new session
+// 6. Restore language (session or cookie)
 // ------------------------------------
 session_start();
 $_SESSION['lang'] = $lang;
+setcookie('lang', $lang, time() + (86400 * 30), "/");
+
+
 
 // ------------------------------------
-// 6. Redirect to login page
+// 8. Redirect to login
 // ------------------------------------
 header("Location: login.php");
 exit;

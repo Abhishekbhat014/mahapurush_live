@@ -4,7 +4,7 @@ require __DIR__ . '/includes/lang.php';
 if (file_exists("config/db.php")) {
     include "config/db.php";
 } else {
-    $conn = false;
+    $con = false;
 }
 
 $isLoggedIn = $_SESSION['logged_in'] ?? false;
@@ -12,9 +12,9 @@ $isLoggedIn = $_SESSION['logged_in'] ?? false;
 $committeeMembers = [];
 $eventQuery = false;
 
-if ($conn) {
+if ($con && $con !== false) {
     // fetch temple info
-    $templeQuery = mysqli_query($conn, "SELECT * FROM temple_info LIMIT 1");
+    $templeQuery = mysqli_query($con, "SELECT * FROM temple_info LIMIT 1");
     if ($templeQuery && mysqli_num_rows($templeQuery) > 0) {
         $templeData = mysqli_fetch_assoc($templeQuery);
         $temple['description'] = $templeData['description'];
@@ -23,7 +23,7 @@ if ($conn) {
     }
 
     // fetch all roles other than customer
-    $cmQuery = mysqli_query($conn, "SELECT u.first_name, u.last_name, u.photo, r.name AS role_name FROM users u JOIN user_roles ur ON u.id = ur.user_id JOIN roles r ON ur.role_id = r.id WHERE r.name != 'customer' ORDER BY r.name, u.first_name");
+    $cmQuery = mysqli_query($con, "SELECT u.first_name, u.last_name, u.photo, r.name AS role_name FROM users u JOIN user_roles ur ON u.id = ur.user_id JOIN roles r ON ur.role_id = r.id WHERE r.name != 'customer' ORDER BY r.name, u.first_name");
     if ($cmQuery) {
         while ($row = mysqli_fetch_assoc($cmQuery)) {
             $committeeMembers[] = $row;
@@ -31,7 +31,7 @@ if ($conn) {
     }
 
     // fetch upcoming events
-    $eventQuery = mysqli_query($conn, "SELECT * FROM events WHERE conduct_on >= CURDATE() ORDER BY conduct_on ASC LIMIT 3");
+    $eventQuery = mysqli_query($con, "SELECT * FROM events WHERE conduct_on >= CURDATE() ORDER BY conduct_on ASC LIMIT 3");
 }
 ?>
 
@@ -282,20 +282,27 @@ if ($conn) {
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item"><a class="nav-link active" href="index.php"><?php echo $t['home']; ?></a></li>
                     <li class="nav-item"><a class="nav-link" href="#about"><?php echo $t['about']; ?></a></li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="panchang.php">
+                            Panchang
+                        </a>
+                    </li>
                     <li class="nav-item"><a class="nav-link" href="#pooja"><?php echo $t['pooja']; ?></a></li>
                     <li class="nav-item"><a class="nav-link" href="#events"><?php echo $t['events']; ?></a></li>
                     <li class="nav-item"><a class="nav-link" href="#donations"><?php echo $t['donations']; ?></a></li>
 
                     <li class="nav-item dropdown ms-lg-3">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                            aria-expanded="false">
+                        <a class="nav-link dropdown-toggle" href="/committee.php" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
                             <?php echo $t['committee']; ?>
                         </a>
 
                         <ul class="dropdown-menu dropdown-menu-end">
                             <?php if (!empty($committeeMembers)) { ?>
                                 <?php foreach ($committeeMembers as $member) {
-                                    $photo = !empty($member['photo']) ? 'uploads/users/' . $member['photo'] : 'assets/img/default-user.png';
+                                    $photo = !empty($member['photo'])
+                                        ? 'uploads/users/' . $member['photo']
+                                        : 'assets/images/default-user.png';
                                     ?>
                                     <li>
                                         <div class="committee-item">
@@ -311,11 +318,22 @@ if ($conn) {
                                         </div>
                                     </li>
                                 <?php } ?>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li class="text-center">
+                                    <a href="committee.php" class="dropdown-item fw-semibold">
+                                        View All Committee
+                                    </a>
+                                </li>
                             <?php } else { ?>
-                                <li class="text-center py-3 text-muted small"><?php echo $t['no_members']; ?></li>
+                                <li class="text-center py-3 text-muted small">
+                                    <?php echo $t['no_members']; ?>
+                                </li>
                             <?php } ?>
                         </ul>
                     </li>
+
 
                     <li class="nav-item dropdown ms-lg-2">
                         <a class="nav-link dropdown-toggle fw-bold text-primary" href="#" role="button"

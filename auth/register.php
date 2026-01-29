@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Check duplicate
     if (empty($error)) {
-        $check = $conn->prepare("SELECT id FROM users WHERE email = ? OR phone = ? LIMIT 1");
+        $check = $con->prepare("SELECT id FROM users WHERE email = ? OR phone = ? LIMIT 1");
         $check->bind_param("ss", $email, $phone);
         $check->execute();
         $checkResult = $check->get_result();
@@ -79,12 +79,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Insert
         if (empty($error)) {
-            $conn->begin_transaction();
+            $con->begin_transaction();
             try {
                 $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
                 // Insert User
-                $stmt = $conn->prepare("INSERT INTO users (first_name, last_name, email, phone, password, photo, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+                $stmt = $con->prepare("INSERT INTO users (first_name, last_name, email, phone, password, photo, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
                 $stmt->bind_param("ssssss", $firstName, $lastName, $email, $phone, $hashedPassword, $photoName);
 
                 if (!$stmt->execute()) {
@@ -94,20 +94,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->close();
 
                 // Assign Role (Customer)
-                $roleFetch = $conn->prepare("SELECT id FROM roles WHERE name = 'customer' LIMIT 1");
+                $roleFetch = $con->prepare("SELECT id FROM roles WHERE name = 'customer' LIMIT 1");
                 $roleFetch->execute();
                 $roleResult = $roleFetch->get_result();
 
                 if ($roleResult->num_rows !== 1) {
                     // Fallback to ID 3 if role name not found (adjust based on your DB)
-                    $memberRoleId = 3;
+                    $memberRoleId = 2;
                 } else {
                     $roleRow = $roleResult->fetch_assoc();
                     $memberRoleId = (int) $roleRow['id'];
                 }
                 $roleFetch->close();
 
-                $roleStmt = $conn->prepare("INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)");
+                $roleStmt = $con->prepare("INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)");
                 $roleStmt->bind_param("ii", $newUserId, $memberRoleId);
 
                 if (!$roleStmt->execute()) {
@@ -115,11 +115,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 $roleStmt->close();
 
-                $conn->commit();
+                $con->commit();
                 $success = $t['success_register'];
 
             } catch (Exception $e) {
-                $conn->rollback();
+                $con->rollback();
                 $error = $e->getMessage();
             }
         }
@@ -154,6 +154,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             --text-dark: #2c3e50;
             --text-muted: #607d8b;
             --bg-body: #fdfbf7;
+        }
+
+        body {
+            -webkit-user-select: none;
+            /* Chrome, Safari */
+            -moz-user-select: none;
+            /* Firefox */
+            -ms-user-select: none;
+            /* IE/Edge */
+            user-select: none;
         }
 
         body {
@@ -346,7 +356,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <i class="bi bi-brightness-high-fill me-2"></i><?php echo $t['title']; ?>
             </a>
             <a href="login.php" class="nav-link-back text-decoration-none">
-                <i class="bi bi-arrow-left me-1"></i> <?php echo $t['back_to_login']; ?>
+                <?php echo $t['home']; ?>
             </a>
         </div>
     </nav>
@@ -407,16 +417,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label class="form-label"><?php echo $t['email']; ?></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                            <input type="email" name="email" class="form-control" placeholder="name@example.com"
-                                required>
+                            <input type="email" name="email" class="form-control">
                         </div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label"><?php echo ($lang === 'mr') ? 'फोन' : 'Phone'; ?></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-                            <input type="text" name="phone" class="form-control" pattern="[0-9]{10}"
-                                placeholder="9876543210" required>
+                            <input type="text" name="phone" class="form-control" pattern="[0-9]{10}">
                         </div>
                     </div>
                 </div>
@@ -436,8 +444,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label class="form-label"><?php echo $t['password']; ?></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                            <input type="password" name="password" class="form-control password-input" id="reg_pass"
-                                required>
+                            <input type="password" name="password" class="form-control password-input" id="reg_pass">
                             <span class="input-group-text password-toggle" onclick="togglePass('reg_pass', this)">
                                 <i class="bi bi-eye"></i>
                             </span>
@@ -448,7 +455,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
                             <input type="password" name="confirm_password" class="form-control password-input"
-                                id="reg_confirm" required>
+                                id="reg_confirm">
                             <span class="input-group-text password-toggle" onclick="togglePass('reg_confirm', this)">
                                 <i class="bi bi-eye"></i>
                             </span>
@@ -478,9 +485,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <footer class="text-center">
         <div class="container">
-            <small>
-                <?php echo $t['copyright']; ?> |
-                <span class="text-white-50"><?php echo $t['copyright_msg']; ?></span>
+            <small class="text-white-50">
+                &copy; <?php echo date("Y"); ?> <?php echo $t['title']; ?> |
+                <span class="text-white"><?php echo $t['copyright']; ?></span>
             </small>
         </div>
     </footer>

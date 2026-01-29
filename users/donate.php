@@ -11,7 +11,7 @@ $dbPath = __DIR__ . '/../config/db.php';
 if (file_exists($dbPath)) {
     require $dbPath;
 } else {
-    $conn = false;
+    $con = false;
 }
 
 // =========================================================
@@ -20,7 +20,7 @@ if (file_exists($dbPath)) {
 $error = '';
 $success = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
 
     $donorName = trim($_POST['name'] ?? '');
     $amount = trim($_POST['amount'] ?? '');
@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
             : 'Please enter a valid name and amount.';
     } else {
 
-        $conn->begin_transaction();
+        $con->begin_transaction();
 
         try {
             // =========================================================
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
             // =========================================================
             $receiptNo = 'MP-' . date('Y') . '-' . rand(10000, 99999);
 
-            $stmt = $conn->prepare("
+            $stmt = $con->prepare("
                 INSERT INTO receipt (receipt_no, issued_on)
                 VALUES (?, NOW())
             ");
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
             // =========================================================
             // STEP 2: INSERT PAYMENT
             // =========================================================
-            $stmt = $conn->prepare("
+            $stmt = $con->prepare("
                 INSERT INTO payments
                 (receipt_id, user_id, donor_name, amount, note, payment_method, status, created_at)
                 VALUES (?, ?, ?, ?, ?, 'cash', 'success', NOW())
@@ -76,14 +76,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
             $stmt->execute();
             $stmt->close();
 
-            $conn->commit();
+            $con->commit();
 
             $success = ($lang === 'mr')
                 ? "धन्यवाद! आपले दान यशस्वीरीत्या नोंदवले गेले आहे. पावती क्रमांक: $receiptNo"
                 : "Thank you! Your donation has been recorded. Receipt No: $receiptNo";
 
         } catch (Exception $e) {
-            $conn->rollback();
+            $con->rollback();
             $error = ($lang === 'mr')
                 ? 'काहीतरी चूक झाली. कृपया पुन्हा प्रयत्न करा.'
                 : 'Something went wrong. Please try again.';
@@ -265,7 +265,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
                 <i class="bi bi-brightness-high-fill me-2"></i><?php echo $t['title']; ?>
             </a>
             <a href="../index.php" class="nav-link-back text-decoration-none">
-                <i class="bi bi-arrow-left me-1"></i> <?php echo ($lang === 'mr') ? 'मुख्यपृष्ठ' : 'Home'; ?>
+                <?php echo ($lang === 'mr') ? 'मुख्यपृष्ठ' : 'Home'; ?>
             </a>
         </div>
     </nav>
@@ -347,9 +347,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
 
     <footer class="text-center">
         <div class="container">
-            <small>
+            <small class="text-white-50">
                 &copy; <?php echo date("Y"); ?> <?php echo $t['title']; ?> |
-                <span class="text-white-50"><?php echo $t['copyright_msg']; ?></span>
+                <span class="text-white"><?php echo $t['copyright']; ?></span>
             </small>
         </div>
     </footer>

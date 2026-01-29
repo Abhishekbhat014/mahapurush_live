@@ -1,23 +1,13 @@
 <?php
-// =========================================================
-// 1. LANGUAGE + SESSION
-// =========================================================
-require __DIR__ . '/../includes/lang.php';
-// session_start() is already in lang.php
 
-// =========================================================
-// 2. DATABASE CONNECTION
-// =========================================================
+require __DIR__ . '/../includes/lang.php';
 $dbPath = __DIR__ . '/../config/db.php';
 if (file_exists($dbPath)) {
     require $dbPath;
 } else {
-    die("Database connection file missing.");
+    die("Database conection file missing.");
 }
 
-// =========================================================
-// 3. LOGIN LOGIC
-// =========================================================
 $error = "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -31,7 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             : 'Please enter both email and password.';
     } else {
 
-        $stmt = $conn->prepare("
+        $stmt = $con->prepare("
             SELECT id, first_name, last_name, password
             FROM users
             WHERE email = ?
@@ -48,7 +38,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             if (password_verify($password, $user['password'])) {
 
                 // Fetch Roles
-                $roleStmt = $conn->prepare("
+                $roleStmt = $con->prepare("
                     SELECT r.id, r.name
                     FROM user_roles ur
                     JOIN roles r ON r.id = ur.role_id
@@ -87,7 +77,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     }
                 }
 
-                header("Location: ../index.php");
+                header("Location: redirect.php");
                 exit;
 
             } else {
@@ -305,7 +295,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <i class="bi bi-brightness-high-fill me-2"></i><?php echo $t['title']; ?>
             </a>
             <a href="../index.php" class="nav-link-back text-decoration-none">
-                <i class="bi bi-arrow-left me-1"></i> <?php echo $t['back_to_login']; ?>
+                <?php echo $t['home']; ?>
             </a>
         </div>
     </nav>
@@ -335,7 +325,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     <label class="form-label small fw-bold text-muted ps-1"><?php echo $t['email']; ?></label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                        <input type="email" name="email" class="form-control" placeholder="name@example.com" required>
+                        <input type="email" name="email" class="form-control">
                     </div>
                 </div>
 
@@ -345,8 +335,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     </div>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                        <input type="password" name="password" class="form-control password-input" id="id_password"
-                            placeholder="••••••••" required>
+                        <input type="password" name="password" class="form-control password-input" id="id_password">
                         <span class="input-group-text password-toggle" id="togglePassword">
                             <i class="bi bi-eye" id="toggleIcon"></i>
                         </span>
@@ -375,9 +364,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     <footer class="text-center">
         <div class="container">
-            <small>
-                <?php echo $t['copyright']; ?> |
-                <span class="text-white-50"><?php echo $t['copyright_msg']; ?></span>
+            <small class="text-white-50">
+                &copy; <?php echo date("Y"); ?> <?php echo $t['title']; ?> |
+                <span class="text-white"><?php echo $t['copyright']; ?></span>
             </small>
         </div>
     </footer>

@@ -33,8 +33,8 @@ $userName = $_SESSION['user_name'] ?? "User";
 ------------------------- */
 $result = false;
 
-if ($conn && $userId > 0) {
-    $stmt = $conn->prepare("
+if ($con && $userId > 0) {
+    $stmt = $con->prepare("
         SELECT 
             p.amount,
             p.status,

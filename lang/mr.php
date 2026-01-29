@@ -90,6 +90,7 @@ return [
    'confirm_password' => 'पासवर्ड पुष्टी करा',
    'register_btn' => 'नोंदणी करा',
    'have_account' => 'आधीच खाते आहे?',
+   'dont_have_account' => 'खाते नाही?',
    'login_here' => 'येथे लॉगिन करा',
    'back_to_login' => 'लॉगिन कडे परत',
    'err_fill_all' => 'सर्व माहिती भरणे आवश्यक आहे.',
