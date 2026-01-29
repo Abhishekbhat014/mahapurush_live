@@ -1,42 +1,28 @@
 <?php
 require __DIR__ . '/includes/lang.php';
-// =========================================================
-// 2. DATABASE CONNECTION
-// =========================================================
+// db connection
 if (file_exists("config/db.php")) {
     include "config/db.php";
 } else {
     $conn = false;
 }
 
-// =========================================================
-// 3. DATA FETCHING
-// =========================================================
+$isLoggedIn = $_SESSION['logged_in'] ?? false;
 
-// Defaults
-$temple = [
-    'description' => ($lang == 'mr') ? 'भगवान शंकरांना समर्पित एक पवित्र स्थान.' : 'A sacred sanctuary devoted to Lord Shiva.',
-    'location' => 'Temple Location',
-    'contact' => '+91 00000 00000'
-];
 $committeeMembers = [];
 $eventQuery = false;
 
 if ($conn) {
-    // 1. Fetch Temple Info
+    // fetch temple info
     $templeQuery = mysqli_query($conn, "SELECT * FROM temple_info LIMIT 1");
     if ($templeQuery && mysqli_num_rows($templeQuery) > 0) {
         $templeData = mysqli_fetch_assoc($templeQuery);
-        // Note: DB content is usually static. If you have mr/en columns in DB, switch here.
-        // For now, we use the DB description, falling back to static if empty
-        if (!empty($templeData['description'])) {
-            $temple['description'] = $templeData['description'];
-        }
+        $temple['description'] = $templeData['description'];
         $temple['location'] = $templeData['location'];
         $temple['contact'] = $templeData['contact'];
     }
 
-    // 2. Fetch Committee
+    // fetch all roles other than customer
     $cmQuery = mysqli_query($conn, "SELECT u.first_name, u.last_name, u.photo, r.name AS role_name FROM users u JOIN user_roles ur ON u.id = ur.user_id JOIN roles r ON ur.role_id = r.id WHERE r.name != 'customer' ORDER BY r.name, u.first_name");
     if ($cmQuery) {
         while ($row = mysqli_fetch_assoc($cmQuery)) {
@@ -44,7 +30,7 @@ if ($conn) {
         }
     }
 
-    // 3. Events
+    // fetch upcoming events
     $eventQuery = mysqli_query($conn, "SELECT * FROM events WHERE conduct_on >= CURDATE() ORDER BY conduct_on ASC LIMIT 3");
 }
 ?>
@@ -65,9 +51,6 @@ if ($conn) {
         rel="stylesheet">
 
     <style>
-        /* ===============================
-           THEME VARIABLES
-        =============================== */
         :root {
             --shiva-blue-light: #e3f2fd;
             --shiva-blue-deep: #1565c0;
@@ -270,6 +253,16 @@ if ($conn) {
         footer a:hover {
             color: var(--shiva-saffron);
         }
+
+        body {
+            -webkit-user-select: none;
+            /* Chrome, Safari */
+            -moz-user-select: none;
+            /* Firefox */
+            -ms-user-select: none;
+            /* IE/Edge */
+            user-select: none;
+        }
     </style>
 </head>
 
@@ -340,8 +333,18 @@ if ($conn) {
                     </li>
 
                     <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
-                        <a class="btn btn-outline-blue btn-sm" href="auth/login.php"><?php echo $t['login']; ?></a>
+                        <?php if ($isLoggedIn) { ?>
+                            <a class="btn btn-outline-blue btn-sm" href="auth/redirect.php">
+                                <?php echo ($lang == 'mr') ? 'डॅशबोर्ड' : 'Dashboard'; ?>
+                            </a>
+                        <?php } else { ?>
+                            <a class="btn btn-outline-blue btn-sm" href="auth/login.php">
+                                <?php echo $t['login']; ?>
+                            </a>
+                        <?php } ?>
                     </li>
+
+
                 </ul>
             </div>
         </div>
@@ -364,9 +367,11 @@ if ($conn) {
             <div class="row align-items-center">
                 <div class="col-lg-6 mb-4">
                     <div class="bg-light rounded-4 p-5 text-center border">
-                        <i class="bi bi-bank2 text-muted" style="font-size:5rem;opacity:.3;"></i>
-                        <p class="small text-muted mt-2">Temple Image Placeholder</p>
+                        <img src="assets/images/temple.png" alt="Temple Image"
+                            class="img-fluid rounded-3 shadow-sm mb-3" style="max-height: 280px; object-fit: cover;">
+                        <p class="small text-muted mt-2">Temple Image</p>
                     </div>
+
                 </div>
                 <div class="col-lg-6 ps-lg-5">
                     <h2 class="fw-bold"><?php echo $t['about_title']; ?></h2>
@@ -455,7 +460,7 @@ if ($conn) {
         <div class="container">
             <h2 class="fw-bold"><?php echo $t['support_title']; ?></h2>
             <p class="lead text-muted mb-4"><?php echo $t['support_desc']; ?></p>
-            <a href="user/donate.php" class="btn btn-saffron btn-lg px-5"><?php echo $t['contribute_btn']; ?></a>
+            <a href="users/donate.php" class="btn btn-saffron btn-lg px-5"><?php echo $t['donate_btn']; ?></a>
         </div>
     </section>
 
@@ -466,20 +471,20 @@ if ($conn) {
                 <p class="text-muted small"><?php echo $t['dev_by']; ?></p>
             </div>
             <div class="row justify-content-center">
-                <div class="col-md-4 col-lg-3 text-center mb-4">
+                <!-- <div class="col-md-4 col-lg-3 text-center mb-4">
                     <div class="dev-card">
-                        <img src="https://via.placeholder.com/150" alt="Dev 1"
+                        <img src="assets/images/dev/Abhishek.jpeg" alt="Dev 1"
                             class="rounded-circle dev-img mb-3 shadow-sm">
-                        <h5 class="fw-bold mb-1">Developer Name 1</h5>
+                        <h5 class="fw-bold mb-1">Abhishek Bhat</h5>
                         <p class="text-muted small">Backend Specialist</p>
                     </div>
-                </div>
+                </div> -->
                 <div class="col-md-4 col-lg-3 text-center">
                     <div class="dev-card">
-                        <img src="https://via.placeholder.com/150" alt="Dev 2"
+                        <img src="assets/images/dev/Yojana.jpeg" alt="Dev 2"
                             class="rounded-circle dev-img mb-3 shadow-sm">
-                        <h5 class="fw-bold mb-1">Developer Name 2</h5>
-                        <p class="text-muted small">Frontend Specialist</p>
+                        <h5 class="fw-bold mb-1">Yojana Gawade</h5>
+                        <p class="text-muted small">Frontend/Backend Specialist</p>
                     </div>
                 </div>
             </div>
@@ -519,11 +524,11 @@ if ($conn) {
             </div>
             <div class="border-top border-secondary mt-4 pt-4 text-center">
                 <small>
-                &copy; <?php echo date("Y"); ?> <?php echo $t['title']; ?> |
-                <span class="text-white-50"><?php echo $t['copyright']; ?></span>
-            </small>
+                    &copy; <?php echo date("Y"); ?> <?php echo $t['title']; ?> |
+                    <span class="text-white-50"><?php echo $t['copyright']; ?></span>
+                </small>
             </div>
-            
+
         </div>
     </footer>
 

@@ -11,7 +11,7 @@ $dbPath = __DIR__ . '/../config/db.php';
 if (file_exists($dbPath)) {
     require $dbPath;
 } else {
-    $conn = false;
+    die("Database connection file missing.");
 }
 
 // =========================================================
@@ -20,128 +20,109 @@ if (file_exists($dbPath)) {
 $error = '';
 $success = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $firstName = trim($_POST['first_name'] ?? '');
     $lastName = trim($_POST['last_name'] ?? '');
     $email = trim($_POST['email'] ?? '');
-    $phone = trim($_POST['phone'] ?? ''); // New
+    $phone = trim($_POST['phone'] ?? '');
     $password = trim($_POST['password'] ?? '');
     $confirm = trim($_POST['confirm_password'] ?? '');
-    $photoName = null; // New
+    $photoName = null;
 
-    // 1. Basic Validation
+    // validation
     if ($firstName === '' || $lastName === '' || $email === '' || $phone === '' || $password === '') {
         $error = $t['err_fill_all'];
-    } elseif ($password !== $confirm) {
+    } else if ($password !== $confirm) {
         $error = $t['err_pass_mismatch'];
-    } elseif (!preg_match('/^[0-9]{10}$/', $phone)) {
-        // Simple 10-digit check
+    } else if (!preg_match('/^[0-9]{10}$/', $phone)) {
         $error = ($lang === 'mr') ? 'अवैध फोन नंबर.' : 'Invalid phone number.';
-    } else {
+    }
 
-        // 2. Check Uniqueness (Email OR Phone)
+    // Check duplicate
+    if (empty($error)) {
         $check = $conn->prepare("SELECT id FROM users WHERE email = ? OR phone = ? LIMIT 1");
         $check->bind_param("ss", $email, $phone);
         $check->execute();
         $checkResult = $check->get_result();
 
         if ($checkResult->num_rows > 0) {
-            $error = ($lang === 'mr')
-                ? 'ईमेल किंवा फोन आधीच नोंदणीकृत आहे.'
-                : 'Email or Phone already registered.';
-        } else {
-
-            // 3. Handle File Upload (Photo)
-            if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
-                $fileTmp = $_FILES['photo']['tmp_name'];
-                $fileName = basename($_FILES['photo']['name']);
-                $fileSize = $_FILES['photo']['size'];
-                $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-
-                $allowed = ['jpg', 'jpeg', 'png', 'webp'];
-
-                if (in_array($fileExt, $allowed)) {
-                    if ($fileSize < 2 * 1024 * 1024) { // 2MB Limit
-                        // Generate unique name
-                        $newFileName = uniqid('user_', true) . '.' . $fileExt;
-                        $uploadDir = __DIR__ . '/../uploads/users/';
-
-                        // Ensure directory exists
-                        if (!is_dir($uploadDir)) {
-                            mkdir($uploadDir, 0777, true);
-                        }
-
-                        if (move_uploaded_file($fileTmp, $uploadDir . $newFileName)) {
-                            $photoName = $newFileName;
-                        } else {
-                            $error = "Failed to upload photo.";
-                        }
-                    } else {
-                        $error = "File size must be less than 2MB.";
-                    }
-                } else {
-                    $error = "Invalid file type. Only JPG, PNG, WEBP allowed.";
-                }
-            }
-
-            // Only proceed if no upload error occurred
-            if (empty($error)) {
-                // 4. Insert User
-                $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-                // 4. Insert User (WITHOUT role)
-                $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
-                $stmt = $conn->prepare(
-                    "INSERT INTO users (first_name, last_name, email, phone, password, photo, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, NOW())"
-                );
-                $stmt->bind_param(
-                    "ssssss",
-                    $firstName,
-                    $lastName,
-                    $email,
-                    $phone,
-                    $hashedPassword,
-                    $photoName
-                );
-
-                if ($stmt->execute()) {
-
-                    // Get newly created user ID
-                    $newUserId = $stmt->insert_id;
-                    $stmt->close();
-
-                    // 5. Assign default role (customer)
-                    // ⚠️ Change role_id according to your roles table
-                    $defaultRoleId = 3; // example: customer
-
-                    $roleStmt = $conn->prepare(
-                        "INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)"
-                    );
-                    $roleStmt->bind_param("ii", $newUserId, $defaultRoleId);
-
-                    if ($roleStmt->execute()) {
-                        $success = $t['success_register'];
-                    } else {
-                        $error = $t['err_generic'];
-                    }
-
-                    $roleStmt->close();
-
-                } else {
-                    $error = $t['err_generic'];
-                }
-
-                if ($stmt->execute()) {
-                    $success = $t['success_register'];
-                } else {
-                    $error = $t['err_generic'];
-                }
-                $stmt->close();
-            }
+            $error = ($lang === 'mr') ? 'ईमेल किंवा फोन आधीच नोंदणीकृत आहे.' : 'Email or Phone already registered.';
         }
         $check->close();
+    }
+
+    if (empty($error)) {
+        // photo upload optional
+        if (!empty($_FILES['photo']['name']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+            $fileTmp = $_FILES['photo']['tmp_name'];
+            $fileName = basename($_FILES['photo']['name']);
+            $fileSize = $_FILES['photo']['size'];
+            $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+            $allowed = ['jpg', 'png', 'jpeg', 'webp'];
+
+            if (!in_array($fileExt, $allowed)) {
+                $error = "Invalid file type.";
+            } elseif ($fileSize > 2 * 1024 * 1024) {
+                $error = "File size must be under 2MB.";
+            } else {
+                $photoName = uniqid('user_', true) . '.' . $fileExt;
+                $uploadDir = __DIR__ . '/../uploads/users/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                if (!move_uploaded_file($fileTmp, $uploadDir . $photoName)) {
+                    $error = "Photo upload failed.";
+                }
+            }
+        }
+
+        // Insert
+        if (empty($error)) {
+            $conn->begin_transaction();
+            try {
+                $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+                // Insert User
+                $stmt = $conn->prepare("INSERT INTO users (first_name, last_name, email, phone, password, photo, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+                $stmt->bind_param("ssssss", $firstName, $lastName, $email, $phone, $hashedPassword, $photoName);
+
+                if (!$stmt->execute()) {
+                    throw new Exception($t['err_generic']);
+                }
+                $newUserId = $stmt->insert_id;
+                $stmt->close();
+
+                // Assign Role (Customer)
+                $roleFetch = $conn->prepare("SELECT id FROM roles WHERE name = 'customer' LIMIT 1");
+                $roleFetch->execute();
+                $roleResult = $roleFetch->get_result();
+
+                if ($roleResult->num_rows !== 1) {
+                    // Fallback to ID 3 if role name not found (adjust based on your DB)
+                    $memberRoleId = 3;
+                } else {
+                    $roleRow = $roleResult->fetch_assoc();
+                    $memberRoleId = (int) $roleRow['id'];
+                }
+                $roleFetch->close();
+
+                $roleStmt = $conn->prepare("INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)");
+                $roleStmt->bind_param("ii", $newUserId, $memberRoleId);
+
+                if (!$roleStmt->execute()) {
+                    throw new Exception($t['err_generic']);
+                }
+                $roleStmt->close();
+
+                $conn->commit();
+                $success = $t['success_register'];
+
+            } catch (Exception $e) {
+                $conn->rollback();
+                $error = $e->getMessage();
+            }
+        }
     }
 }
 ?>
@@ -162,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
 
     <style>
         /* ===============================
-           THEME VARIABLES
+           THEME VARIABLES (Shiva Design)
         =============================== */
         :root {
             --shiva-blue-light: #e3f2fd;
@@ -177,13 +158,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
 
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #ffffff 0%, var(--shiva-blue-light) 100%);
+            background: linear-gradient(135deg, var(--bg-body) 0%, var(--shiva-blue-light) 100%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             color: var(--text-dark);
         }
 
+        /* Typography */
         h1,
         h2,
         h3,
@@ -216,7 +198,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
         }
 
         /* Main Content */
-        .main-wrapper {
+        .auth-wrapper {
             flex: 1;
             display: flex;
             align-items: center;
@@ -228,8 +210,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
         .register-card {
             background: #ffffff;
             width: 100%;
-            max-width: 600px;
-            /* Slightly wider for new fields */
+            max-width: 650px;
+            /* Wider for 2-column fields */
             padding: 2.5rem;
             border-radius: 20px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
@@ -251,33 +233,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
         }
 
         /* Form Controls */
-        .form-control {
-            padding: 12px 15px;
-            border-radius: 10px;
-            border: 1px solid #dee2e6;
-            font-size: 0.95rem;
-        }
-
-        .form-control:focus {
-            border-color: var(--shiva-saffron);
-            box-shadow: 0 0 0 4px rgba(255, 152, 0, 0.1);
+        .form-label {
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 0.3rem;
         }
 
         .input-group-text {
             background-color: #f8f9fa;
             border-radius: 10px 0 0 10px;
             border: 1px solid #dee2e6;
+            border-right: none;
             color: var(--text-muted);
+            min-width: 45px;
+            justify-content: center;
         }
 
         .form-control {
+            padding: 12px;
             border-radius: 0 10px 10px 0;
+            border: 1px solid #dee2e6;
+            border-left: none;
+            font-size: 0.95rem;
         }
 
-        /* Specific fix for file input */
+        /* Focus State */
+        .input-group:focus-within .input-group-text {
+            border-color: var(--shiva-saffron);
+            color: var(--shiva-saffron);
+        }
+
+        .input-group:focus-within .form-control {
+            border-color: var(--shiva-saffron);
+            box-shadow: 0 0 0 4px rgba(255, 152, 0, 0.1);
+        }
+
+        /* Special styling for File Input */
         input[type="file"].form-control {
             border-radius: 10px;
-            padding: 10px;
+            border-left: 1px solid #dee2e6;
+        }
+
+        .input-group-file .input-group-text {
+            border-right: 1px solid #dee2e6;
+            /* Restore border for file icon */
+        }
+
+        /* Password Eye Toggle Styling */
+        .password-input {
+            border-right: none !important;
+            border-radius: 0 !important;
+        }
+
+        .password-toggle {
+            cursor: pointer;
+            background-color: white;
+            border-left: none;
+            border-radius: 0 10px 10px 0 !important;
+        }
+
+        .password-toggle:hover {
+            color: var(--shiva-saffron);
         }
 
         /* Buttons */
@@ -299,6 +316,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
             color: white;
         }
 
+        /* Links */
         .link-saffron {
             color: var(--shiva-saffron);
             text-decoration: none;
@@ -333,7 +351,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
         </div>
     </nav>
 
-    <div class="main-wrapper">
+    <div class="auth-wrapper">
         <div class="register-card fade-in">
 
             <div class="text-center">
@@ -347,19 +365,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
             </div>
 
             <?php if ($error): ?>
-                <div class="alert alert-danger text-center small py-2 rounded-3 mb-4">
-                    <i class="bi bi-exclamation-triangle-fill me-1"></i> <?php echo htmlspecialchars($error); ?>
+                <div class="alert alert-danger d-flex align-items-center rounded-3 p-2 small mb-4">
+                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+                    <div><?php echo htmlspecialchars($error); ?></div>
                 </div>
             <?php endif; ?>
 
             <?php if ($success): ?>
-                <div class="alert alert-success text-center small py-2 rounded-3 mb-4">
-                    <i class="bi bi-check-circle-fill me-1"></i> <?php echo htmlspecialchars($success); ?>
-                    <div class="mt-2">
-                        <a href="login.php" class="fw-bold text-success text-decoration-underline">
-                            <?php echo $t['login_here']; ?>
-                        </a>
+                <div class="alert alert-success text-center rounded-3 p-3 mb-4">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="bi bi-check-circle-fill fs-4 me-2"></i>
+                        <span class="fw-bold"><?php echo htmlspecialchars($success); ?></span>
                     </div>
+                    <a href="login.php" class="btn btn-sm btn-outline-success rounded-pill px-4">
+                        <?php echo $t['login_here']; ?>
+                    </a>
                 </div>
             <?php endif; ?>
 
@@ -367,14 +387,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
 
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label class="form-label small fw-bold text-muted ps-1"><?php echo $t['first_name']; ?></label>
+                        <label class="form-label"><?php echo $t['first_name']; ?></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-person"></i></span>
                             <input type="text" name="first_name" class="form-control" required>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small fw-bold text-muted ps-1"><?php echo $t['last_name']; ?></label>
+                        <label class="form-label"><?php echo $t['last_name']; ?></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-person"></i></span>
                             <input type="text" name="last_name" class="form-control" required>
@@ -384,51 +404,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
 
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label class="form-label small fw-bold text-muted ps-1"><?php echo $t['email']; ?></label>
+                        <label class="form-label"><?php echo $t['email']; ?></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                            <input type="email" name="email" class="form-control" placeholder="example@mail.com"
+                            <input type="email" name="email" class="form-control" placeholder="name@example.com"
                                 required>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small fw-bold text-muted ps-1">
-                            <?php echo ($lang === 'mr') ? 'फोन' : 'Phone'; ?>
-                        </label>
+                        <label class="form-label"><?php echo ($lang === 'mr') ? 'फोन' : 'Phone'; ?></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-                            <input type="text" name="phone" class="form-control" placeholder="9876543210"
-                                pattern="[0-9]{10}" required>
+                            <input type="text" name="phone" class="form-control" pattern="[0-9]{10}"
+                                placeholder="9876543210" required>
                         </div>
                     </div>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted ps-1">
-                        <?php echo ($lang === 'mr') ? 'प्रोफाइल फोटो (ऐच्छिक)' : 'Profile Photo (Optional)'; ?>
-                    </label>
-                    <div class="input-group">
+                    <label
+                        class="form-label"><?php echo ($lang === 'mr') ? 'प्रोफाइल फोटो (ऐच्छिक)' : 'Profile Photo (Optional)'; ?></label>
+                    <div class="input-group input-group-file">
                         <span class="input-group-text"><i class="bi bi-camera"></i></span>
                         <input type="file" name="photo" class="form-control" accept="image/*">
                     </div>
-                    <div class="form-text small mt-1">Max size 2MB (JPG, PNG)</div>
+                    <div class="form-text small mt-1 text-end">Max size 2MB (JPG, PNG)</div>
                 </div>
 
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
-                        <label class="form-label small fw-bold text-muted ps-1"><?php echo $t['password']; ?></label>
+                        <label class="form-label"><?php echo $t['password']; ?></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                            <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                            <input type="password" name="password" class="form-control password-input" id="reg_pass"
+                                required>
+                            <span class="input-group-text password-toggle" onclick="togglePass('reg_pass', this)">
+                                <i class="bi bi-eye"></i>
+                            </span>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <label
-                            class="form-label small fw-bold text-muted ps-1"><?php echo $t['confirm_password']; ?></label>
+                        <label class="form-label"><?php echo $t['confirm_password']; ?></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
-                            <input type="password" name="confirm_password" class="form-control" placeholder="••••••••"
-                                required>
+                            <input type="password" name="confirm_password" class="form-control password-input"
+                                id="reg_confirm" required>
+                            <span class="input-group-text password-toggle" onclick="togglePass('reg_confirm', this)">
+                                <i class="bi bi-eye"></i>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -463,6 +486,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function togglePass(inputId, toggleBtn) {
+            const input = document.getElementById(inputId);
+            const icon = toggleBtn.querySelector('i');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        }
+    </script>
 
 </body>
 

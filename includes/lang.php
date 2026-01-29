@@ -1,24 +1,17 @@
 <?php
-
-// -------------------------------------------------
-// 1. Start session (must be first)
-// -------------------------------------------------
+// session start
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
-// -------------------------------------------------
-// 2. Supported languages
-// -------------------------------------------------
+// supported languages
 $supportedLangs = ['en', 'mr'];
 
-// -------------------------------------------------
-// 3. Handle language change from URL
-// -------------------------------------------------
+// language change
+// first check if lang is set or not and then check if the value in lang is supported by website or not
 if (isset($_GET['lang']) && in_array($_GET['lang'], $supportedLangs, true)) {
 
-    // Save for current session
-    $_SESSION['lang'] = $_GET['lang'];
+    // save language in session
+    $_SESSION['lang'] = $_GET['lang'] ?? 'en';
 
     // Save for future visits (30 days)
     setcookie(
@@ -34,10 +27,8 @@ if (isset($_GET['lang']) && in_array($_GET['lang'], $supportedLangs, true)) {
     exit;
 }
 
-// -------------------------------------------------
-// 4. Decide active language
+// Decide active language
 // Priority: Session > Cookie > Default
-// -------------------------------------------------
 $lang = $_SESSION['lang']
     ?? $_COOKIE['lang']
     ?? 'en';
@@ -47,9 +38,7 @@ if (!in_array($lang, $supportedLangs, true)) {
     $lang = 'en';
 }
 
-// -------------------------------------------------
 // 5. Load language file
-// -------------------------------------------------
 $langFile = __DIR__ . "/../lang/{$lang}.php";
 
 // Fallback if file missing
@@ -59,7 +48,3 @@ if (!file_exists($langFile)) {
 
 $t = require $langFile;
 
-// -------------------------------------------------
-// 6. $lang  -> current language code
-//    $t     -> translations array
-// -------------------------------------------------
