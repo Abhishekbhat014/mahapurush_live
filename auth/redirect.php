@@ -1,5 +1,4 @@
 <?php
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -10,7 +9,7 @@ if ($_SESSION['logged_in'] !== true) {
 }
 
 // Use primary_role set during login
-$role = $_SESSION['primary_role'] ?? 'customer';
+$role = $_SESSION['primary_role'];
 
 switch ($role) {
 

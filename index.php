@@ -1,28 +1,34 @@
 <?php
+// Include language file
 require __DIR__ . '/includes/lang.php';
-// db connection
+
+// include db file
 if (file_exists("config/db.php")) {
-    include "config/db.php";
+    require __DIR__ . "/config/db.php";
 } else {
     $con = false;
 }
 
 $isLoggedIn = $_SESSION['logged_in'] ?? false;
-
 $committeeMembers = [];
 $eventQuery = false;
 
+// if connection object is there and active
 if ($con && $con !== false) {
-    // fetch temple info
+    // fetch temple Info
     $templeQuery = mysqli_query($con, "SELECT * FROM temple_info LIMIT 1");
     if ($templeQuery && mysqli_num_rows($templeQuery) > 0) {
         $templeData = mysqli_fetch_assoc($templeQuery);
+        $temple['temple_name'] = $templeData['temple_name'];
         $temple['description'] = $templeData['description'];
         $temple['location'] = $templeData['location'];
         $temple['contact'] = $templeData['contact'];
+        $temple['time'] = $templeData['time'];
+        $temple['address'] = $templeData['address'];
+        $temple['photo'] = $templeData['photo'] ? '' : "assets/images/temple.png";
     }
 
-    // fetch all roles other than customer
+    // Committee Members logic
     $cmQuery = mysqli_query($con, "SELECT u.first_name, u.last_name, u.photo, r.name AS role_name FROM users u JOIN user_roles ur ON u.id = ur.user_id JOIN roles r ON ur.role_id = r.id WHERE r.name != 'customer' ORDER BY r.name, u.first_name");
     if ($cmQuery) {
         while ($row = mysqli_fetch_assoc($cmQuery)) {
@@ -30,7 +36,6 @@ if ($con && $con !== false) {
         }
     }
 
-    // fetch upcoming events
     $eventQuery = mysqli_query($con, "SELECT * FROM events WHERE conduct_on >= CURDATE() ORDER BY conduct_on ASC LIMIT 3");
 }
 ?>
@@ -38,517 +43,240 @@ if ($con && $con !== false) {
 <!DOCTYPE html>
 <html lang="<?php echo $lang; ?>">
 
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $t['title']; ?></title>
-
+    <title><?php echo $t['title']; ?> - Official Portal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:wght@400;700&display=swap"
-        rel="stylesheet">
 
     <style>
         :root {
-            --shiva-blue-light: #e3f2fd;
-            --shiva-blue-deep: #1565c0;
-            --shiva-saffron: #ff9800;
-            --shiva-saffron-light: #fff3e0;
-            --text-dark: #2c3e50;
-            --text-muted: #607d8b;
-            --bg-body: #fdfbf7;
+            --ant-primary: #1677ff;
+            --ant-primary-hover: #4096ff;
+            --ant-bg-layout: #f0f2f5;
+            --ant-border-color: #f0f0f0;
+            --ant-text: rgba(0, 0, 0, 0.88);
+            --ant-text-sec: rgba(0, 0, 0, 0.45);
+            --ant-radius: 12px;
+            --ant-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08);
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            /* Works well for English & Marathi */
-            color: var(--text-dark);
-            background-color: var(--bg-body);
-            line-height: 1.7;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--ant-bg-layout);
+            color: var(--ant-text);
+            -webkit-user-select: none;
+            user-select: none;
         }
 
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        .navbar-brand {
-            font-family: 'Playfair Display', serif;
+        .ant-hero {
+            background: #fff;
+            padding: 80px 0;
+            text-align: center;
+            border-bottom: 1px solid var(--ant-border-color);
+            background-image: radial-gradient(circle at top right, #e6f4ff 0%, #ffffff 80%);
         }
 
-        /* Navbar & General UI Styles (Same as before) */
-        .navbar {
-            background-color: #ffffff;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            padding: 1rem 0;
+        .ant-card {
+            background: #fff;
+            border: 1px solid var(--ant-border-color);
+            border-radius: var(--ant-radius);
+            box-shadow: var(--ant-shadow);
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            overflow: hidden;
+            height: 100%;
         }
 
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.5rem;
-            color: var(--shiva-saffron) !important;
-            letter-spacing: 0.5px;
+        .ant-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
         }
 
-        .nav-link {
-            color: var(--text-dark);
-            font-weight: 500;
-            margin-left: 1rem;
-            transition: color 0.3s;
+        .ant-card-body {
+            padding: 32px;
         }
 
-        .nav-link:hover,
-        .nav-link.active {
-            color: var(--shiva-saffron);
-        }
-
-        .committee-item {
+        .service-icon {
+            width: 64px;
+            height: 64px;
+            background: #e6f4ff;
+            color: var(--ant-primary);
+            border-radius: 16px;
             display: flex;
             align-items: center;
-            gap: 15px;
-            padding: 10px;
-            border-radius: 8px;
-            transition: background 0.2s;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 28px;
         }
 
-        .committee-item:hover {
-            background-color: var(--shiva-blue-light);
-        }
-
-        .committee-item img {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
+        .temple-img-main {
+            width: 100%;
+            height: 400px;
             object-fit: cover;
-            border: 2px solid var(--shiva-saffron);
-        }
-
-        .dropdown-menu {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            min-width: 200px;
-            padding: 10px;
-        }
-
-        .hero-section {
-            background: linear-gradient(135deg, #ffffff 0%, var(--shiva-blue-light) 100%);
-            padding: 120px 0;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        .hero-subtitle {
-            font-size: 1.2rem;
-            letter-spacing: 2px;
-            color: var(--shiva-blue-deep);
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        .btn-saffron {
-            background-color: var(--shiva-saffron);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            padding: 12px 35px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
-        }
-
-        .btn-saffron:hover {
-            background-color: #f57c00;
-            transform: translateY(-2px);
-            color: white;
-        }
-
-        .btn-outline-blue {
-            border: 2px solid var(--shiva-blue-deep);
-            color: var(--shiva-blue-deep);
-            border-radius: 50px;
-            padding: 8px 25px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .btn-outline-blue:hover {
-            background-color: var(--shiva-blue-deep);
-            color: white;
-        }
-
-        .feature-card {
-            background: white;
-            border: none;
             border-radius: 16px;
-            padding: 2rem;
-            text-align: center;
-            transition: all 0.3s ease;
-            height: 100%;
-            border: 1px solid rgba(0, 0, 0, 0.03);
+            box-shadow: var(--ant-shadow);
         }
 
-        .feature-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            border-color: var(--shiva-blue-light);
-        }
-
-        .feature-icon {
-            font-size: 2.5rem;
-            color: var(--shiva-saffron);
-            margin-bottom: 1rem;
-        }
-
-        .event-card {
-            border: none;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s;
-            background: white;
-        }
-
-        .event-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .event-date-box {
-            background-color: var(--shiva-blue-light);
-            color: var(--shiva-blue-deep);
+        .date-box {
+            background: var(--ant-primary);
+            color: #fff;
+            border-radius: 8px;
+            min-width: 70px;
             padding: 10px;
             text-align: center;
+        }
+
+        .ant-btn-primary-big {
+            background-color: var(--ant-primary);
+            color: #fff !important;
+            padding: 12px 36px;
             border-radius: 8px;
-            font-weight: bold;
-            margin-bottom: 15px;
+            font-weight: 600;
             display: inline-block;
-        }
-
-        .dev-img {
-            width: 120px;
-            height: 120px;
-            object-fit: cover;
-            border: 4px solid var(--shiva-blue-light);
-            padding: 2px;
-            transition: transform 0.3s;
-        }
-
-        .dev-card:hover .dev-img {
-            transform: scale(1.05);
-            border-color: var(--shiva-saffron);
-        }
-
-        footer {
-            background-color: #263238;
-            color: #eceff1;
-        }
-
-        footer a {
-            color: #b0bec5;
             text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        footer a:hover {
-            color: var(--shiva-saffron);
-        }
-
-        body {
-            -webkit-user-select: none;
-            /* Chrome, Safari */
-            -moz-user-select: none;
-            /* Firefox */
-            -ms-user-select: none;
-            /* IE/Edge */
-            user-select: none;
+            transition: 0.3s;
         }
     </style>
 </head>
 
 <body>
 
-    <nav class="navbar navbar-expand-lg sticky-top">
+    <?php include 'includes/header.php'; ?>
+
+    <section class="ant-hero">
         <div class="container">
-            <a class="navbar-brand" href="index.php">
-                <i class="bi bi-brightness-high-fill me-2"></i><?php echo $t['title']; ?>
-            </a>
-
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item"><a class="nav-link active" href="index.php"><?php echo $t['home']; ?></a></li>
-                    <li class="nav-item"><a class="nav-link" href="#about"><?php echo $t['about']; ?></a></li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="panchang.php">
-                            Panchang
-                        </a>
-                    </li>
-                    <li class="nav-item"><a class="nav-link" href="#pooja"><?php echo $t['pooja']; ?></a></li>
-                    <li class="nav-item"><a class="nav-link" href="#events"><?php echo $t['events']; ?></a></li>
-                    <li class="nav-item"><a class="nav-link" href="#donations"><?php echo $t['donations']; ?></a></li>
-
-                    <li class="nav-item dropdown ms-lg-3">
-                        <a class="nav-link dropdown-toggle" href="/committee.php" role="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            <?php echo $t['committee']; ?>
-                        </a>
-
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <?php if (!empty($committeeMembers)) { ?>
-                                <?php foreach ($committeeMembers as $member) {
-                                    $photo = !empty($member['photo'])
-                                        ? 'uploads/users/' . $member['photo']
-                                        : 'assets/images/default-user.png';
-                                    ?>
-                                    <li>
-                                        <div class="committee-item">
-                                            <img src="<?php echo $photo; ?>" alt="Member">
-                                            <div>
-                                                <div class="committee-name">
-                                                    <?php echo htmlspecialchars($member['first_name'] . ' ' . $member['last_name']); ?>
-                                                </div>
-                                                <div class="committee-role">
-                                                    <?php echo ucfirst(htmlspecialchars($member['role_name'])); ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </li>
-                                <?php } ?>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li class="text-center">
-                                    <a href="committee.php" class="dropdown-item fw-semibold">
-                                        View All Committee
-                                    </a>
-                                </li>
-                            <?php } else { ?>
-                                <li class="text-center py-3 text-muted small">
-                                    <?php echo $t['no_members']; ?>
-                                </li>
-                            <?php } ?>
-                        </ul>
-                    </li>
-
-
-                    <li class="nav-item dropdown ms-lg-2">
-                        <a class="nav-link dropdown-toggle fw-bold text-primary" href="#" role="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-translate me-1"></i>
-                            <?php echo ($lang == 'en') ? 'English' : 'मराठी'; ?>
-                        </a>
-
-                        <ul class="dropdown-menu dropdown-menu-end text-center" style="min-width: 120px;">
-                            <li><a class="dropdown-item <?php echo ($lang == 'en') ? 'active' : ''; ?>"
-                                    href="?lang=en">English</a></li>
-                            <li><a class="dropdown-item <?php echo ($lang == 'mr') ? 'active' : ''; ?>"
-                                    href="?lang=mr">मराठी</a></li>
-                        </ul>
-                    </li>
-
-                    <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
-                        <?php if ($isLoggedIn) { ?>
-                            <a class="btn btn-outline-blue btn-sm" href="auth/redirect.php">
-                                <?php echo ($lang == 'mr') ? 'डॅशबोर्ड' : 'Dashboard'; ?>
-                            </a>
-                        <?php } else { ?>
-                            <a class="btn btn-outline-blue btn-sm" href="auth/login.php">
-                                <?php echo $t['login']; ?>
-                            </a>
-                        <?php } ?>
-                    </li>
-
-
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <section class="hero-section text-center">
-        <div class="container">
-            <p class="hero-subtitle mb-3"><?php echo $t['welcome_subtitle']; ?></p>
-            <h1 class="display-3 fw-bold"><?php echo $t['welcome_title']; ?></h1>
-            <p class="lead text-muted mt-3 mb-5"><?php echo htmlspecialchars($temple['description']); ?></p>
-            <div class="d-flex justify-content-center gap-3 flex-wrap">
-                <a href="#donations" class="btn btn-saffron btn-lg"><?php echo $t['donate_btn']; ?></a>
-                <a href="#pooja" class="btn btn-outline-blue btn-lg"><?php echo $t['book_pooja_btn']; ?></a>
+            <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary px-3 py-2 mb-3 fw-bold text-uppercase"
+                style="letter-spacing: 1px; font-size: 11px;">
+                <?php echo $t['welcome_subtitle'] ?? 'Divine Sanctuary'; ?>
+            </span>
+            <h1><?php echo $t['welcome_title']; ?></h1>
+            <div class="d-flex justify-content-center gap-3 mt-4">
+                <a href="donate.php" class="ant-btn-primary-big shadow-sm">Donate Now</a>
+                <a href="pooja.php" class="btn btn-outline-dark px-5 py-2 fw-bold"
+                    style="border-radius: 8px; height: 50px; display: flex; align-items: center;">Book a Pooja</a>
             </div>
         </div>
     </section>
 
-    <section id="about" class="py-5 bg-white">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-6 mb-4">
-                    <div class="bg-light rounded-4 p-5 text-center border">
-                        <img src="assets/images/temple.png" alt="Temple Image"
-                            class="img-fluid rounded-3 shadow-sm mb-3" style="max-height: 280px; object-fit: cover;">
-                        <p class="small text-muted mt-2">Temple Image</p>
+    <main class="container py-5">
+
+        <div class="row align-items-center g-5 mb-5 pb-4">
+            <div class="col-lg-6">
+                <img src="<?= $temple['photo'] ?>" class="temple-img-main" alt="Temple Image">
+            </div>
+            <div class="col-lg-6">
+                <span class="text-primary fw-bold text-uppercase small mb-2 d-block" style="letter-spacing: 1px;">Our
+                    Sacred Heritage</span>
+                <h2 class="fw-bold mb-4">About <?= $t['title'] ?></h2>
+                <p class="text-secondary fs-5 mb-4" style="line-height: 1.8;">
+                    <?php
+                    // Show first 300 characters of description as a summary
+                    echo nl2br(htmlspecialchars(mb_strimwidth($temple['description'], 0, 450, "...")));
+                    ?>
+                </p>
+                <div class="d-flex gap-4 mb-4">
+                    <div>
+                        <h4 class="fw-bold text-primary mb-0">Daily</h4>
+                        <span class="small text-muted text-uppercase fw-bold">Aarti & Puja</span>
                     </div>
-
+                    <div class="vr opacity-25"></div>
+                    <div>
+                        <h4 class="fw-bold text-primary mb-0">Infinite</h4>
+                        <span class="small text-muted text-uppercase fw-bold">Blessings</span>
+                    </div>
                 </div>
-                <div class="col-lg-6 ps-lg-5">
-                    <h2 class="fw-bold"><?php echo $t['about_title']; ?></h2>
-                    <p class="text-muted mt-3"><?php echo htmlspecialchars($temple['description']); ?></p>
-                    <a href="#" class="btn btn-link px-0 text-decoration-none"><?php echo $t['read_history']; ?> →</a>
-                </div>
+                <a href="about.php" class="btn btn-link text-primary fw-bold p-0 text-decoration-none">
+                    Read our full history <i class="bi bi-arrow-right ms-1"></i>
+                </a>
             </div>
         </div>
-    </section>
 
-    <section id="pooja" class="py-5" style="background-color:var(--shiva-blue-light);">
-        <div class="container">
-            <div class="text-center mb-5">
-                <h2 class="fw-bold"><?php echo $t['services_title']; ?></h2>
-            </div>
+        <div class="mb-5 pt-4">
+            <h4 class="fw-bold mb-4">Temple Services</h4>
             <div class="row g-4">
-                <div class="col-md-6 col-lg-3">
-                    <div class="feature-card">
-                        <i class="bi bi-calendar-check feature-icon"></i>
-                        <h5><?php echo $t['service_pooja']; ?></h5>
-                        <p class="small text-muted"><?php echo $t['service_pooja_desc']; ?></p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="feature-card">
-                        <i class="bi bi-heart-fill feature-icon"></i>
-                        <h5><?php echo $t['service_donate']; ?></h5>
-                        <p class="small text-muted"><?php echo $t['service_donate_desc']; ?></p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="feature-card">
-                        <i class="bi bi-people-fill feature-icon"></i>
-                        <h5><?php echo $t['service_events']; ?></h5>
-                        <p class="small text-muted"><?php echo $t['service_events_desc']; ?></p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="feature-card">
-                        <i class="bi bi-basket-fill feature-icon"></i>
-                        <h5><?php echo $t['service_seva']; ?></h5>
-                        <p class="small text-muted"><?php echo $t['service_seva_desc']; ?></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="events" class="py-5 bg-white">
-        <div class="container">
-            <div class="text-center mb-5">
-                <h2 class="fw-bold"><?php echo $t['upcoming_events']; ?></h2>
-            </div>
-            <div class="row justify-content-center">
-                <?php if ($eventQuery && mysqli_num_rows($eventQuery) > 0) { ?>
-                    <?php while ($event = mysqli_fetch_assoc($eventQuery)) {
-                        $dateObj = strtotime($event['conduct_on']);
-                        ?>
-                        <div class="col-md-4 mb-4">
-                            <div class="card event-card p-4 h-100 text-center">
-                                <div class="event-date-box">
-                                    <span class="d-block small"><?php echo $t['month_of']; ?></span>
-                                    <span class="fs-4"><?php echo date("F", $dateObj); ?></span>
-                                </div>
-                                <h5 class="fw-bold"><?php echo htmlspecialchars($event['name']); ?></h5>
-                                <p class="small text-muted">
-                                    <i class="bi bi-calendar-event me-1"></i>
-                                    <?php echo date("l, d Y", $dateObj); ?>
-                                </p>
-                                <p class="small text-muted"><?php echo $t['duration']; ?>:
-                                    <?php echo htmlspecialchars($event['duration']); ?>
-                                </p>
+                <?php
+                $icons = ['calendar2-check', 'heart-fill', 'people-fill', 'shop-window'];
+                $serviceTitles = [$t['service_pooja'], $t['service_donate'], $t['service_events'], $t['service_seva']];
+                for ($i = 0; $i < 4; $i++): ?>
+                    <div class="col-6 col-md-3">
+                        <div class="ant-card">
+                            <div class="ant-card-body text-center">
+                                <div class="service-icon"><i class="bi bi-<?= $icons[$i] ?>"></i></div>
+                                <div class="fw-bold mb-2"><?= $serviceTitles[$i] ?></div>
+                                <div class="small text-muted d-none d-md-block">Dedicated rituals and services for all
+                                    devotees.</div>
                             </div>
                         </div>
-                    <?php } ?>
-                <?php } else { ?>
-                    <div class="col-12 text-center">
-                        <p class="text-muted"><?php echo $t['no_events']; ?></p>
                     </div>
-                <?php } ?>
+                <?php endfor; ?>
             </div>
         </div>
-    </section>
 
-    <section id="donations" class="py-5 text-center" style="background-color:var(--shiva-saffron-light);">
-        <div class="container">
-            <h2 class="fw-bold"><?php echo $t['support_title']; ?></h2>
-            <p class="lead text-muted mb-4"><?php echo $t['support_desc']; ?></p>
-            <a href="users/donate.php" class="btn btn-saffron btn-lg px-5"><?php echo $t['donate_btn']; ?></a>
-        </div>
-    </section>
+        <div style="height: 1px; background: var(--ant-border-color); margin: 60px 0;"></div>
 
-    <section class="py-5 bg-white border-top">
-        <div class="container">
-            <div class="text-center mb-5">
-                <h2 class="fw-bold h4"><?php echo $t['tech_team']; ?></h2>
-                <p class="text-muted small"><?php echo $t['dev_by']; ?></p>
-            </div>
-            <div class="row justify-content-center">
-                <!-- <div class="col-md-4 col-lg-3 text-center mb-4">
-                    <div class="dev-card">
-                        <img src="assets/images/dev/Abhishek.jpeg" alt="Dev 1"
-                            class="rounded-circle dev-img mb-3 shadow-sm">
-                        <h5 class="fw-bold mb-1">Abhishek Bhat</h5>
-                        <p class="text-muted small">Backend Specialist</p>
+        <div class="row g-5">
+            <div class="col-lg-8">
+                <h4 class="fw-bold mb-4">Upcoming Events</h4>
+                <?php if ($eventQuery && mysqli_num_rows($eventQuery) > 0): ?>
+                    <?php while ($event = mysqli_fetch_assoc($eventQuery)): ?>
+                        <div class="ant-card mb-4 border-0">
+                            <div class="ant-card-body d-flex align-items-center gap-4">
+                                <div class="date-box shadow-sm">
+                                    <div class="fw-bold fs-4"><?= date("d", strtotime($event['conduct_on'])) ?></div>
+                                    <div class="small text-uppercase fw-bold" style="font-size: 10px; opacity: 0.9;">
+                                        <?= date("M", strtotime($event['conduct_on'])) ?>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h5 class="fw-bold mb-1"><?= htmlspecialchars($event['name']) ?></h5>
+                                    <div class="small text-muted"><i class="bi bi-clock me-1"></i> <?= $event['duration'] ?>
+                                    </div>
+                                </div>
+                                <a href="events.php?id=<?= $event['id'] ?>"
+                                    class="btn btn-light btn-sm px-4 rounded-pill border fw-bold text-primary">Details</a>
+                            </div>
+                        </div>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <div class="ant-card">
+                        <div class="ant-card-body text-center py-5">
+                            <i class="bi bi-calendar-x fs-1 text-muted opacity-25 mb-3"></i>
+                            <p class="text-muted mb-0">Stay tuned for upcoming spiritual gatherings.</p>
+                        </div>
                     </div>
-                </div> -->
-                <div class="col-md-4 col-lg-3 text-center">
-                    <div class="dev-card">
-                        <img src="assets/images/dev/Yojana.jpeg" alt="Dev 2"
-                            class="rounded-circle dev-img mb-3 shadow-sm">
-                        <h5 class="fw-bold mb-1">Yojana Gawade</h5>
-                        <p class="text-muted small">Frontend/Backend Specialist</p>
+                <?php endif; ?>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="ant-card sticky-top" style="top: 88px; z-index: 1;">
+                    <div class="ant-card-body">
+                        <h5 class="fw-bold mb-4">Contact Us</h5>
+                        <div class="d-flex gap-3 mb-4">
+                            <div class="text-primary fs-5"><i class="bi bi-geo-alt-fill"></i></div>
+                            <div>
+                                <small class="text-uppercase text-muted fw-bold d-block mb-1"
+                                    style="font-size: 10px;">Location</small>
+                                <span
+                                    class="small text-dark fw-medium"><?= htmlspecialchars($temple['location'] ?? 'Visit us') ?></span>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-3">
+                            <div class="text-primary fs-5"><i class="bi bi-telephone-fill"></i></div>
+                            <div>
+                                <small class="text-uppercase text-muted fw-bold d-block mb-1"
+                                    style="font-size: 10px;">Phone</small>
+                                <span
+                                    class="small text-dark fw-medium"><?= htmlspecialchars($temple['contact'] ?? 'Call us') ?></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+    </main>
 
-    <footer class="py-5 mt-5" style="background-color:#263238;">
-        <div class="container">
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <h5 class="fw-bold text-white mb-3">
-                        <i class="bi bi-brightness-high-fill me-2 text-warning"></i>
-                        <?php echo $t['title']; ?>
-                    </h5>
-                    <p class="small text-secondary"><?php echo htmlspecialchars($temple['description']); ?></p>
-                </div>
-                <div class="col-md-4">
-                    <h5 class="fw-bold text-white mb-3"><?php echo $t['contact']; ?></h5>
-                    <ul class="list-unstyled small text-secondary">
-                        <li class="mb-2"><i class="bi bi-geo-alt-fill me-2"></i>
-                            <?php echo htmlspecialchars($temple['location']); ?></li>
-                        <li class="mb-2"><i class="bi bi-telephone-fill me-2"></i>
-                            <?php echo htmlspecialchars($temple['contact']); ?></li>
-                    </ul>
-                </div>
-                <div class="col-md-4">
-                    <h5 class="fw-bold text-white mb-3"><?php echo $t['quick_links']; ?></h5>
-                    <ul class="list-unstyled small">
-                        <li class="mb-2"><a href="privacy.php"
-                                class="text-secondary text-decoration-none"><?php echo $t['privacy']; ?></a></li>
-                        <li class="mb-2"><a href="terms.php"
-                                class="text-secondary text-decoration-none"><?php echo $t['terms']; ?></a></li>
-                        <li class="mb-2"><a href="user/donate.php"
-                                class="text-secondary text-decoration-none"><?php echo $t['donations']; ?></a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="border-top border-secondary mt-4 pt-4 text-center">
-                <small>
-                    &copy; <?php echo date("Y"); ?> <?php echo $t['title']; ?> |
-                    <span class="text-white-50"><?php echo $t['copyright']; ?></span>
-                </small>
-            </div>
-
-        </div>
-    </footer>
+    <?php include 'includes/footer.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

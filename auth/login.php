@@ -1,51 +1,46 @@
 <?php
-
+// inlcude laguage file
 require __DIR__ . '/../includes/lang.php';
+
+// include db file
 $dbPath = __DIR__ . '/../config/db.php';
+
 if (file_exists($dbPath)) {
     require $dbPath;
 } else {
-    die("Database conection file missing.");
+    die("Database connection file missing.");
 }
 
 $error = "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-
+    // fetch email and password
     $email = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
 
+    // if email and password are empty
     if ($email === '' || $password === '') {
-        $error = ($lang === 'mr')
-            ? 'कृपया ई-मेल आणि पासवर्ड भरा.'
-            : 'Please enter both email and password.';
+        $error = ($lang === 'mr') ? 'कृपया ई-मेल आणि पासवर्ड भरा.' : 'Please enter both email and password.';
     } else {
-
-        $stmt = $con->prepare("
-            SELECT id, first_name, last_name, password
-            FROM users
-            WHERE email = ?
-            LIMIT 1
-        ");
+        $stmt = $con->prepare("SELECT id, first_name, last_name, password FROM users WHERE email = ? LIMIT 1");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($result && $result->num_rows === 1) {
-
             $user = $result->fetch_assoc();
-
+            // if password matches
             if (password_verify($password, $user['password'])) {
-
                 // Fetch Roles
                 $roleStmt = $con->prepare("
-                    SELECT r.id, r.name
+                    SELECT r.name
                     FROM user_roles ur
                     JOIN roles r ON r.id = ur.role_id
                     WHERE ur.user_id = ?
                 ");
                 $roleStmt->bind_param("i", $user['id']);
                 $roleStmt->execute();
+
                 $roleResult = $roleStmt->get_result();
 
                 $roles = [];
@@ -57,33 +52,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
                 $_SESSION['roles'] = $roles;
                 $_SESSION['logged_in'] = true;
-
-                // Role Logic
-                $_SESSION['is_customer'] = false;
-                $_SESSION['is_committee'] = false;
-                $_SESSION['primary_role'] = null;
-
-                $rolePriority = ['chairman', 'vice chairman', 'treasurer', 'secretary', 'member'];
-
-                foreach ($rolePriority as $priorityRole) {
-                    if (in_array($priorityRole, $roles, true)) {
-                        $_SESSION['primary_role'] = $priorityRole;
-                        if ($priorityRole === 'member') {
-                            $_SESSION['is_customer'] = true;
-                        } else {
-                            $_SESSION['is_committee'] = true;
-                        }
-                        break;
-                    }
-                }
+                $_SESSION['primary_role'] = $roles[0] ?? "customer";
 
                 header("Location: redirect.php");
                 exit;
-
             } else {
                 $error = ($lang === 'mr') ? 'चुकीचा पासवर्ड.' : 'Invalid password.';
             }
-
         } else {
             $error = ($lang === 'mr') ? 'हे खाते अस्तित्वात नाही.' : 'No account found with that email.';
         }
@@ -102,293 +77,221 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:wght@400;700&display=swap"
-        rel="stylesheet">
 
     <style>
-        /* ===============================
-           THEME VARIABLES
-        =============================== */
         :root {
-            --shiva-blue-light: #e3f2fd;
-            --shiva-blue-deep: #1565c0;
-            --shiva-saffron: #ff9800;
-            --shiva-saffron-hover: #f57c00;
-            --shiva-saffron-light: #fff3e0;
-            --text-dark: #2c3e50;
-            --text-muted: #607d8b;
-            --bg-body: #fdfbf7;
+            --ant-primary: #1677ff;
+            --ant-primary-hover: #4096ff;
+            --ant-bg-layout: #f8f9fa;
+            --ant-border-color: #f0f0f0;
+            --ant-text: rgba(0, 0, 0, 0.88);
+            --ant-text-sec: rgba(0, 0, 0, 0.45);
+            --ant-radius: 12px;
+            --ant-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08);
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #ffffff 0%, var(--shiva-blue-light) 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: radial-gradient(circle at top right, #e6f4ff 0%, #ffffff 70%);
+            color: var(--ant-text);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            color: var(--text-dark);
         }
 
-        h1,
-        h2,
-        h3,
-        h4,
-        .navbar-brand {
-            font-family: 'Playfair Display', serif;
+        /* --- Header --- */
+        .ant-header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            height: 72px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--ant-border-color);
         }
 
-        /* Navbar */
-        .navbar {
-            background: #ffffff;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.04);
-            padding: 1rem 0;
-        }
-
-        .navbar-brand {
-            font-weight: 700;
-            color: var(--shiva-saffron) !important;
-            font-size: 1.5rem;
-        }
-
-        .nav-link-back {
-            color: var(--text-muted);
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-
-        .nav-link-back:hover {
-            color: var(--shiva-saffron);
-        }
-
-        /* Main Content */
-        .main-wrapper {
+        /* --- Login Card --- */
+        .login-container {
             flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 3rem 1rem;
+            padding: 40px 20px;
         }
 
-        /* Login Card */
-        .login-card {
-            background: #ffffff;
+        .ant-card {
+            background: #fff;
+            border: 1px solid var(--ant-border-color);
+            border-radius: var(--ant-radius);
+            box-shadow: var(--ant-shadow);
             width: 100%;
-            max-width: 450px;
-            padding: 2.5rem;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
-            border-top: 6px solid var(--shiva-saffron);
-            position: relative;
+            max-width: 420px;
+            overflow: hidden;
         }
 
-        .icon-circle {
-            width: 70px;
-            height: 70px;
-            background-color: var(--shiva-saffron-light);
-            color: var(--shiva-saffron);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            margin: 0 auto 1.5rem auto;
+        .ant-card-body {
+            padding: 40px;
+            /* Consistent 32px-40px padding */
         }
 
-        /* Form Controls */
+        /* --- Form Controls --- */
+        .form-label {
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
         .form-control {
-            padding: 12px 15px;
-            border-radius: 10px;
-            border: 1px solid #dee2e6;
-            font-size: 0.95rem;
+            border-radius: 8px;
+            padding: 10px 12px;
+            border: 1px solid #d9d9d9;
+            transition: all 0.2s;
         }
 
         .form-control:focus {
-            border-color: var(--shiva-saffron);
-            box-shadow: 0 0 0 4px rgba(255, 152, 0, 0.1);
+            border-color: var(--ant-primary);
+            box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
         }
 
         .input-group-text {
-            background-color: #f8f9fa;
-            border-radius: 10px 0 0 10px;
-            border: 1px solid #dee2e6;
-            color: var(--text-muted);
+            background: #fafafa;
+            border-color: #d9d9d9;
+            color: var(--ant-text-sec);
         }
 
-        /* Specific radius for input groups */
-        .input-group .form-control:not(:last-child) {
-            border-radius: 0;
-        }
-
-        .input-group .form-control:last-child {
-            border-radius: 0 10px 10px 0;
-        }
-
-        /* Eye Icon Style */
-        .password-toggle {
-            cursor: pointer;
-            border-radius: 0 10px 10px 0 !important;
-            background-color: white;
-        }
-
-        .password-input {
-            border-right: none;
-            border-radius: 0 !important;
-        }
-
-        /* Buttons */
-        .btn-saffron {
-            background-color: var(--shiva-saffron);
-            color: white;
+        /* --- Buttons --- */
+        .ant-btn-primary {
+            background-color: var(--ant-primary);
+            color: #fff;
             border: none;
-            border-radius: 50px;
             padding: 12px;
+            border-radius: 8px;
             font-weight: 600;
-            letter-spacing: 0.5px;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
+            width: 100%;
         }
 
-        .btn-saffron:hover {
-            background-color: var(--shiva-saffron-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
-            color: white;
+        .ant-btn-primary:hover {
+            background-color: var(--ant-primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(22, 119, 255, 0.2);
         }
 
-        /* Links */
-        .link-saffron {
-            color: var(--shiva-saffron);
-            text-decoration: none;
-            font-weight: 600;
+        /* --- Footer --- */
+        .ant-footer {
+            padding: 30px 0;
+            border-top: 1px solid var(--ant-border-color);
+            background: #fff;
         }
 
-        .link-saffron:hover {
-            text-decoration: underline;
-        }
-
-        /* Footer */
-        footer {
-            background-color: #263238;
-            color: #cfd8dc;
-            padding: 1.5rem 0;
-            font-size: 0.85rem;
-            margin-top: auto;
-        }
-
-        body {
-            -webkit-user-select: none;
-            /* Chrome, Safari */
-            -moz-user-select: none;
-            /* Firefox */
-            -ms-user-select: none;
-            /* IE/Edge */
-            user-select: none;
+        .ant-divider {
+            height: 1px;
+            background: var(--ant-border-color);
+            margin: 24px 0;
         }
     </style>
 </head>
 
 <body>
 
-    <nav class="navbar">
-        <div class="container">
-            <a class="navbar-brand" href="../index.php">
-                <i class="bi bi-brightness-high-fill me-2"></i><?php echo $t['title']; ?>
+    <header class="ant-header">
+        <div class="container d-flex align-items-center justify-content-between">
+            <a href="../index.php" class="fw-bold text-dark text-decoration-none fs-4 d-flex align-items-center">
+                <i class="bi bi-bank2 text-primary me-2"></i><?php echo $t['title']; ?>
             </a>
-            <a href="../index.php" class="nav-link-back text-decoration-none">
+            <a href="../index.php" class="text-secondary text-decoration-none small fw-medium">
                 <?php echo $t['home']; ?>
             </a>
         </div>
-    </nav>
+    </header>
 
-    <div class="main-wrapper">
-        <div class="login-card fade-in">
-
-            <div class="text-center">
-                <div class="icon-circle">
-                    <i class="bi bi-person-circle"></i>
-                </div>
-                <h2 class="fw-bold mb-2"><?php echo $t['login']; ?></h2>
-                <p class="text-muted small mb-4">
-                    <?php echo ($lang === 'mr') ? 'आपल्या खात्यात प्रवेश करण्यासाठी माहिती भरा' : 'Enter your credentials to access your account'; ?>
-                </p>
-            </div>
-
-            <?php if ($error): ?>
-                <div class="alert alert-danger text-center small py-2 rounded-3 mb-4">
-                    <i class="bi bi-exclamation-triangle-fill me-1"></i> <?php echo htmlspecialchars($error); ?>
-                </div>
-            <?php endif; ?>
-
-            <form method="post">
-
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted ps-1"><?php echo $t['email']; ?></label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                        <input type="email" name="email" class="form-control">
+    <div class="login-container">
+        <div class="ant-card">
+            <div class="ant-card-body">
+                <div class="text-center mb-4">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3"
+                        style="width: 60px; height: 60px;">
+                        <i class="bi bi-shield-lock fs-3"></i>
                     </div>
+                    <h3 class="fw-bold mb-1"><?php echo $t['login']; ?></h3>
+                    <p class="text-secondary small">
+                        <?php echo ($lang === 'mr') ? 'तुमच्या खात्यात लॉग इन करा' : 'Securely access your account'; ?>
+                    </p>
                 </div>
 
-                <div class="mb-4">
-                    <div class="d-flex justify-content-between">
-                        <label class="form-label small fw-bold text-muted ps-1"><?php echo $t['password']; ?></label>
+                <?php if ($error): ?>
+                    <div class="alert alert-danger border-0 small py-2 d-flex align-items-center"
+                        style="background: #fff2f0; color: #ff4d4f;">
+                        <i class="bi bi-exclamation-circle-fill me-2"></i> <?php echo htmlspecialchars($error); ?>
                     </div>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                        <input type="password" name="password" class="form-control password-input" id="id_password">
-                        <span class="input-group-text password-toggle" id="togglePassword">
-                            <i class="bi bi-eye" id="toggleIcon"></i>
-                        </span>
-                    </div>
-                </div>
+                <?php endif; ?>
 
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-saffron">
+                <form method="post">
+                    <div class="mb-3">
+                        <label class="form-label"><?php echo $t['email']; ?></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                            <input type="email" name="email" class="form-control" placeholder="example@mail.com"
+                                required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label"><?php echo $t['password']; ?></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" name="password" class="form-control" id="id_password"
+                                placeholder="••••••••" required>
+                            <button class="btn btn-outline-secondary border-secondary-subtle" type="button"
+                                id="togglePassword">
+                                <i class="bi bi-eye" id="toggleIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="ant-btn-primary">
                         <?php echo $t['login']; ?>
                     </button>
+                </form>
+
+                <div class="text-center mt-4 pt-3 border-top">
+                    <p class="small text-muted mb-0">
+                        <?php echo $t['dont_have_account']; ?>
+                        <a href="register.php" class="text-primary text-decoration-none fw-bold ms-1">
+                            <?php echo ($lang === 'mr') ? 'नोंदणी करा' : 'Sign Up'; ?>
+                        </a>
+                    </p>
                 </div>
-
-            </form>
-
-            <div class="text-center mt-4 pt-2 border-top">
-                <p class="small text-muted mb-0 mt-3">
-                    <?php echo $t['dont_have_account']; ?>
-                    <a href="register.php" class="link-saffron ms-1">
-                        <?php echo ($lang === 'mr') ? 'नोंदणी करा' : 'Sign Up'; ?>
-                    </a>
-                </p>
             </div>
-
         </div>
     </div>
 
-    <footer class="text-center">
-        <div class="container">
-            <small class="text-white-50">
-                &copy; <?php echo date("Y"); ?> <?php echo $t['title']; ?> |
-                <span class="text-white"><?php echo $t['copyright']; ?></span>
-            </small>
+    <footer class="ant-footer">
+        <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+            <div class="small text-muted">
+                &copy; <?php echo date("Y"); ?> <?php echo $t['title']; ?>. All rights reserved.
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-start">
+                    <div style="font-size: 11px;" class="fw-bold">Yojana Gawade</div>
+                    <div style="font-size: 9px;" class="text-uppercase text-primary fw-bold">Full Stack Developer</div>
+                </div>
+            </div>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
         const togglePassword = document.querySelector('#togglePassword');
-        const password = document.querySelector('#id_password');
+        const passwordField = document.querySelector('#id_password');
         const toggleIcon = document.querySelector('#toggleIcon');
 
-        togglePassword.addEventListener('click', function (e) {
-            // toggle the type attribute
-            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-            password.setAttribute('type', type);
-
-            // toggle the icon
+        togglePassword.addEventListener('click', function () {
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
             toggleIcon.classList.toggle('bi-eye');
             toggleIcon.classList.toggle('bi-eye-slash');
         });
     </script>
-
 </body>
 
 </html>

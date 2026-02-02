@@ -1,0 +1,62 @@
+<style>
+    .ant-footer-base {
+        background: #fafafa;
+        border-top: 1px solid #f0f0f0;
+        padding: 60px 0 30px;
+        color: rgba(0, 0, 0, 0.88);
+        margin-top: 50px;
+    }
+
+    .footer-link-base {
+        color: rgba(0, 0, 0, 0.45);
+        text-decoration: none;
+        font-size: 14px;
+        transition: 0.2s;
+    }
+
+    .footer-link-base:hover {
+        color: #1677ff;
+    }
+</style>
+
+<footer class="ant-footer-base">
+    <div class="container">
+        <div class="row g-5">
+            <div class="col-lg-4">
+                <div class="fw-bold fs-4 mb-3">Temple Portal</div>i
+                <p class="small text-muted">A digital sanctuary for our temple community, providing transparency and
+                    devotion.</p>
+            </div>
+            <!-- TODO : Fix broken link -->
+            <div class="col-lg-2 offset-lg-1 col-6">
+                <h6 class="fw-bold mb-4 small">QUICK LINKS</h6>
+                <ul class="list-unstyled d-grid gap-2">
+                    <li><a href="/panchang.php" class="footer-link-base">Panchang</a></li>
+                    <li><a href="../gallery.php" class="footer-link-base">Gallery</a></li>
+                    <li><a href="/about.php" class="footer-link-base">About Us</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-2 col-6">
+                <h6 class="fw-bold mb-4 small">DEVOTIONAL</h6>
+                <ul class="list-unstyled d-grid gap-2">
+                    <li><a href="donate.php" class="footer-link-base">Donations</a></li>
+                    <li><a href="pooja.php" class="footer-link-base">Pooja Booking</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-3">
+                <h6 class="fw-bold mb-4 small">SOCIAL</h6>
+                <div class="d-flex gap-3 fs-5">
+                    <i class="bi bi-facebook"></i><i class="bi bi-instagram"></i><i class="bi bi-youtube"></i>
+                </div>
+            </div>
+        </div>
+        <div style="height:1px; background:#f0f0f0; margin: 40px 0;"></div>
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+            <div class="small text-muted">&copy; <?= date("Y") ?> Temple Portal. All rights reserved.</div>
+            <div class="d-flex gap-3 small fw-bold">
+                <span class="text-primary">Yojana Gawade</span>
+                <span class="text-primary">Abhishek Bhat</span>
+            </div>
+        </div>
+    </div>
+</footer>

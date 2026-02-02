@@ -1,89 +1,51 @@
 <?php
-// =========================================================
-// 1. SESSION + LANGUAGE
-// =========================================================
-session_start(); // Start session for language support (even if no login)
-
-// Adjust path to lang.php as needed
+// Logic remains identical to your provided PHP...
+session_start();
 require __DIR__ . '/includes/lang.php';
-
-// =========================================================
-// 2. DATABASE CONNECTION
-// =========================================================
 $dbPath = __DIR__ . '/config/db.php';
 if (!file_exists($dbPath)) {
     die("Database config missing.");
 }
 require $dbPath;
 
-// Handle Variable Name Mismatch (if your db.php uses $conn, but logic uses $con)
 if (!isset($con) && isset($conn)) {
     $con = $conn;
 }
 
-// =========================================================
-// 3. INPUT PARAMETERS (SEARCH & FILTER)
-// =========================================================
 $search = trim($_GET['search'] ?? '');
 $roleId = trim($_GET['role'] ?? '');
 
-// =========================================================
-// 4. FETCH ROLES (FOR FILTER DROPDOWN)
-// =========================================================
 $userRoles = [];
-// Assuming your roles table has 'id' and 'name' columns based on previous context
-// If column is 'role_name', change 'name' to 'role_name' below
 $roleQuery = mysqli_query($con, "SELECT id, name FROM roles ORDER BY name ASC");
-
 if ($roleQuery) {
     while ($r = mysqli_fetch_assoc($roleQuery)) {
         $userRoles[] = $r;
     }
 }
 
-// =========================================================
-// 5. BUILD MAIN QUERY (COMMITTEE MEMBERS)
-// =========================================================
-// Only fetch users who have a role (INNER JOIN)
 $sql = "
-    SELECT 
-        u.id,
-        u.first_name,
-        u.last_name,
-        u.photo,
-        r.name as role_name
+    SELECT u.id, u.first_name, u.last_name, u.photo, r.id as role_id, r.name as role_name
     FROM users u
     JOIN user_roles ur ON ur.user_id = u.id
     JOIN roles r ON r.id = ur.role_id
     WHERE r.name != 'customer' 
 ";
 
-// ---------- SEARCH FILTER ----------
 if ($search !== '') {
     $safeSearch = mysqli_real_escape_string($con, $search);
     $sql .= " AND (u.first_name LIKE '%$safeSearch%' OR u.last_name LIKE '%$safeSearch%')";
 }
-
-// ---------- ROLE FILTER ----------
 if ($roleId !== '') {
     $safeRole = mysqli_real_escape_string($con, $roleId);
     $sql .= " AND r.id = '$safeRole'";
 }
-
-// ---------- ORDER ----------
 $sql .= " ORDER BY r.name, u.first_name";
 
-// =========================================================
-// 6. EXECUTE QUERY
-// =========================================================
 $committeeMembers = [];
 $result = mysqli_query($con, $sql);
-
 if ($result) {
     while ($row = mysqli_fetch_assoc($result)) {
-        // Fallback for photo
         $photoPath = !empty($row['photo']) ? 'uploads/users/' . $row['photo'] : 'assets/img/default-user.png';
-
         $committeeMembers[] = [
             'id' => $row['id'],
             'name' => $row['first_name'] . ' ' . $row['last_name'],
@@ -101,291 +63,238 @@ if ($result) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $t['committee']; ?> - <?php echo $t['title']; ?></title>
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:wght@400;700&display=swap"
-        rel="stylesheet">
 
     <style>
-        /* ===============================
-           THEME VARIABLES
-        =============================== */
         :root {
-            --shiva-blue-light: #e3f2fd;
-            --shiva-blue-deep: #1565c0;
-            --shiva-saffron: #ff9800;
-            --shiva-saffron-hover: #f57c00;
-            --shiva-saffron-light: #fff3e0;
-            --text-dark: #2c3e50;
-            --text-muted: #607d8b;
-            --bg-body: #fdfbf7;
+            --ant-primary: #1677ff;
+            --ant-primary-hover: #4096ff;
+            --ant-bg-layout: #f8f9fa;
+            --ant-border-color: #f0f0f0;
+            --ant-text: rgba(0, 0, 0, 0.88);
+            --ant-text-sec: rgba(0, 0, 0, 0.45);
+            --ant-radius: 12px;
+            --ant-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08);
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-dark);
-            display: flex;
-            flex-direction: column;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: radial-gradient(circle at top right, #e6f4ff 0%, #ffffff 70%);
+            color: var(--ant-text);
             min-height: 100vh;
         }
 
-        h1,
-        h2,
-        h3,
-        h4,
-        .navbar-brand {
-            font-family: 'Playfair Display', serif;
+        /* --- Header --- */
+        .ant-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            height: 72px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--ant-border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
-        /* Navbar (Embedded for consistency) */
-        .navbar {
-            background: #ffffff;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.04);
-            padding: 1rem 0;
-        }
-
-        .navbar-brand {
-            font-weight: 700;
-            color: var(--shiva-saffron) !important;
-            font-size: 1.5rem;
-        }
-
-        .nav-link {
-            color: var(--text-dark);
-            font-weight: 500;
-        }
-
-        .nav-link:hover {
-            color: var(--shiva-saffron);
-        }
-
-        /* Hero Section */
-        .page-header {
-            background: linear-gradient(135deg, #ffffff 0%, var(--shiva-blue-light) 100%);
-            padding: 3rem 0;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            margin-bottom: 3rem;
-        }
-
-        /* Member Card */
-        .member-card {
-            background: #fff;
-            border: none;
-            border-radius: 16px;
-            overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            height: 100%;
+        /* --- Page Hero --- */
+        .ant-page-hero {
+            padding: 60px 0;
             text-align: center;
-            border-top: 4px solid var(--shiva-saffron);
+            border-bottom: 1px solid var(--ant-border-color);
+            margin-bottom: 40px;
         }
 
-        .member-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        .ant-page-hero h1 {
+            font-size: 42px;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            background: linear-gradient(135deg, #111 0%, #444 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .member-img-wrapper {
-            width: 120px;
-            height: 120px;
-            margin: 2rem auto 1rem;
-            position: relative;
-        }
-
-        .member-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-            border: 4px solid var(--shiva-saffron-light);
-            padding: 3px;
-        }
-
-        .role-badge {
-            background-color: var(--shiva-blue-light);
-            color: var(--shiva-blue-deep);
-            font-size: 0.8rem;
-            font-weight: 600;
-            padding: 5px 12px;
-            border-radius: 50px;
-            display: inline-block;
-            margin-bottom: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* Filter Section */
-        .filter-card {
-            background: white;
-            border-radius: 50px;
-            padding: 10px 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            margin-bottom: 3rem;
-            border: 1px solid #eee;
+        /* --- Filter Bar --- */
+        .filter-container {
+            background: #fff;
+            padding: 12px;
+            border-radius: 16px;
+            border: 1px solid var(--ant-border-color);
+            box-shadow: var(--ant-shadow);
+            margin-bottom: 50px;
         }
 
         .form-control,
         .form-select {
             border: none;
-            box-shadow: none;
-            background: transparent;
+            box-shadow: none !important;
+            font-size: 14px;
         }
 
-        .form-control:focus,
-        .form-select:focus {
-            box-shadow: none;
-        }
-
-        .btn-saffron {
-            background-color: var(--shiva-saffron);
-            color: white;
-            border-radius: 50px;
-            padding: 8px 25px;
+        .btn-ant-primary {
+            background: var(--ant-primary);
+            color: #fff;
+            border: none;
+            padding: 8px 24px;
+            border-radius: 8px;
             font-weight: 600;
         }
 
-        .btn-saffron:hover {
-            background-color: var(--shiva-saffron-hover);
-            color: white;
+        /* --- Member Card --- */
+        .member-card {
+            background: #fff;
+            border: 1px solid var(--ant-border-color);
+            border-radius: var(--ant-radius);
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            height: 100%;
+            text-align: center;
+            padding: 32px;
+            /* Cohesive 32px Padding */
         }
 
-        /* Footer */
-        footer {
-            background-color: #263238;
-            color: #cfd8dc;
-            padding: 1.5rem 0;
-            margin-top: auto;
+        .member-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--ant-shadow);
         }
 
-        body {
-            -webkit-user-select: none;
-            /* Chrome, Safari */
-            -moz-user-select: none;
-            /* Firefox */
-            -ms-user-select: none;
-            /* IE/Edge */
-            user-select: none;
+        .member-img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 20px;
+            border: 3px solid #e6f4ff;
+        }
+
+        .role-tag {
+            display: inline-block;
+            padding: 2px 12px;
+            font-size: 11px;
+            font-weight: 700;
+            background: #e6f4ff;
+            color: var(--ant-primary);
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        /* --- Footer --- */
+        .ant-footer {
+            background: #fff;
+            padding: 60px 0 30px;
+            border-top: 1px solid var(--ant-border-color);
+            margin-top: 60px;
         }
     </style>
 </head>
 
 <body>
 
-    <nav class="navbar navbar-expand-lg sticky-top">
-        <div class="container">
-            <a class="navbar-brand" href="index.php">
-                <i class="bi bi-brightness-high-fill me-2"></i><?php echo $t['title']; ?>
+    <header class="ant-header">
+        <div class="container d-flex align-items-center justify-content-between">
+            <a href="index.php" class="fw-bold text-dark text-decoration-none fs-4 d-flex align-items-center">
+                <i class="bi bi-bank2 text-primary me-2"></i><?php echo $t['title']; ?>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item"><a class="nav-link" href="index.php"><?php echo $t['home']; ?></a></li>
-                    <li class="nav-item"><a class="nav-link" href="auth/login.php"><?php echo $t['login']; ?></a></li>
-                </ul>
+            <div class="d-flex align-items-center gap-3">
+                <a href="index.php"
+                    class="text-secondary text-decoration-none small fw-medium"><?php echo $t['home']; ?></a>
+                <a href="auth/login.php" class="btn btn-primary btn-sm px-4"
+                    style="border-radius: 8px; background: var(--ant-primary); border: none;">
+                    <?php echo $t['login']; ?>
+                </a>
             </div>
-        </div>
-    </nav>
-
-    <header class="page-header text-center">
-        <div class="container">
-            <h1 class="display-5 fw-bold mb-2"><?php echo $t['committee']; ?></h1>
-            <p class="text-muted lead">Dedicated sevaks serving the temple and community</p>
         </div>
     </header>
 
-    <div class="container pb-5">
+    <div class="ant-page-hero">
+        <div class="container">
+            <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary px-3 py-2 mb-3 fw-bold text-uppercase"
+                style="letter-spacing: 1px; font-size: 11px;">
+                Our Dedicated Team
+            </span>
+            <h1><?php echo $t['committee']; ?></h1>
+            <p class="text-secondary small mb-0 mx-auto" style="max-width: 600px;">
+                <?php echo $t['dedicated_sevaks_serving_the_temple_and_community']; ?>
+            </p>
+        </div>
+    </div>
 
+    <div class="container">
         <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <form method="GET" action="" class="filter-card d-flex flex-wrap align-items-center gap-2">
-
-                    <div class="d-flex align-items-center flex-grow-1 border-end pe-2">
-                        <i class="bi bi-search text-muted ms-2"></i>
-                        <input type="text" name="search" class="form-control" placeholder="Search member name..."
-                            value="<?php echo htmlspecialchars($search); ?>">
-                    </div>
-
-                    <div class="d-flex align-items-center flex-grow-1">
-                        <i class="bi bi-person-badge text-muted ms-2"></i>
-                        <select name="role" class="form-select">
-                            <option value="">All Roles</option>
-                            <?php foreach ($userRoles as $role): ?>
-                                <option value="<?php echo $role['id']; ?>" <?php echo ($roleId == $role['id']) ? 'selected' : ''; ?>>
-                                    <?php echo ucfirst($role['name']); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <button type="submit" class="btn btn-saffron">Filter</button>
-
-                    <?php if (!empty($search) || !empty($roleId)): ?>
-                        <a href="committee.php" class="btn btn-outline-secondary rounded-pill px-3" title="Clear Filters">
-                            <i class="bi bi-x-lg"></i>
-                        </a>
-                    <?php endif; ?>
-                </form>
+            <div class="col-lg-10">
+                <div class="filter-container">
+                    <form method="GET" action="" class="row g-2 align-items-center">
+                        <div class="col-md-5 d-flex align-items-center px-3 border-end">
+                            <i class="bi bi-search text-muted me-2"></i>
+                            <input type="text" name="search" class="form-control"
+                                placeholder="<?php echo $t['search_member_name']; ?>..."
+                                value="<?php echo htmlspecialchars($search); ?>">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-center px-3 border-end">
+                            <i class="bi bi-funnel text-muted me-2"></i>
+                            <select name="role" class="form-select">
+                                <option value=""><?php echo $t['all_roles']; ?></option>
+                                <?php foreach ($userRoles as $role): ?>
+                                    <option value="<?php echo $role['id']; ?>" <?php echo ($roleId == $role['id']) ? 'selected' : ''; ?>>
+                                        <?php echo ucfirst($role['name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex justify-content-end gap-2 px-3">
+                            <button type="submit"
+                                class="btn-ant-primary flex-grow-1"><?php echo $t['filter']; ?></button>
+                            <?php if (!empty($search) || !empty($roleId)): ?>
+                                <a href="committee.php" class="btn btn-light rounded-pill"><i class="bi bi-x-lg"></i></a>
+                            <?php endif; ?>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
 
         <div class="row g-4">
-
             <?php if (count($committeeMembers) > 0): ?>
-
                 <?php foreach ($committeeMembers as $member): ?>
                     <div class="col-12 col-sm-6 col-lg-3">
-                        <div class="member-card shadow-sm">
-                            <div class="member-img-wrapper">
-                                <img src="<?php echo htmlspecialchars($member['photo']); ?>"
-                                    alt="<?php echo htmlspecialchars($member['name']); ?>" class="member-img">
-                            </div>
-                            <div class="card-body pt-0 pb-4">
-                                <h5 class="card-title fw-bold mb-2">
-                                    <?php echo htmlspecialchars($member['name']); ?>
-                                </h5>
-                                <span class="role-badge">
-                                    <?php echo htmlspecialchars($member['role']); ?>
-                                </span>
-                                <div class="mt-3 opacity-50">
-                                    <i class="bi bi-envelope me-2"></i>
-                                    <i class="bi bi-telephone"></i>
-                                </div>
+                        <div class="member-card">
+                            <img src="<?php echo htmlspecialchars($member['photo']); ?>" alt="Member" class="member-img">
+                            <h6 class="fw-bold mb-1 text-dark"><?php echo htmlspecialchars($member['name']); ?></h6>
+                            <span class="role-tag mb-3"><?php echo htmlspecialchars($member['role']); ?></span>
+
+                            <div class="d-flex justify-content-center gap-3 mt-2 text-muted opacity-50">
+                                <i class="bi bi-envelope fs-5"></i>
+                                <i class="bi bi-telephone fs-5"></i>
                             </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
-
             <?php else: ?>
-
                 <div class="col-12 text-center py-5">
-                    <div class="text-muted opacity-50 mb-3">
-                        <i class="bi bi-people" style="font-size: 4rem;"></i>
-                    </div>
-                    <h4 class="fw-bold text-muted">No members found</h4>
-                    <p class="text-muted">Try adjusting your search filters.</p>
-                    <a href="committee.php" class="btn btn-outline-primary rounded-pill mt-2">View All Members</a>
+                    <i class="bi bi-people text-muted opacity-25" style="font-size: 4rem;"></i>
+                    <h5 class="fw-bold text-muted mt-3"><?php echo $t['no_member_found']; ?></h5>
+                    <p class="small text-muted"><?php echo $t['try_adjusting_your_search_filter']; ?></p>
                 </div>
-
             <?php endif; ?>
-
         </div>
     </div>
 
-    <footer class="text-center">
-        <div class="container">
-            <small class="text-white-50">
-                &copy; <?php echo date("Y"); ?> <?php echo $t['title']; ?> |
-                <span class="text-white"><?php echo $t['copyright']; ?></span>
-            </small>
+    <footer class="ant-footer">
+        <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+            <div class="small text-muted">
+                &copy; <?php echo date("Y"); ?> <?php echo $t['title']; ?>. All rights reserved.
+            </div>
+            <div class="d-flex align-items-center gap-3">
+
+                <div class="text-start">
+                    <div style="font-size: 11px;" class="fw-bold">Yojana Gawade</div>
+                    <div style="font-size: 9px;" class="text-uppercase text-primary fw-bold">Full Stack Developer</div>
+                </div>
+            </div>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
 
 </html>
