@@ -41,7 +41,7 @@ $userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Requests - <?= $t['title'] ?></title>
+    <title><?php echo $t['my_requests']; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -205,25 +205,24 @@ $userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">My Requests</h2>
-                    <p class="text-secondary mb-0">Track the status of your material contributions, bookings, and
-                        payment queries.</p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['my_requests']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['my_requests_subtitle']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
 
                     <div class="ant-card">
-                        <div class="ant-card-head"><i class="bi bi-box-seam me-2 text-primary"></i> Material
-                            Contributions</div>
+                        <div class="ant-card-head"><i class="bi bi-box-seam me-2 text-primary"></i>
+                            <?php echo $t['material_contributions']; ?></div>
                         <div class="table-responsive">
                             <table class="table ant-table mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Item Name</th>
-                                        <th>Category</th>
-                                        <th>Quantity</th>
-                                        <th>Status</th>
-                                        <th>Date</th>
+                                        <th><?php echo $t['item_name']; ?></th>
+                                        <th><?php echo $t['category']; ?></th>
+                                        <th><?php echo $t['quantity']; ?></th>
+                                        <th><?php echo $t['status']; ?></th>
+                                        <th><?php echo $t['date']; ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -234,15 +233,14 @@ $userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']
                                                 <td class="text-secondary"><?= htmlspecialchars($c['type']) ?></td>
                                                 <td><?= $c['quantity'] . ' ' . $c['unit'] ?></td>
                                                 <td><span
-                                                        class="ant-badge <?= $c['status'] == 'pending' ? 'badge-pending' : 'badge-rejected' ?>"><?= ucfirst($c['status']) ?></span>
+                                                    class="ant-badge <?= $c['status'] == 'pending' ? 'badge-pending' : 'badge-rejected' ?>"><?= ($c['status'] == 'pending') ? $t['pending'] : $t['rejected']; ?></span>
                                                 </td>
                                                 <td class="text-muted small"><?= date('d M Y', strtotime($c['created_at'])) ?>
                                                 </td>
                                             </tr>
                                         <?php endforeach; else: ?>
                                         <tr>
-                                            <td colspan="5" class="text-center py-5 text-muted small">No pending material
-                                                contributions found.</td>
+                                            <td colspan="5" class="text-center py-5 text-muted small"><?php echo $t['no_pending_material_contributions']; ?></td>
                                         </tr>
                                     <?php endif; ?>
                                 </tbody>
@@ -251,16 +249,16 @@ $userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']
                     </div>
 
                     <div class="ant-card">
-                        <div class="ant-card-head"><i class="bi bi-calendar-event me-2 text-primary"></i> Pending Pooja
-                            Bookings</div>
+                        <div class="ant-card-head"><i class="bi bi-calendar-event me-2 text-primary"></i>
+                            <?php echo $t['pending_pooja_bookings']; ?></div>
                         <div class="table-responsive">
                             <table class="table ant-table mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Pooja Name</th>
-                                        <th>Scheduled Date</th>
-                                        <th>Time Slot</th>
-                                        <th>Status</th>
+                                        <th><?php echo $t['pooja_name']; ?></th>
+                                        <th><?php echo $t['scheduled_date']; ?></th>
+                                        <th><?php echo $t['time_slot']; ?></th>
+                                        <th><?php echo $t['status']; ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -269,13 +267,12 @@ $userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']
                                             <tr>
                                                 <td class="fw-bold"><?= htmlspecialchars($p['type']) ?></td>
                                                 <td><?= date('d M Y', strtotime($p['pooja_date'])) ?></td>
-                                                <td class="text-secondary"><?= ucfirst($p['time_slot'] ?? 'Any') ?></td>
-                                                <td><span class="ant-badge badge-pending">Pending Approval</span></td>
+                                                <td class="text-secondary"><?= ucfirst($p['time_slot'] ?? $t['any_time']) ?></td>
+                                                <td><span class="ant-badge badge-pending"><?php echo $t['pending_approval']; ?></span></td>
                                             </tr>
                                         <?php endforeach; else: ?>
                                         <tr>
-                                            <td colspan="4" class="text-center py-5 text-muted small">No pending bookings in
-                                                queue.</td>
+                                            <td colspan="4" class="text-center py-5 text-muted small"><?php echo $t['no_pending_bookings']; ?></td>
                                         </tr>
                                     <?php endif; ?>
                                 </tbody>
@@ -284,16 +281,16 @@ $userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']
                     </div>
 
                     <div class="ant-card">
-                        <div class="ant-card-head"><i class="bi bi-exclamation-octagon me-2 text-danger"></i> Payment
-                            Issues</div>
+                        <div class="ant-card-head"><i class="bi bi-exclamation-octagon me-2 text-danger"></i>
+                            <?php echo $t['payment_issues']; ?></div>
                         <div class="table-responsive">
                             <table class="table ant-table mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Amount</th>
-                                        <th>Method</th>
-                                        <th>Issue Status</th>
-                                        <th>Transaction Date</th>
+                                        <th><?php echo $t['amount']; ?></th>
+                                        <th><?php echo $t['method']; ?></th>
+                                        <th><?php echo $t['issue_status']; ?></th>
+                                        <th><?php echo $t['transaction_date']; ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -305,15 +302,14 @@ $userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']
                                                         class="text-uppercase small fw-bold text-muted"><?= $p['payment_method'] ?></span>
                                                 </td>
                                                 <td><span
-                                                        class="ant-badge <?= $p['status'] == 'failed' ? 'badge-failed' : 'badge-pending' ?>"><?= ucfirst($p['status']) ?></span>
+                                                        class="ant-badge <?= $p['status'] == 'failed' ? 'badge-failed' : 'badge-pending' ?>"><?= ($p['status'] == 'failed') ? $t['failed'] : $t['pending']; ?></span>
                                                 </td>
                                                 <td class="text-muted small"><?= date('d M Y', strtotime($p['created_at'])) ?>
                                                 </td>
                                             </tr>
                                         <?php endforeach; else: ?>
                                         <tr>
-                                            <td colspan="4" class="text-center py-5 text-muted small">All payments are up to
-                                                date.</td>
+                                            <td colspan="4" class="text-center py-5 text-muted small"><?php echo $t['all_payments_up_to_date']; ?></td>
                                         </tr>
                                     <?php endif; ?>
                                 </tbody>

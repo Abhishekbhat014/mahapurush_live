@@ -20,7 +20,7 @@ $role = $_SESSION['role'] ?? 'member'; // Changed to check standard 'role'
 --------------------------- */
 $receiptNo = $_GET['no'] ?? '';
 if ($receiptNo === '') {
-    die("Invalid receipt reference.");
+    die($t['invalid_receipt_reference']);
 }
 
 /* ---------------------------
@@ -32,7 +32,7 @@ $stmt->execute();
 $receipt = $stmt->get_result()->fetch_assoc();
 
 if (!$receipt) {
-    die("Receipt not found.");
+    die($t['receipt_not_found']);
 }
 
 /* ---------------------------
@@ -67,7 +67,7 @@ if (isset($q)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipt #<?= htmlspecialchars($receipt['receipt_no']) ?></title>
+    <title><?php echo $t['receipt']; ?> #<?= htmlspecialchars($receipt['receipt_no']) ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
@@ -217,11 +217,11 @@ if (isset($q)) {
 
     <div class="no-print-bar">
         <a href="javascript:history.back()" class="btn btn-light border rounded-pill px-4 fw-bold">
-            <i class="bi bi-arrow-left me-2"></i> Back
+            <i class="bi bi-arrow-left me-2"></i> <?php echo $t['back']; ?>
         </a>
         <button onclick="window.print()" class="btn btn-primary rounded-pill px-4 shadow-sm"
             style="background: var(--ant-primary); border:none;">
-            <i class="bi bi-printer-fill me-2"></i> Print Official Receipt
+            <i class="bi bi-printer-fill me-2"></i> <?php echo $t['print_official_receipt']; ?>
         </button>
     </div>
 
@@ -230,61 +230,61 @@ if (isset($q)) {
             <div class="receipt-header d-flex justify-content-between align-items-end">
                 <div>
                     <h2 class="fw-bold mb-1 text-dark"><?= htmlspecialchars($t['title']) ?></h2>
-                    <p class="text-muted small mb-0">Official Acknowledgment Receipt</p>
+                    <p class="text-muted small mb-0"><?php echo $t['official_ack_receipt']; ?></p>
                 </div>
                 <div class="text-end">
-                    <div class="label-text">Receipt Number</div>
+                    <div class="label-text"><?php echo $t['receipt_number']; ?></div>
                     <span class="receipt-no">#<?= htmlspecialchars($receipt['receipt_no']) ?></span>
                 </div>
             </div>
 
             <div class="row mt-5">
                 <div class="col-7">
-                    <div class="label-text">Devotee / Contributor</div>
+                    <div class="label-text"><?php echo $t['devotee_contributor']; ?></div>
                     <div class="data-text"><?= htmlspecialchars($details['name'] ?? $_SESSION['user_name']) ?></div>
 
-                    <div class="label-text">Purpose of Payment</div>
+                    <div class="label-text"><?php echo $t['purpose_of_payment']; ?></div>
                     <div class="data-text">
                         <span
                             class="badge bg-light text-dark border fw-bold px-3"><?= ucfirst($receipt['purpose']) ?></span>
                         <?php if ($source === 'pooja'): ?>
-                            <div class="small text-muted mt-1">Scheduled:
+                            <div class="small text-muted mt-1"><?php echo $t['scheduled']; ?>:
                                 <?= date('d M Y', strtotime($details['pooja_date'])) ?> (<?= $details['time_slot'] ?>)
                             </div>
                         <?php endif; ?>
                     </div>
 
-                    <div class="label-text">Date Issued</div>
+                    <div class="label-text"><?php echo $t['date_issued']; ?></div>
                     <div class="data-text"><?= date('d F Y, h:i A', strtotime($receipt['issued_on'])) ?></div>
                 </div>
 
                 <div class="col-5 text-end">
                     <?php if ($source === 'contributions'): ?>
-                        <div class="label-text">Quantity Received</div>
+                        <div class="label-text"><?php echo $t['quantity_received']; ?></div>
                         <div class="data-text"><?= htmlspecialchars($details['quantity'] . ' ' . $details['unit']) ?></div>
                     <?php endif; ?>
 
-                    <div class="label-text">Transaction Status</div>
-                    <div class="data-text text-success">COMPLETED</div>
+                    <div class="label-text"><?php echo $t['transaction_status']; ?></div>
+                    <div class="data-text text-success"><?php echo $t['completed']; ?></div>
                 </div>
             </div>
 
             <div class="amount-block">
-                <div class="label-text">Total Value Received</div>
+                <div class="label-text"><?php echo $t['total_value_received']; ?></div>
                 <div class="amount-val">
-                    <?= $receipt['amount'] > 0 ? '₹' . number_format($receipt['amount'], 2) : 'IN-KIND' ?>
+                    <?= $receipt['amount'] > 0 ? '₹' . number_format($receipt['amount'], 2) : ['in_kind'] ?>
                 </div>
                 <div class="small text-muted italic mt-2" style="font-size: 11px;">
-                    This is a digitally generated document. No physical signature is required.
+                    <?php echo $t['digital_document_note']; ?>
                 </div>
             </div>
 
-            <div class="verified-stamp">Verified System</div>
+            <div class="verified-stamp"><?php echo $t['verified_system']; ?></div>
 
             <div class="mt-5 pt-5 text-center border-top">
                 <p class="small text-muted mb-0">
-                    Thank you for your support and devotion.<br>
-                    <strong>May the divine blessings be with you always.</strong>
+                    <?php echo $t['thank_you_support_devotion']; ?><br>
+                    <strong><?php echo $t['divine_blessings']; ?></strong>
                 </p>
             </div>
         </div>
@@ -293,3 +293,4 @@ if (isset($q)) {
 </body>
 
 </html>
+

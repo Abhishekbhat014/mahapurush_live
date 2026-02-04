@@ -4,7 +4,7 @@ session_start();
 require __DIR__ . '/includes/lang.php';
 $dbPath = __DIR__ . '/config/db.php';
 if (!file_exists($dbPath)) {
-    die("Database config missing.");
+    die($t['db_config_missing']);
 }
 require $dbPath;
 
@@ -210,7 +210,7 @@ if ($result) {
         <div class="container">
             <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary px-3 py-2 mb-3 fw-bold text-uppercase"
                 style="letter-spacing: 1px; font-size: 11px;">
-                Our Dedicated Team
+                <?php echo $t['our_dedicated_team']; ?>
             </span>
             <h1><?php echo $t['committee']; ?></h1>
             <p class="text-secondary small mb-0 mx-auto" style="max-width: 600px;">
@@ -258,7 +258,7 @@ if ($result) {
                 <?php foreach ($committeeMembers as $member): ?>
                     <div class="col-12 col-sm-6 col-lg-3">
                         <div class="member-card">
-                            <img src="<?php echo htmlspecialchars($member['photo']); ?>" alt="Member" class="member-img">
+                            <img src="<?php echo htmlspecialchars($member['photo']); ?>" alt="<?php echo $t['member']; ?>" class="member-img">
                             <h6 class="fw-bold mb-1 text-dark"><?php echo htmlspecialchars($member['name']); ?></h6>
                             <span class="role-tag mb-3"><?php echo htmlspecialchars($member['role']); ?></span>
 
@@ -272,8 +272,8 @@ if ($result) {
             <?php else: ?>
                 <div class="col-12 text-center py-5">
                     <i class="bi bi-people text-muted opacity-25" style="font-size: 4rem;"></i>
-                    <h5 class="fw-bold text-muted mt-3"><?php echo $t['no_member_found']; ?></h5>
-                    <p class="small text-muted"><?php echo $t['try_adjusting_your_search_filter']; ?></p>
+                    <h5 class="fw-bold text-muted mt-3"><?php echo $t['no_members']; ?></h5>
+                    <p class="small text-muted"><?php echo $t['try_adjusting_search']; ?></p>
                 </div>
             <?php endif; ?>
         </div>
@@ -282,13 +282,13 @@ if ($result) {
     <footer class="ant-footer">
         <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
             <div class="small text-muted">
-                &copy; <?php echo date("Y"); ?> <?php echo $t['title']; ?>. All rights reserved.
+                <?php echo sprintf($t['copyright_footer_title'], date("Y"), $t['title']); ?>
             </div>
             <div class="d-flex align-items-center gap-3">
 
                 <div class="text-start">
                     <div style="font-size: 11px;" class="fw-bold">Yojana Gawade</div>
-                    <div style="font-size: 9px;" class="text-uppercase text-primary fw-bold">Full Stack Developer</div>
+                    <div style="font-size: 9px;" class="text-uppercase text-primary fw-bold"><?php echo $t['full_stack_developer']; ?></div>
                 </div>
             </div>
         </div>

@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_contribution']
         $contributorName = $_SESSION['user_name'];
 
         if ($typeId <= 0 || $title === '' || $qty <= 0) {
-            throw new Exception("Please fill all required fields correctly.");
+            throw new Exception($t['err_fill_required_fields']);
         }
 
         // --- Step A: Generate Receipt for tracking ---
@@ -84,7 +84,7 @@ $currentPage = 'contribute.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Make Contribution - <?php echo $t['title']; ?></title>
+    <title><?php echo $t['make_contribution']; ?> - <?php echo $t['title']; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -257,9 +257,8 @@ $currentPage = 'contribute.php';
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Make a Contribution</h2>
-                    <p class="text-secondary mb-0">Your support helps the temple grow. Submit details for material or
-                        food items.</p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['make_contribution']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['contribution_subtitle']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -281,15 +280,15 @@ $currentPage = 'contribute.php';
                             <?php endif; ?>
 
                             <div class="ant-card">
-                                <div class="ant-card-head">Contribution Details</div>
+                                <div class="ant-card-head"><?php echo $t['contribution_details']; ?></div>
                                 <div class="ant-card-body">
                                     <form method="POST">
                                         <div class="row g-4">
                                             <div class="col-md-6">
-                                                <label class="form-label">Contribution Category <span
+                                                <label class="form-label"><?php echo $t['contribution_category']; ?> <span
                                                         class="text-danger">*</span></label>
                                                 <select name="contribution_type_id" class="form-select" required>
-                                                    <option value="" disabled selected>Select Category</option>
+                                                    <option value="" disabled selected><?php echo $t['select_category']; ?></option>
                                                     <?php while ($row = mysqli_fetch_assoc($types)): ?>
                                                         <option value="<?= $row['id'] ?>">
                                                             <?= htmlspecialchars($row['type']) ?>
@@ -299,43 +298,43 @@ $currentPage = 'contribute.php';
                                             </div>
 
                                             <div class="col-md-6">
-                                                <label class="form-label">Item Name / Title <span
+                                                <label class="form-label"><?php echo $t['item_name_title']; ?> <span
                                                         class="text-danger">*</span></label>
                                                 <input type="text" name="title" class="form-control"
-                                                    placeholder="e.g., Basmati Rice" required>
+                                                    placeholder="<?php echo $t['item_name_placeholder']; ?>" required>
                                             </div>
 
                                             <div class="col-md-6">
-                                                <label class="form-label">Quantity <span
+                                                <label class="form-label"><?php echo $t['quantity']; ?> <span
                                                         class="text-danger">*</span></label>
                                                 <input type="number" step="0.01" name="quantity" class="form-control"
-                                                    placeholder="0.00" required>
+                                                    placeholder="<?php echo $t['amount_placeholder']; ?>" required>
                                             </div>
 
                                             <div class="col-md-6">
-                                                <label class="form-label">Unit <span
+                                                <label class="form-label"><?php echo $t['unit']; ?> <span
                                                         class="text-danger">*</span></label>
                                                 <select name="unit" class="form-select" required>
-                                                    <option value="kg">Kg</option>
-                                                    <option value="litre">Litre</option>
-                                                    <option value="pcs">Pieces</option>
-                                                    <option value="bags">Bags</option>
-                                                    <option value="quintal">Quintal</option>
+                                                    <option value="kg"><?php echo $t['unit_kg']; ?></option>
+                                                    <option value="litre"><?php echo $t['unit_litre']; ?></option>
+                                                    <option value="pcs"><?php echo $t['unit_pieces']; ?></option>
+                                                    <option value="bags"><?php echo $t['unit_bags']; ?></option>
+                                                    <option value="quintal"><?php echo $t['unit_quintal']; ?></option>
                                                 </select>
                                             </div>
 
                                             <div class="col-12">
-                                                <label class="form-label">Additional Description</label>
+                                                <label class="form-label"><?php echo $t['additional_description']; ?></label>
                                                 <textarea name="description" class="form-control" rows="3"
-                                                    placeholder="Brand, quality, or special notes..."></textarea>
+                                                    placeholder="<?php echo $t['additional_description_placeholder']; ?>"></textarea>
                                             </div>
 
                                             <div class="col-12 text-end pt-2">
                                                 <a href="dashboard.php" class="btn btn-light px-4 border me-2"
-                                                    style="border-radius: 8px;">Cancel</a>
+                                                    style="border-radius: 8px;"><?php echo $t['cancel']; ?></a>
                                                 <button type="submit" name="submit_contribution"
                                                     class="ant-btn-primary">
-                                                    Submit Contribution
+                                                    <?php echo $t['submit_contribution']; ?>
                                                 </button>
                                             </div>
                                         </div>

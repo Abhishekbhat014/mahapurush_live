@@ -37,7 +37,7 @@ $currentPage = 'member_directory.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Member Directory - <?php echo $t['title']; ?></title>
+    <title><?php echo $t['member_directory']; ?> - <?php echo $t['title']; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -227,15 +227,15 @@ $currentPage = 'member_directory.php';
                 <div class="dashboard-hero">
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                         <div>
-                            <h2 class="fw-bold mb-1">Member Directory</h2>
-                            <p class="text-secondary mb-0 small">View all temple members and committee staff.</p>
+                            <h2 class="fw-bold mb-1"><?php echo $t['member_directory']; ?></h2>
+                            <p class="text-secondary mb-0 small"><?php echo $t['member_directory_subtitle']; ?></p>
                         </div>
                         <div style="min-width: 320px;">
                             <form method="GET" class="input-group shadow-sm">
                                 <span class="input-group-text bg-white border-end-0"><i
                                         class="bi bi-search text-muted"></i></span>
                                 <input type="text" name="search" class="form-control border-start-0"
-                                    placeholder="Search members..." value="<?= htmlspecialchars($search) ?>">
+                                    placeholder="<?php echo $t['search_members_placeholder']; ?>" value="<?= htmlspecialchars($search) ?>">
                             </form>
                         </div>
                     </div>
@@ -248,11 +248,11 @@ $currentPage = 'member_directory.php';
                                 <table class="table ant-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Member Profile</th>
-                                            <th>Role</th>
-                                            <th>Email Address</th>
-                                            <th>Phone</th>
-                                            <th class="text-end">Actions</th>
+                                            <th><?php echo $t['member_profile']; ?></th>
+                                            <th><?php echo $t['role']; ?></th>
+                                            <th><?php echo $t['email_address']; ?></th>
+                                            <th><?php echo $t['phone']; ?></th>
+                                            <th class="text-end"><?php echo $t['actions']; ?></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -263,7 +263,7 @@ $currentPage = 'member_directory.php';
                                             <tr>
                                                 <td>
                                                     <div class="d-flex align-items-center gap-3">
-                                                        <img src="<?= $photo ?>" class="member-avatar" alt="Profile"
+                                                        <img src="<?= $photo ?>" class="member-avatar" alt="<?php echo $t['profile']; ?>"
                                                             data-bs-toggle="modal" data-bs-target="#enlargePhotoModal"
                                                             onclick="prepareModal('<?= $photo ?>', '<?= htmlspecialchars($fullName) ?>')">
                                                         <div>
@@ -279,10 +279,10 @@ $currentPage = 'member_directory.php';
                                                 <td class="text-end">
                                                     <button class="copy-btn"
                                                         onclick="copyValue('<?= htmlspecialchars($row['email']) ?>', this)"
-                                                        title="Copy Email"><i class="bi bi-envelope"></i></button>
+                                                        title="<?php echo $t['copy_email']; ?>"><i class="bi bi-envelope"></i></button>
                                                     <button class="copy-btn ms-1"
                                                         onclick="copyValue('<?= htmlspecialchars($row['phone']) ?>', this)"
-                                                        title="Copy Phone"><i class="bi bi-telephone"></i></button>
+                                                        title="<?php echo $t['copy_phone']; ?>"><i class="bi bi-telephone"></i></button>
                                                 </td>
                                             </tr>
                                         <?php endwhile; ?>
@@ -300,7 +300,7 @@ $currentPage = 'member_directory.php';
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content shadow-lg border-0">
                 <div class="modal-header border-0 pb-0">
-                    <h6 class="modal-title fw-bold" id="modalNameDisplay">Member Photo</h6>
+                    <h6 class="modal-title fw-bold" id="modalNameDisplay"><?php echo $t['member_photo']; ?></h6>
                     <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
@@ -309,7 +309,7 @@ $currentPage = 'member_directory.php';
                 </div>
                 <div class="modal-footer border-0 pt-0 justify-content-center">
                     <button type="button" class="btn btn-light btn-sm px-4 rounded-pill border"
-                        data-bs-dismiss="modal">Close Preview</button>
+                        data-bs-dismiss="modal"><?php echo $t['close_preview']; ?></button>
                 </div>
             </div>
         </div>
@@ -318,7 +318,7 @@ $currentPage = 'member_directory.php';
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div id="copyToast" class="toast align-items-center text-white bg-dark border-0" role="alert">
             <div class="d-flex">
-                <div class="toast-body"><i class="bi bi-check2-circle me-2 text-success"></i> Copied to clipboard!</div>
+                <div class="toast-body"><i class="bi bi-check2-circle me-2 text-success"></i> <?php echo $t['copied_to_clipboard']; ?></div>
             </div>
         </div>
     </div>

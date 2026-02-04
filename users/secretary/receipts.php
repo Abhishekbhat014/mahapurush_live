@@ -52,7 +52,7 @@ $result = mysqli_query($con, $sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipt Archive -
+    <title><?php echo $t['receipt_archive']; ?> -
         <?= $t['title'] ?>
     </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -227,9 +227,8 @@ $result = mysqli_query($con, $sql);
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Receipt Archive</h2>
-                    <p class="text-secondary mb-0">Unified database of all issued receipts for rituals and donations.
-                    </p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['receipt_archive']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['receipt_archive_subtitle']; ?></p>
                 </div>
 
                 <div class="p-4 pb-5">
@@ -238,12 +237,12 @@ $result = mysqli_query($con, $sql);
                             <table class="table ant-table mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Receipt ID</th>
-                                        <th>Purpose</th>
-                                        <th>Details</th>
-                                        <th>Amount</th>
-                                        <th>Issued Date</th>
-                                        <th class="text-end">Actions</th>
+                                        <th><?php echo $t['receipt_id']; ?></th>
+                                        <th><?php echo $t['purpose']; ?></th>
+                                        <th><?php echo $t['details']; ?></th>
+                                        <th><?php echo $t['amount']; ?></th>
+                                        <th><?php echo $t['issued_date']; ?></th>
+                                        <th class="text-end"><?php echo $t['actions']; ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -263,7 +262,7 @@ $result = mysqli_query($con, $sql);
                                                 </td>
                                                 <td class="fw-bold text-dark">
                                                     <?= ($row['purpose'] === 'Contribution')
-                                                        ? '<span class="text-muted small">In-Kind</span>'
+                                                        ? '<span class="text-muted small">' . $t['in_kind'] . '</span>'
                                                         : '₹' . number_format($row['amount'], 2) ?>
                                                 </td>
                                                 <td class="text-secondary small">
@@ -276,7 +275,7 @@ $result = mysqli_query($con, $sql);
                                                     <a href="../receipt/view.php?no=<?= $row['receipt_no'] ?>"
                                                         class="btn btn-light btn-sm border rounded-pill px-3 fw-bold"
                                                         style="font-size: 12px;">
-                                                        <i class="bi bi-printer me-1"></i> Print
+                                                        <i class="bi bi-printer me-1"></i> <?php echo $t['print']; ?>
                                                     </a>
                                                 </td>
                                             </tr>
@@ -285,7 +284,7 @@ $result = mysqli_query($con, $sql);
                                         <tr>
                                             <td colspan="6" class="text-center py-5 text-muted">
                                                 <i class="bi bi-receipt-cutoff fs-1 opacity-25 d-block mb-3"></i>
-                                                No receipts have been issued yet.
+                                                <?php echo $t['no_receipts_issued']; ?>
                                             </td>
                                         </tr>
                                     <?php endif; ?>

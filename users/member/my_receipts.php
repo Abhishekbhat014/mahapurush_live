@@ -92,7 +92,7 @@ $currentPage = 'my_receipts.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipt History - <?php echo $t['title']; ?></title>
+    <title><?php echo $t['receipt_history']; ?> - <?php echo $t['title']; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
@@ -258,9 +258,8 @@ $currentPage = 'my_receipts.php';
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Receipt History</h2>
-                    <p class="text-secondary mb-0">View and download receipts for your spiritual bookings and donations.
-                    </p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['receipt_history']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['receipt_history_subtitle']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -270,12 +269,12 @@ $currentPage = 'my_receipts.php';
                                 <table class="table ant-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Receipt No</th>
-                                            <th>Type</th>
-                                            <th>Description</th>
-                                            <th>Amount</th>
-                                            <th>Issued Date</th>
-                                            <th class="text-end">Action</th>
+                                            <th><?php echo $t['receipt_no']; ?></th>
+                                            <th><?php echo $t['type']; ?></th>
+                                            <th><?php echo $t['description']; ?></th>
+                                            <th><?php echo $t['amount']; ?></th>
+                                            <th><?php echo $t['issued_date']; ?></th>
+                                            <th class="text-end"><?php echo $t['action']; ?></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -285,11 +284,11 @@ $currentPage = 'my_receipts.php';
                                                 <tr>
                                                     <td class="receipt-no">#<?= htmlspecialchars($r['receipt_no']) ?></td>
                                                     <td><span
-                                                            class="purpose-badge <?= $badgeClass ?>"><?= ucfirst($r['purpose']) ?></span>
+                                                            class="purpose-badge <?= $badgeClass ?>"><?= $r['purpose'] === 'pooja' ? $t['pooja'] : ($r['purpose'] === 'donation' ? $t['donation'] : $t['contribution']); ?></span>
                                                     </td>
                                                     <td class="fw-medium text-dark"><?= htmlspecialchars($r['title']) ?></td>
                                                     <td class="fw-bold">
-                                                        <?= ($r['purpose'] === 'contribution') ? '<span class="text-muted small">In-Kind</span>' : '₹' . number_format($r['amount'], 2) ?>
+                                                        <?= ($r['purpose'] === 'contribution') ? '<span class="text-muted small">'. $t['in_kind'] . '</span>' : '₹' . number_format($r['amount'], 2) ?>
                                                     </td>
                                                     <td class="text-secondary small">
                                                         <?= date("d M Y, h:i A", strtotime($r['issued_on'])) ?>
@@ -297,7 +296,7 @@ $currentPage = 'my_receipts.php';
                                                     <td class="text-end">
                                                         <a href="receipt_download.php?id=<?= (int) $r['receipt_id'] ?>"
                                                             class="btn btn-light btn-sm border rounded-pill px-3 fw-medium">
-                                                            <i class="bi bi-file-earmark-pdf me-1"></i> View
+                                                            <i class="bi bi-file-earmark-pdf me-1"></i> <?php echo $t['view']; ?>
                                                         </a>
 
                                                     </td>
@@ -307,7 +306,7 @@ $currentPage = 'my_receipts.php';
                                             <tr>
                                                 <td colspan="6" class="text-center py-5 text-muted">
                                                     <i class="bi bi-file-earmark-x d-block fs-1 opacity-25 mb-3"></i>
-                                                    No receipts found in your history.
+                                                    <?php echo $t['no_receipts_found']; ?>
                                                 </td>
                                             </tr>
                                         <?php endif; ?>
@@ -325,3 +324,4 @@ $currentPage = 'my_receipts.php';
 </body>
 
 </html>
+

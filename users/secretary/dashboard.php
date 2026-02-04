@@ -29,7 +29,7 @@ $todayReceipts = mysqli_fetch_row(mysqli_query($con, "SELECT COUNT(*) FROM recei
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secretary Dashboard -
+    <title><?php echo $t['secretary_dashboard']; ?> -
         <?= $t['title'] ?>
     </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -215,9 +215,8 @@ $todayReceipts = mysqli_fetch_row(mysqli_query($con, "SELECT COUNT(*) FROM recei
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Secretary Overview</h2>
-                    <p class="text-secondary mb-0">Monitor temple operations, pending approvals, and daily collections.
-                    </p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['secretary_overview']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['secretary_overview_subtitle']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -227,11 +226,11 @@ $todayReceipts = mysqli_fetch_row(mysqli_query($con, "SELECT COUNT(*) FROM recei
                             <div class="ant-card">
                                 <div class="ant-card-body">
                                     <div class="kpi-icon bg-orange-soft shadow-sm"><i class="bi bi-box-seam"></i></div>
-                                    <span class="kpi-label">Pending Items</span>
+                                    <span class="kpi-label"><?php echo $t['pending_items']; ?></span>
                                     <h3 class="kpi-value">
                                         <?= $pendingContributions ?>
                                     </h3>
-                                    <p class="small text-muted mb-0 mt-2">Material contributions</p>
+                                    <p class="small text-muted mb-0 mt-2"><?php echo $t['material_contributions']; ?></p>
                                 </div>
                             </div>
                         </div>
@@ -241,11 +240,11 @@ $todayReceipts = mysqli_fetch_row(mysqli_query($con, "SELECT COUNT(*) FROM recei
                                 <div class="ant-card-body">
                                     <div class="kpi-icon bg-blue-soft shadow-sm"><i class="bi bi-calendar-event"></i>
                                     </div>
-                                    <span class="kpi-label">Pending Poojas</span>
+                                    <span class="kpi-label"><?php echo $t['pending_poojas']; ?></span>
                                     <h3 class="kpi-value">
                                         <?= $pendingPoojas ?>
                                     </h3>
-                                    <p class="small text-muted mb-0 mt-2">Bookings awaiting review</p>
+                                    <p class="small text-muted mb-0 mt-2"><?php echo $t['bookings_awaiting_review']; ?></p>
                                 </div>
                             </div>
                         </div>
@@ -255,11 +254,11 @@ $todayReceipts = mysqli_fetch_row(mysqli_query($con, "SELECT COUNT(*) FROM recei
                                 <div class="ant-card-body">
                                     <div class="kpi-icon bg-green-soft shadow-sm"><i class="bi bi-currency-rupee"></i>
                                     </div>
-                                    <span class="kpi-label">Today's Income</span>
+                                    <span class="kpi-label"><?php echo $t['todays_income']; ?></span>
                                     <h3 class="kpi-value">₹
                                         <?= number_format($todayAmount, 0) ?>
                                     </h3>
-                                    <p class="small text-muted mb-0 mt-2">Cash & Online total</p>
+                                    <p class="small text-muted mb-0 mt-2"><?php echo $t['cash_online_total']; ?></p>
                                 </div>
                             </div>
                         </div>
@@ -268,11 +267,11 @@ $todayReceipts = mysqli_fetch_row(mysqli_query($con, "SELECT COUNT(*) FROM recei
                             <div class="ant-card">
                                 <div class="ant-card-body">
                                     <div class="kpi-icon bg-purple-soft shadow-sm"><i class="bi bi-receipt"></i></div>
-                                    <span class="kpi-label">Receipts Issued</span>
+                                    <span class="kpi-label"><?php echo $t['receipts_issued']; ?></span>
                                     <h3 class="kpi-value">
                                         <?= $todayReceipts ?>
                                     </h3>
-                                    <p class="small text-muted mb-0 mt-2">Generated today</p>
+                                    <p class="small text-muted mb-0 mt-2"><?php echo $t['generated_today']; ?></p>
                                 </div>
                             </div>
                         </div>
@@ -284,14 +283,14 @@ $todayReceipts = mysqli_fetch_row(mysqli_query($con, "SELECT COUNT(*) FROM recei
                             <div class="ant-card" style="border-bottom: 1px solid var(--ant-border-color);">
                                 <div class="ant-card-body d-flex justify-content-between align-items-center">
                                     <div>
-                                        <h6 class="fw-bold mb-1">Administrative Actions</h6>
-                                        <p class="text-muted small mb-0">Jump to pending queues to take action.</p>
+                                        <h6 class="fw-bold mb-1"><?php echo $t['administrative_actions']; ?></h6>
+                                        <p class="text-muted small mb-0"><?php echo $t['jump_to_pending_queues']; ?></p>
                                     </div>
                                     <div class="d-flex gap-2">
                                         <a href="contributions_review.php"
-                                            class="btn btn-primary btn-sm rounded-pill px-3">Review Items</a>
+                                            class="btn btn-primary btn-sm rounded-pill px-3"><?php echo $t['review_items']; ?></a>
                                         <a href="pooja_approvals.php"
-                                            class="btn btn-outline-primary btn-sm rounded-pill px-3">Approve Poojas</a>
+                                            class="btn btn-outline-primary btn-sm rounded-pill px-3"><?php echo $t['approve_poojas']; ?></a>
                                     </div>
                                 </div>
                             </div>

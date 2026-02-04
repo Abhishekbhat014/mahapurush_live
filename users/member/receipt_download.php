@@ -1,23 +1,24 @@
 <?php
 session_start();
+require '../../includes/lang.php';
 require '../../config/db.php';
 // Assuming receipt_helper handles ownership logic based on your tables
 require '../../includes/receipt_helper.php';
 
 if (!isset($_SESSION['logged_in'])) {
-    die('Unauthorized');
+    die($t['unauthorized']);
 }
 
 $receiptId = (int) ($_GET['id'] ?? 0);
 $uid = (int) $_SESSION['user_id'];
 
 if ($receiptId <= 0) {
-    die('Invalid receipt');
+    die($t['invalid_receipt']);
 }
 
 // Ownership check
 if (!validateReceiptOwnership($con, $receiptId, $uid)) {
-    die('Access denied');
+    die($t['access_denied']);
 }
 
 // Fetch unified receipt data (Joining with payments for amount/purpose)
@@ -33,16 +34,16 @@ $stmt->execute();
 $receipt = $stmt->get_result()->fetch_assoc();
 
 if (!$receipt) {
-    die('Receipt not found');
+    die($t['receipt_not_found']);
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo $lang; ?>">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipt #<?= htmlspecialchars($receipt['receipt_no']) ?></title>
+    <title><?php echo $t['receipt']; ?> #<?= htmlspecialchars($receipt['receipt_no']) ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
@@ -185,11 +186,11 @@ if (!$receipt) {
 
     <div class="action-bar no-print">
         <a href="receipt_history.php" class="btn btn-light border rounded-pill px-4">
-            <i class="bi bi-arrow-left me-2"></i>Back to History
+            <i class="bi bi-arrow-left me-2"></i><?php echo $t['back_to_history']; ?>
         </a>
         <button onclick="window.print()" class="btn btn-primary rounded-pill px-4 shadow-sm"
             style="background: var(--ant-primary); border:none;">
-            <i class="bi bi-printer me-2"></i>Print Receipt
+            <i class="bi bi-printer me-2"></i><?php echo $t['print_receipt']; ?>
         </button>
     </div>
 
@@ -197,48 +198,48 @@ if (!$receipt) {
         <div class="receipt-content">
             <div class="receipt-header d-flex justify-content-between align-items-end">
                 <div>
-                    <h2 class="fw-bold mb-1 text-dark">OFFICIAL RECEIPT</h2>
-                    <p class="text-muted small mb-0">Issued by Temple Administration</p>
+                    <h2 class="fw-bold mb-1 text-dark"><?php echo $t['official_receipt']; ?></h2>
+                    <p class="text-muted small mb-0"><?php echo $t['issued_by_temple_admin']; ?></p>
                 </div>
                 <div class="text-end">
-                    <span class="label-text d-block">Receipt Number</span>
+                    <span class="label-text d-block"><?php echo $t['receipt_number']; ?></span>
                     <span class="receipt-no">#<?= htmlspecialchars($receipt['receipt_no']) ?></span>
                 </div>
             </div>
 
             <div class="row mt-5">
                 <div class="col-6">
-                    <div class="label-text">Donor / Devotee Name</div>
+                    <div class="label-text"><?php echo $t['donor_devotee_name']; ?></div>
                     <div class="data-text"><?= htmlspecialchars($receipt['donor_name'] ?? $_SESSION['user_name']) ?>
                     </div>
 
-                    <div class="label-text">Date of Issue</div>
+                    <div class="label-text"><?php echo $t['date_of_issue']; ?></div>
                     <div class="data-text"><?= date("d M Y, h:i A", strtotime($receipt['issued_on'])) ?></div>
                 </div>
                 <div class="col-6 text-end">
-                    <div class="label-text">Payment Status</div>
+                    <div class="label-text"><?php echo $t['payment_status']; ?></div>
                     <div class="mb-4 mt-2">
-                        <span class="stamp">Verified Success</span>
+                        <span class="stamp"><?php echo $t['verified_success']; ?></span>
                     </div>
 
-                    <div class="label-text">Payment Method</div>
-                    <div class="data-text"><?= ucfirst(htmlspecialchars($receipt['payment_method'] ?? 'Manual')) ?>
+                    <div class="label-text"><?php echo $t['payment_method']; ?></div>
+                    <div class="data-text"><?= ucfirst(htmlspecialchars($receipt['payment_method'] ?? $t['manual'])) ?>
                     </div>
                 </div>
             </div>
 
             <div class="amount-block">
-                <div class="label-text">Total Contribution</div>
+                <div class="label-text"><?php echo $t['total_contribution']; ?></div>
                 <div class="amount-val">₹<?= number_format($receipt['amount'], 2) ?></div>
                 <div class="small text-muted italic mt-2">
-                    Note: This is a computer-generated receipt and does not require a physical signature.
+                    <?php echo $t['receipt_note']; ?>
                 </div>
             </div>
 
             <div class="mt-5 pt-5 text-center border-top">
                 <p class="small text-muted mb-0">
-                    Thank you for your generous contribution towards the temple services.<br>
-                    <strong>May the blessings of the Almighty be with you.</strong>
+                    <?php echo $t['thank_you_contribution']; ?><br>
+                    <strong><?php echo $t['blessings_message']; ?></strong>
                 </p>
             </div>
         </div>

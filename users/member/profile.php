@@ -21,9 +21,9 @@ if (isset($_POST['update_details'])) {
 
     if (mysqli_query($con, "UPDATE users SET first_name='$fName', last_name='$lName', phone='$phone' WHERE id='$uid'")) {
         $_SESSION['user_name'] = $fName . ' ' . $lName;
-        $successMsg = "Profile details updated successfully.";
+        $successMsg = $t['profile_details_updated'];
     } else {
-        $errorMsg = "Failed to update profile.";
+        $errorMsg = $t['profile_update_failed'];
     }
 }
 
@@ -40,15 +40,15 @@ if (isset($_POST['change_password'])) {
         if ($newPass === $confirmPass) {
             $hashedNew = password_hash($newPass, PASSWORD_DEFAULT);
             if (mysqli_query($con, "UPDATE users SET password='$hashedNew' WHERE id='$uid'")) {
-                $successMsg = "Password updated successfully.";
+                $successMsg = $t['password_updated'];
             } else {
-                $errorMsg = "Database error.";
+                $errorMsg = $t['database_error'];
             }
         } else {
-            $errorMsg = "New passwords do not match.";
+            $errorMsg = $t['new_passwords_mismatch'];
         }
     } else {
-        $errorMsg = "Current password is incorrect.";
+        $errorMsg = $t['incorrect_current_password'];
     }
 }
 
@@ -67,7 +67,7 @@ $currentPage = 'profile.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile - <?php echo $t['title']; ?></title>
+    <title><?php echo $t['my_profile']; ?> - <?php echo $t['title']; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -245,8 +245,8 @@ $currentPage = 'profile.php';
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">My Profile</h2>
-                    <p class="text-secondary mb-0">Update your information and manage account security.</p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['my_profile']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['profile_subtitle_member']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -268,35 +268,35 @@ $currentPage = 'profile.php';
                             <div class="ant-card text-center">
                                 <div class="ant-card-body">
                                     <img src="<?= htmlspecialchars($userPhotoUrl) ?>" class="profile-avatar mb-3"
-                                        alt="Avatar">
+                                        alt="<?php echo $t['profile_avatar_alt']; ?>">
                                     <h5 class="fw-bold mb-1">
                                         <?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?>
                                     </h5>
-                                    <p class="text-muted small">Devotee Member</p>
+                                    <p class="text-muted small"><?php echo $t['devotee_member']; ?></p>
                                 </div>
                             </div>
 
                             <div class="ant-card">
-                                <div class="ant-card-head">Change Password</div>
+                                <div class="ant-card-head"><?php echo $t['change_password']; ?></div>
                                 <div class="ant-card-body">
                                     <form method="POST">
                                         <div class="mb-3">
-                                            <label class="form-label">Current Password</label>
+                                            <label class="form-label"><?php echo $t['current_password']; ?></label>
                                             <input type="password" name="current_password" class="form-control"
                                                 required>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">New Password</label>
+                                            <label class="form-label"><?php echo $t['new_password']; ?></label>
                                             <input type="password" name="new_password" class="form-control" required
                                                 minlength="6">
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Confirm New Password</label>
+                                            <label class="form-label"><?php echo $t['confirm_new_password']; ?></label>
                                             <input type="password" name="confirm_password" class="form-control"
                                                 required>
                                         </div>
                                         <button type="submit" name="change_password"
-                                            class="ant-btn-primary w-100">Update Password</button>
+                                            class="ant-btn-primary w-100"><?php echo $t['update_password']; ?></button>
                                     </form>
                                 </div>
                             </div>
@@ -304,36 +304,35 @@ $currentPage = 'profile.php';
 
                         <div class="col-lg-8">
                             <div class="ant-card">
-                                <div class="ant-card-head">Personal Information</div>
+                                <div class="ant-card-head"><?php echo $t['personal_information']; ?></div>
                                 <div class="ant-card-body">
                                     <form method="POST">
                                         <div class="row g-3">
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">First Name</label>
+                                                <label class="form-label"><?php echo $t['first_name']; ?></label>
                                                 <input type="text" name="first_name" class="form-control"
                                                     value="<?= htmlspecialchars($user['first_name']) ?>" required>
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">Last Name</label>
+                                                <label class="form-label"><?php echo $t['last_name']; ?></label>
                                                 <input type="text" name="last_name" class="form-control"
                                                     value="<?= htmlspecialchars($user['last_name']) ?>" required>
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">Phone Number</label>
+                                                <label class="form-label"><?php echo $t['phone_number']; ?></label>
                                                 <input type="tel" name="phone" class="form-control"
                                                     value="<?= htmlspecialchars($user['phone']) ?>" required>
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">Email Address</label>
+                                                <label class="form-label"><?php echo $t['email_address']; ?></label>
                                                 <input type="email" class="form-control bg-light"
                                                     value="<?= htmlspecialchars($user['email']) ?>" readonly>
-                                                <div class="form-text small" style="font-size: 11px;">Email cannot be
-                                                    modified.</div>
+                                                <div class="form-text small" style="font-size: 11px;"><?php echo $t['email_cannot_modify']; ?></div>
                                             </div>
                                         </div>
                                         <div class="d-flex justify-content-end mt-4">
                                             <button type="submit" name="update_details"
-                                                class="ant-btn-primary px-5">Save Changes</button>
+                                                class="ant-btn-primary px-5"><?php echo $t['save_changes']; ?></button>
                                         </div>
                                     </form>
                                 </div>

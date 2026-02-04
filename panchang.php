@@ -181,8 +181,8 @@ $rahuDisplay = ($rahu)
 
 
 
-$nakName = $nak['name'] ?? 'Unknown';
-$yogaName = $yoga['name'] ?? 'Unknown';
+$nakName = $nak['name'] ?? $t['unknown'];
+$yogaName = $yoga['name'] ?? $t['unknown'];
 
 ?>
 
@@ -339,12 +339,12 @@ $yogaName = $yoga['name'] ?? 'Unknown';
 
                     <li class="nav-item dropdown ms-lg-2">
                         <a class="nav-link dropdown-toggle text-primary fw-bold" href="#" data-bs-toggle="dropdown">
-                            <i class="bi bi-translate me-1"></i> <?php echo ($lang == 'en') ? 'English' : 'मराठी'; ?>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="?date=<?php echo $dateInput; ?>&lang=en">English</a></li>
-                            <li><a class="dropdown-item" href="?date=<?php echo $dateInput; ?>&lang=mr">मराठी</a></li>
-                        </ul>
+    <i class="bi bi-translate me-1"></i> <?= ($lang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
+</a>
+<ul class="dropdown-menu dropdown-menu-end">
+    <li><a class="dropdown-item" href="?date=<?php echo $dateInput; ?>&lang=en"><?php echo $t['lang_english']; ?></a></li>
+    <li><a class="dropdown-item" href="?date=<?php echo $dateInput; ?>&lang=mr"><?php echo $t['lang_marathi_full']; ?></a></li>
+</ul>
                     </li>
 
                     <li class="nav-item ms-lg-3">
@@ -365,7 +365,7 @@ $yogaName = $yoga['name'] ?? 'Unknown';
         <div class="container">
             <h1 class="display-5 fw-bold mb-2"><?php echo $t['daily_panchang']; ?></h1>
             <p class="lead text-muted mb-4">
-                <i class="bi bi-geo-alt-fill me-1"></i> Mumbai &bull; <?php echo $displayDate; ?>
+                <i class="bi bi-geo-alt-fill me-1"></i> <?php echo $t['mumbai']; ?> &bull; <?php echo $displayDate; ?>
             </p>
             <form action="" method="GET" class="mx-auto" style="max-width: 300px;">
                 <div class="input-group">
@@ -465,3 +465,4 @@ $yogaName = $yoga['name'] ?? 'Unknown';
 </body>
 
 </html>
+

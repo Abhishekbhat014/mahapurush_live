@@ -21,7 +21,7 @@ if (isset($_POST['book_pooja'])) {
     $description = mysqli_real_escape_string($con, $_POST['notes']);
 
     if (empty($poojaTypeId) || empty($poojaDate)) {
-        $errorMsg = "Please select a pooja and date.";
+        $errorMsg = $t['err_select_pooja_date'];
     } else {
         $fee = 0;
         $feeQuery = mysqli_query($con, "SELECT fee FROM pooja_type WHERE id = '$poojaTypeId' LIMIT 1");
@@ -33,9 +33,9 @@ if (isset($_POST['book_pooja'])) {
                 VALUES ('$uid', '$poojaTypeId', '$poojaDate', '$timeSlot', '$description', '$fee', 'pending')";
 
         if (mysqli_query($con, $sql)) {
-            $successMsg = "Pooja booking request submitted successfully.";
+            $successMsg = $t['pooja_request_submitted'];
         } else {
-            $errorMsg = "Booking failed. Please try again.";
+            $errorMsg = $t['booking_failed_try_again'];
         }
     }
 }
@@ -60,7 +60,7 @@ if ($uRow = mysqli_fetch_assoc($uQuery)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book Pooja - <?php echo $t['title']; ?></title>
+    <title><?php echo $t['book_pooja']; ?> - <?php echo $t['title']; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
@@ -232,8 +232,8 @@ body {
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Book a Pooja</h2>
-                    <p class="text-secondary mb-0">Schedule a sacred service for your spiritual needs.</p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['book_pooja']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['pooja_schedule_subtitle']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -255,14 +255,14 @@ body {
                             <?php endif; ?>
 
                             <div class="ant-card shadow-sm">
-                                <div class="ant-card-head">Pooja Details</div>
+                                <div class="ant-card-head"><?php echo $t['pooja_details']; ?></div>
                                 <div class="ant-card-body">
                                     <form method="POST">
                                         <div class="mb-4">
-                                            <label class="form-label">Select Pooja Service <span
+                                            <label class="form-label"><?php echo $t['select_pooja_service_label']; ?> <span
                                                     class="text-danger">*</span></label>
                                             <select name="pooja_type_id" class="form-select" required>
-                                                <option value="" disabled selected>Choose a service...</option>
+                                                <option value="" disabled selected><?php echo $t['choose_service']; ?></option>
                                                 <?php foreach ($poojaList as $p): ?>
                                                     <option value="<?= $p['id'] ?>">
                                                         <?= htmlspecialchars($p['type']) ?>
@@ -274,32 +274,31 @@ body {
 
                                         <div class="row">
                                             <div class="col-md-6 mb-4">
-                                                <label class="form-label">Preferred Date <span
+                                                <label class="form-label"><?php echo $t['preferred_date']; ?> <span
                                                         class="text-danger">*</span></label>
                                                 <input type="date" name="pooja_date" class="form-control"
                                                     min="<?= date('Y-m-d') ?>" required>
                                             </div>
                                             <div class="col-md-6 mb-4">
-                                                <label class="form-label">Time Slot</label>
+                                                <label class="form-label"><?php echo $t['time_slot']; ?></label>
                                                 <select name="time_slot" class="form-select">
-                                                    <option value="morning">Morning</option>
-                                                    <option value="afternoon">Afternoon</option>
-                                                    <option value="evening">Evening</option>
+                                                    <option value="morning"><?php echo $t['morning']; ?></option>
+                                                    <option value="afternoon"><?php echo $t['afternoon']; ?></option>
+                                                    <option value="evening"><?php echo $t['evening']; ?></option>
                                                 </select>
                                             </div>
                                         </div>
 
                                         <div class="mb-4">
-                                            <label class="form-label">Special Requests / Notes</label>
+                                            <label class="form-label"><?php echo $t['special_requests_notes']; ?></label>
                                             <textarea name="notes" class="form-control" rows="4"
-                                                placeholder="E.g. family names for sankalp, specific time etc."></textarea>
+                                                placeholder="<?php echo $t['special_requests_placeholder']; ?>"></textarea>
                                         </div>
 
                                         <div class="d-flex gap-3 justify-content-end mt-2">
                                             <a href="dashboard.php" class="btn btn-light px-4 border"
-                                                style="border-radius: 8px;">Cancel</a>
-                                            <button type="submit" name="book_pooja" class="ant-btn-primary">Confirm
-                                                Request</button>
+                                                style="border-radius: 8px;"><?php echo $t['cancel']; ?></a>
+                                            <button type="submit" name="book_pooja" class="ant-btn-primary"><?php echo $t['confirm_request']; ?></button>
                                         </div>
                                     </form>
                                 </div>

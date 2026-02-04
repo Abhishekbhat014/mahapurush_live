@@ -31,9 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pooja_id'], $_POST['n
         $stmt->bind_param("si", $newStatus, $poojaId);
 
         if ($stmt->execute()) {
-            $success = "Pooja booking has been " . $newStatus . " successfully.";
+            $success = sprintf($t['pooja_status_updated'], $newStatus === 'completed' ? $t['completed'] : $t['cancelled']);
         } else {
-            $error = "Unable to update status. Please try again.";
+            $error = $t['status_update_failed'];
         }
     }
 }
@@ -55,7 +55,7 @@ $result = mysqli_query($con, $sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pooja Management -
+    <title><?php echo $t['pooja_management']; ?> -
         <?= $t['title'] ?>
     </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -264,8 +264,8 @@ $result = mysqli_query($con, $sql);
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Pooja Bookings</h2>
-                    <p class="text-secondary mb-0">Manage devotee schedules and verify ritual completions.</p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['pooja_bookings']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['pooja_bookings_subtitle']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -291,12 +291,12 @@ $result = mysqli_query($con, $sql);
                             <table class="table ant-table mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Devotee Name</th>
-                                        <th>Pooja Type</th>
-                                        <th>Schedule</th>
-                                        <th>Fee</th>
-                                        <th>Status</th>
-                                        <th class="text-end">Actions</th>
+                                        <th><?php echo $t['devotee_name']; ?></th>
+                                        <th><?php echo $t['pooja_type']; ?></th>
+                                        <th><?php echo $t['schedule']; ?></th>
+                                        <th><?php echo $t['fee']; ?></th>
+                                        <th><?php echo $t['status']; ?></th>
+                                        <th class="text-end"><?php echo $t['actions']; ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -322,14 +322,14 @@ $result = mysqli_query($con, $sql);
                                                         <?= date('d M Y', strtotime($r['pooja_date'])) ?>
                                                     </div>
                                                     <small class="text-muted text-uppercase" style="font-size: 10px;">
-                                                        <?= $r['time_slot'] ?? 'Anytime' ?>
+                                                        <?= $r['time_slot'] ?? $t['anytime'] ?>
                                                     </small>
                                                 </td>
                                                 <td class="fw-bold">₹
                                                     <?= number_format($r['fee'], 0) ?>
                                                 </td>
                                                 <td><span class="ant-badge <?= $statusClass ?>">
-                                                        <?= ucfirst($r['status']) ?>
+                                                        <?= $r['status'] === 'pending' ? $t['pending'] : ($r['status'] === 'paid' ? $t['paid'] : ($r['status'] === 'completed' ? $t['completed'] : $t['cancelled'])) ?>
                                                     </span></td>
                                                 <td class="text-end">
                                                     <?php if (in_array($r['status'], ['pending', 'paid'])): ?>
@@ -338,20 +338,20 @@ $result = mysqli_query($con, $sql);
                                                                 <input type="hidden" name="pooja_id" value="<?= $r['id'] ?>">
                                                                 <input type="hidden" name="new_status" value="completed">
                                                                 <button type="submit" class="btn-ant-success"
-                                                                    title="Mark as Completed">
-                                                                    <i class="bi bi-check2"></i> Done
+                                                                    title="<?php echo $t['mark_completed']; ?>">
+                                                                    <i class="bi bi-check2"></i> <?php echo $t['done']; ?>
                                                                 </button>
                                                             </form>
                                                             <form method="POST">
                                                                 <input type="hidden" name="pooja_id" value="<?= $r['id'] ?>">
                                                                 <input type="hidden" name="new_status" value="cancelled">
-                                                                <button type="submit" class="btn-ant-danger" title="Cancel Booking">
+                                                                <button type="submit" class="btn-ant-danger" title="<?php echo $t['cancel_booking']; ?>">
                                                                     <i class="bi bi-x-lg"></i>
                                                                 </button>
                                                             </form>
                                                         </div>
                                                     <?php else: ?>
-                                                        <span class="text-muted small">Archived</span>
+                                                        <span class="text-muted small"><?php echo $t['archived']; ?></span>
                                                     <?php endif; ?>
                                                 </td>
                                             </tr>
@@ -360,7 +360,7 @@ $result = mysqli_query($con, $sql);
                                         <tr>
                                             <td colspan="6" class="text-center py-5 text-muted">
                                                 <i class="bi bi-calendar2-x fs-1 opacity-25 d-block mb-3"></i>
-                                                No bookings scheduled at the moment.
+                                                <?php echo $t['no_bookings_scheduled']; ?>
                                             </td>
                                         </tr>
                                     <?php endif; ?>

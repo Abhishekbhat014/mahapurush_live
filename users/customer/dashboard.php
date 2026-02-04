@@ -11,7 +11,7 @@ $dbPath = __DIR__ . '/../../config/db.php';
 require $dbPath;
 
 $userId = $_SESSION['user_id'] ?? 0;
-$userName = $_SESSION['user_name'] ?? "User";
+$userName = $_SESSION['user_name'] ?? $t['user'];
 
 /* -------------------------
     FETCH DONATIONS
@@ -195,12 +195,12 @@ if ($con && $userId > 0) {
             <div class="d-flex align-items-center gap-3">
                 <div class="dropdown">
                     <button class="btn btn-light btn-sm dropdown-toggle border" data-bs-toggle="dropdown">
-                        <i class="bi bi-translate me-1"></i> <?php echo strtoupper($currLang); ?>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
-                        <li><a class="dropdown-item small" href="?lang=en">English</a></li>
-                        <li><a class="dropdown-item small" href="?lang=mr">मराठी</a></li>
-                    </ul>
+    <i class="bi bi-translate me-1"></i> <?= ($currLang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
+</button>
+<ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+    <li><a class="dropdown-item small" href="?lang=en"><?php echo $t['lang_english']; ?></a></li>
+    <li><a class="dropdown-item small" href="?lang=mr"><?php echo $t['lang_marathi_full']; ?></a></li>
+</ul>
                 </div>
                 <div class="vr mx-2 text-muted opacity-25"></div>
                 <span class="small fw-bold text-secondary"><?= htmlspecialchars($userName) ?></span>
@@ -215,7 +215,7 @@ if ($con && $userId > 0) {
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
                     <h2 class="fw-bold mb-1"><?php echo $t['welcome']; ?>, <?= explode(' ', $userName)[0] ?>!</h2>
-                    <p class="text-secondary mb-0">Track your donations and spiritual contributions.</p>
+                    <p class="text-secondary mb-0"><?php echo $t['track_donations_subtitle']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -246,7 +246,7 @@ if ($con && $userId > 0) {
                                                 ?>
                                                 <tr>
                                                     <td class="fw-bold text-primary">
-                                                        #<?= htmlspecialchars($row['receipt_no'] ?? 'N/A') ?></td>
+                                                        #<?= htmlspecialchars($row['receipt_no'] ?? $t['not_available']) ?></td>
                                                     <td class="fw-bold">₹<?= number_format($row['amount'], 2) ?></td>
                                                     <td><span class="badge-soft <?= $statusClass ?>"><?= $statusLabel ?></span>
                                                     </td>
@@ -285,3 +285,4 @@ if ($con && $userId > 0) {
 </body>
 
 </html>
+

@@ -32,7 +32,7 @@ if ($isLoggedIn) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Us - <?= htmlspecialchars($t['title']) ?></title>
+    <title><?php echo $t['about_us']; ?> - <?= htmlspecialchars($t['title']) ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
@@ -207,9 +207,9 @@ if ($isLoggedIn) {
         <div class="container">
             <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary px-3 py-2 mb-3 fw-bold text-uppercase"
                 style="letter-spacing: 2px; font-size: 11px;">
-                Our Spiritual Journey
+                <?php echo $t['about_hero_badge']; ?>
             </span>
-            <h1 class="display-4 fw-bold text-dark mb-4">Faith, Community, and<br>Ancient Traditions</h1>
+            <h1 class="display-4 fw-bold text-dark mb-4"><?php echo $t['about_hero_title']; ?></h1>
             <p class="text-secondary mx-auto fs-5" style="max-width: 800px; line-height: 1.8;">
                 <?= htmlspecialchars($temple['description']) ?>
             </p>
@@ -219,43 +219,40 @@ if ($isLoggedIn) {
     <main class="container py-5 mt-5">
         <div class="row align-items-center g-5 mb-5 pb-5">
             <div class="col-lg-6">
-                <div class="section-title">Our Heritage</div>
+                <div class="section-title"><?php echo $t['about_heritage_title']; ?></div>
                 <p class="text-secondary mb-4" style="font-size: 17px; line-height: 1.8;">
-                    Founded on the principles of Seva and devotion, our temple has served as a beacon
-                    of peace for generations. What started as a small sanctuary has grown into a vibrant center for
-                    spiritual learning and community gathering.
+                    <?php echo $t['about_heritage_desc']; ?>
                 </p>
                 <div class="row g-3">
                     <div class="col-6">
                         <div class="fw-bold fs-3 text-primary">100+</div>
-                        <div class="small text-muted text-uppercase fw-bold">Years of Legacy</div>
+                        <div class="small text-muted text-uppercase fw-bold"><?php echo $t['years_of_legacy']; ?></div>
                     </div>
                     <div class="col-6">
                         <div class="fw-bold fs-3 text-primary">50k+</div>
-                        <div class="small text-muted text-uppercase fw-bold">Devotees Served</div>
+                        <div class="small text-muted text-uppercase fw-bold"><?php echo $t['devotees_served']; ?></div>
                     </div>
                 </div>
             </div>
             <div class="col-lg-6">
                 <div class="ant-card overflow-hidden border-0 shadow-lg">
                     <img src="https://images.unsplash.com/photo-1609766418204-94aae0ecf0cc?auto=format&fit=crop&q=80&w=1200"
-                        class="img-fluid" alt="Temple Architecture">
+                        class="img-fluid" alt="<?php echo $t['temple_architecture_alt']; ?>">
                 </div>
             </div>
         </div>
 
         <div class="py-5">
             <div class="text-center mb-5">
-                <div class="section-title">Foundational Pillars</div>
+                <div class="section-title"><?php echo $t['foundational_pillars']; ?></div>
             </div>
             <div class="row g-4">
                 <div class="col-md-4">
                     <div class="ant-card">
                         <div class="ant-card-body">
                             <div class="card-icon"><i class="bi bi-brightness-high"></i></div>
-                            <h5 class="fw-bold mb-3">Spiritual Growth</h5>
-                            <p class="text-secondary small mb-0">Providing a sacred space for daily prayers, meditation,
-                                and ritualistic poojas to cleanse the soul.</p>
+                            <h5 class="fw-bold mb-3"><?php echo $t['pillar_spiritual_growth']; ?></h5>
+                            <p class="text-secondary small mb-0"><?php echo $t['pillar_spiritual_growth_desc']; ?></p>
                         </div>
                     </div>
                 </div>
@@ -263,9 +260,8 @@ if ($isLoggedIn) {
                     <div class="ant-card">
                         <div class="ant-card-body">
                             <div class="card-icon"><i class="bi bi-people"></i></div>
-                            <h5 class="fw-bold mb-3">Community Unity</h5>
-                            <p class="text-secondary small mb-0">Fostering a sense of belonging through community
-                                festivals, cultural events, and shared celebrations.</p>
+                            <h5 class="fw-bold mb-3"><?php echo $t['pillar_community_unity']; ?></h5>
+                            <p class="text-secondary small mb-0"><?php echo $t['pillar_community_unity_desc']; ?></p>
                         </div>
                     </div>
                 </div>
@@ -273,9 +269,8 @@ if ($isLoggedIn) {
                     <div class="ant-card">
                         <div class="ant-card-body">
                             <div class="card-icon"><i class="bi bi-hand-thumbs-up"></i></div>
-                            <h5 class="fw-bold mb-3">Seva (Service)</h5>
-                            <p class="text-secondary small mb-0">Dedicated to helping the underprivileged through food
-                                distribution, medical aid, and educational support.</p>
+                            <h5 class="fw-bold mb-3"><?php echo $t['pillar_seva']; ?></h5>
+                            <p class="text-secondary small mb-0"><?php echo $t['pillar_seva_desc']; ?></p>
                         </div>
                     </div>
                 </div>

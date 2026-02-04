@@ -35,7 +35,7 @@ $totalCollection = mysqli_fetch_row($totalRes)[0] ?? 0;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Ledger - <?= $t['title'] ?></title>
+    <title><?php echo $t['payment_ledger']; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -210,12 +210,11 @@ $totalCollection = mysqli_fetch_row($totalRes)[0] ?? 0;
                 <div class="dashboard-hero">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h2 class="fw-bold mb-1">Financial Ledger</h2>
-                            <p class="text-secondary mb-0">Audit all incoming donations and ritual fees.</p>
+                            <h2 class="fw-bold mb-1"><?php echo $t['financial_ledger']; ?></h2>
+                            <p class="text-secondary mb-0"><?php echo $t['financial_ledger_subtitle']; ?></p>
                         </div>
                         <div class="text-end">
-                            <small class="text-muted text-uppercase fw-bold" style="font-size: 10px;">Lifetime
-                                Collection</small>
+                            <small class="text-muted text-uppercase fw-bold" style="font-size: 10px;"><?php echo $t['lifetime_collection']; ?></small>
                             <h3 class="fw-bold text-primary mb-0">₹<?= number_format($totalCollection, 2) ?></h3>
                         </div>
                     </div>
@@ -227,13 +226,13 @@ $totalCollection = mysqli_fetch_row($totalRes)[0] ?? 0;
                             <table class="table ant-table mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Receipt No</th>
-                                        <th>Donor / Devotee</th>
-                                        <th>Amount</th>
-                                        <th>Method</th>
-                                        <th>Status</th>
-                                        <th>Date & Time</th>
-                                        <th class="text-end">Actions</th>
+                                        <th><?php echo $t['receipt_no']; ?></th>
+                                        <th><?php echo $t['donor_devotee']; ?></th>
+                                        <th><?php echo $t['amount']; ?></th>
+                                        <th><?php echo $t['method']; ?></th>
+                                        <th><?php echo $t['status']; ?></th>
+                                        <th><?php echo $t['date_time']; ?></th>
+                                        <th class="text-end"><?php echo $t['actions']; ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -245,7 +244,7 @@ $totalCollection = mysqli_fetch_row($totalRes)[0] ?? 0;
                                                         <span
                                                             class="receipt-pill">#<?= htmlspecialchars($row['receipt_no']) ?></span>
                                                     <?php else: ?>
-                                                        <span class="text-muted small">N/A</span>
+                                                        <span class="text-muted small"><?php echo $t['not_available']; ?></span>
                                                     <?php endif; ?>
                                                 </td>
                                                 <td class="fw-bold"><?= htmlspecialchars($row['donor_name']) ?></td>
@@ -260,7 +259,7 @@ $totalCollection = mysqli_fetch_row($totalRes)[0] ?? 0;
                                                         default => 'bg-ant-warning'
                                                     };
                                                     ?>
-                                                    <span class="ant-badge <?= $sClass ?>"><?= ucfirst($row['status']) ?></span>
+                                                    <span class="ant-badge <?= $sClass ?>"><?= $row['status'] === 'success' ? $t['success'] : ($row['status'] === 'failed' ? $t['failed'] : $t['pending']); ?></span>
                                                 </td>
                                                 <td class="text-secondary small">
                                                     <?= date('d M Y', strtotime($row['created_at'])) ?>
@@ -273,7 +272,7 @@ $totalCollection = mysqli_fetch_row($totalRes)[0] ?? 0;
                                                         <a href="../receipt/view.php?no=<?= $row['receipt_no'] ?>"
                                                             class="btn btn-light btn-sm border rounded-pill px-3 fw-bold"
                                                             style="font-size: 12px;">
-                                                            <i class="bi bi-eye me-1"></i> View
+                                                            <i class="bi bi-eye me-1"></i> <?php echo $t['view']; ?>
                                                         </a>
                                                     <?php endif; ?>
                                                 </td>
@@ -283,7 +282,7 @@ $totalCollection = mysqli_fetch_row($totalRes)[0] ?? 0;
                                         <tr>
                                             <td colspan="7" class="text-center py-5 text-muted">
                                                 <i class="bi bi-wallet2 fs-1 opacity-25 d-block mb-3"></i>
-                                                No payment transactions found in the records.
+                                                <?php echo $t['no_payment_transactions']; ?>
                                             </td>
                                         </tr>
                                     <?php endif; ?>

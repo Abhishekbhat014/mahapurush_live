@@ -31,9 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param("si", $action, $id);
 
         if ($stmt->execute()) {
-            $success = "Contribution successfully " . $action . ".";
+            $success = sprintf($t['contribution_action_success'], $action === 'approved' ? $t['approved'] : $t['rejected']);
         } else {
-            $error = "Failed to update contribution.";
+            $error = $t['contribution_update_failed'];
         }
     }
 }
@@ -55,7 +55,7 @@ $rows = mysqli_query($con, $sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contributions Approval -
+    <title><?php echo $t['contributions_approval']; ?> -
         <?= $t['title'] ?>
     </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -229,9 +229,8 @@ $rows = mysqli_query($con, $sql);
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Contribution Approvals</h2>
-                    <p class="text-secondary mb-0">Verify and approve non-monetary items submitted by temple members.
-                    </p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['contributions_approval']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['contributions_approval_subtitle']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -257,12 +256,12 @@ $rows = mysqli_query($con, $sql);
                             <table class="table ant-table mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Contributor</th>
-                                        <th>Item Name</th>
-                                        <th>Category</th>
-                                        <th>Quantity</th>
-                                        <th>Submitted On</th>
-                                        <th class="text-end">Actions</th>
+                                        <th><?php echo $t['contributor']; ?></th>
+                                        <th><?php echo $t['item_name']; ?></th>
+                                        <th><?php echo $t['category']; ?></th>
+                                        <th><?php echo $t['quantity']; ?></th>
+                                        <th><?php echo $t['submitted_on']; ?></th>
+                                        <th class="text-end"><?php echo $t['actions']; ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -291,16 +290,12 @@ $rows = mysqli_query($con, $sql);
                                                         <form method="POST">
                                                             <input type="hidden" name="contribution_id" value="<?= $r['id'] ?>">
                                                             <input type="hidden" name="action" value="approved">
-                                                            <button type="submit" class="btn-ant-success">
-                                                                Approve
-                                                            </button>
+                                                            <button type="submit" class="btn-ant-success"><?php echo $t['approve']; ?></button>
                                                         </form>
                                                         <form method="POST">
                                                             <input type="hidden" name="contribution_id" value="<?= $r['id'] ?>">
                                                             <input type="hidden" name="action" value="rejected">
-                                                            <button type="submit" class="btn-ant-reject">
-                                                                Reject
-                                                            </button>
+                                                            <button type="submit" class="btn-ant-reject"><?php echo $t['reject']; ?></button>
                                                         </form>
                                                     </div>
                                                 </td>
@@ -310,7 +305,7 @@ $rows = mysqli_query($con, $sql);
                                         <tr>
                                             <td colspan="6" class="text-center py-5 text-muted">
                                                 <i class="bi bi-clipboard-check fs-1 opacity-25 d-block mb-3"></i>
-                                                Everything is caught up! No pending contributions.
+                                                <?php echo $t['no_pending_contributions']; ?>
                                             </td>
                                         </tr>
                                     <?php endif; ?>

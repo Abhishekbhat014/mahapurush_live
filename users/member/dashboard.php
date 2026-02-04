@@ -220,15 +220,15 @@ while ($drow = mysqli_fetch_assoc($resDonations)) {
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Namaste, <?= explode(' ', $_SESSION['user_name'])[0] ?>!</h2>
-                    <p class="text-secondary mb-0">Overview of your spiritual bookings and generous contributions.</p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['namaste']; ?>, <?= explode(' ', $_SESSION['user_name'])[0] ?>!</h2>
+                    <p class="text-secondary mb-0"><?php echo $t['member_dashboard_subtitle']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
                     <div class="row g-4">
                         <div class="col-lg-4">
                             <div class="ant-card">
-                                <div class="ant-card-head">Temple Info</div>
+                                <div class="ant-card-head"><?php echo $t['temple_info']; ?></div>
                                 <div class="ant-card-body">
                                     <div class="text-center mb-4">
                                         <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
@@ -236,7 +236,7 @@ while ($drow = mysqli_fetch_assoc($resDonations)) {
                                             <i class="bi bi-bank fs-3 text-primary"></i>
                                         </div>
                                         <h6 class="fw-bold mb-1">
-                                            <?= htmlspecialchars($temple['temple_name'] ?? 'Temple') ?>
+                                            <?= htmlspecialchars($temple['temple_name'] ?? $t['temple']) ?>
                                         </h6>
                                         <p class="small text-muted mb-0">
                                             <?= htmlspecialchars($temple['contact'] ?? '') ?>
@@ -252,20 +252,20 @@ while ($drow = mysqli_fetch_assoc($resDonations)) {
                         <div class="col-lg-8">
                             <div class="ant-card">
                                 <div class="ant-card-head d-flex justify-content-between align-items-center">
-                                    <span>Recent Pooja Bookings</span>
+                                    <span><?php echo $t['recent_pooja_bookings']; ?></span>
                                     <a href="pooja_book.php"
-                                        class="btn btn-link btn-sm text-primary text-decoration-none p-0">New <i
-                                            class="bi bi-plus"></i></a>
+                                        class="btn btn-link btn-sm text-primary text-decoration-none p-0"><?php echo $t['new']; ?>
+                                        <i class="bi bi-plus"></i></a>
                                 </div>
                                 <div class="ant-card-body p-0">
                                     <div class="table-responsive">
                                         <table class="table ant-table mb-0">
                                             <thead>
                                                 <tr>
-                                                    <th>Pooja</th>
-                                                    <th>Date</th>
-                                                    <th>Fee</th>
-                                                    <th>Status</th>
+                                                    <th><?php echo $t['pooja']; ?></th>
+                                                    <th><?php echo $t['date']; ?></th>
+                                                    <th><?php echo $t['fee']; ?></th>
+                                                    <th><?php echo $t['status']; ?></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -277,13 +277,14 @@ while ($drow = mysqli_fetch_assoc($resDonations)) {
                                                         <td><?= date('d M Y', strtotime($b['pooja_date'])) ?></td>
                                                         <td class="fw-bold text-dark">₹<?= number_format($b['fee'], 0) ?>
                                                         </td>
-                                                        <td><span
-                                                                class="badge-soft <?= $sClass ?>"><?= ucfirst($b['status']) ?></span>
+                                                        <td><span class="badge-soft <?= $sClass ?>">
+                                                                <?= $b['status'] === 'completed' ? $t['completed'] : ($b['status'] === 'paid' ? $t['paid'] : $t['pending']) ?>
+                                                            </span>
                                                         </td>
                                                     </tr>
                                                 <?php endforeach;
                                                 if (empty($myPoojaBookings))
-                                                    echo "<tr><td colspan='4' class='text-center py-4 text-muted small'>No bookings found</td></tr>"; ?>
+                                                    echo "<tr><td colspan='4' class='text-center py-4 text-muted small'>{$t['no_bookings_found']}</td></tr>"; ?>
                                             </tbody>
                                         </table>
                                     </div>
@@ -294,20 +295,20 @@ while ($drow = mysqli_fetch_assoc($resDonations)) {
                         <div class="col-12">
                             <div class="ant-card">
                                 <div class="ant-card-head d-flex justify-content-between align-items-center">
-                                    <span>Generous Donations</span>
+                                    <span><?php echo $t['generous_donations']; ?></span>
                                     <a href="../donate.php"
-                                        class="btn btn-link btn-sm text-primary text-decoration-none p-0">Donate +</a>
+                                        class="btn btn-link btn-sm text-primary text-decoration-none p-0"><?php echo $t['donate_plus']; ?></a>
                                 </div>
                                 <div class="ant-card-body p-0">
                                     <div class="table-responsive">
                                         <table class="table ant-table mb-0">
                                             <thead>
                                                 <tr>
-                                                    <th>Receipt No</th>
-                                                    <th>Amount</th>
-                                                    <th>Date</th>
-                                                    <th>Status</th>
-                                                    <th class="text-end">Action</th>
+                                                    <th><?php echo $t['receipt_no']; ?></th>
+                                                    <th><?php echo $t['amount']; ?></th>
+                                                    <th><?php echo $t['date']; ?></th>
+                                                    <th><?php echo $t['status']; ?></th>
+                                                    <th class="text-end"><?php echo $t['action']; ?></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -316,25 +317,25 @@ while ($drow = mysqli_fetch_assoc($resDonations)) {
                                                     ?>
                                                     <tr>
                                                         <td class="fw-bold text-primary">
-                                                            #<?= htmlspecialchars($don['receipt_no'] ?? 'N/A') ?></td>
+                                                            #<?= htmlspecialchars($don['receipt_no'] ?? $t['not_available']) ?></td>
                                                         <td class="fw-bold text-dark">
                                                             ₹<?= number_format($don['amount'], 2) ?></td>
                                                         <td class="text-secondary">
                                                             <?= date('d M Y', strtotime($don['created_at'])) ?>
                                                         </td>
                                                         <td><span
-                                                                class="badge-soft <?= $dStatus ?>"><?= ucfirst($don['status']) ?></span>
+                                                                class="badge-soft <?= $dStatus ?>"><?= $don['status'] === 'success' ? $t['success'] : $t['pending']; ?></span>
                                                         </td>
                                                         <td class="text-end">
                                                             <a href="receipt_download.php?id=13"
                                                                 class="btn btn-light btn-sm border rounded-pill px-3 fw-medium">
-                                                                <i class="bi bi-file-earmark-pdf me-1"></i> View
+                                                                <i class="bi bi-file-earmark-pdf me-1"></i> <?php echo $t['view']; ?>
                                                             </a>
                                                         </td>
                                                     </tr>
                                                 <?php endforeach;
                                                 if (empty($myDonations))
-                                                    echo "<tr><td colspan='5' class='text-center py-5 text-muted small'>You haven't made any donations yet.</td></tr>"; ?>
+                                                    echo "<tr><td colspan='5' class='text-center py-5 text-muted small'>{$t['no_donations_yet']}</td></tr>"; ?>
                                             </tbody>
                                         </table>
                                     </div>

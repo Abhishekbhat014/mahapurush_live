@@ -8,7 +8,7 @@ $dbPath = __DIR__ . '/../config/db.php';
 if (file_exists($dbPath)) {
     require $dbPath;
 } else {
-    die("Database connection file missing.");
+    die($t['db_connection_missing']);
 }
 
 $error = "";
@@ -20,7 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     // if email and password are empty
     if ($email === '' || $password === '') {
-        $error = ($lang === 'mr') ? 'कृपया ई-मेल आणि पासवर्ड भरा.' : 'Please enter both email and password.';
+        $error = $t['err_email_password_required'];
     } else {
         $stmt = $con->prepare("SELECT id, first_name, last_name, password FROM users WHERE email = ? LIMIT 1");
         $stmt->bind_param("s", $email);
@@ -57,10 +57,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 header("Location: redirect.php");
                 exit;
             } else {
-                $error = ($lang === 'mr') ? 'चुकीचा पासवर्ड.' : 'Invalid password.';
+                $error = $t['err_invalid_password'];
             }
         } else {
-            $error = ($lang === 'mr') ? 'हे खाते अस्तित्वात नाही.' : 'No account found with that email.';
+            $error = $t['err_no_account'];
         }
         $stmt->close();
     }
@@ -214,7 +214,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     </div>
                     <h3 class="fw-bold mb-1"><?php echo $t['login']; ?></h3>
                     <p class="text-secondary small">
-                        <?php echo ($lang === 'mr') ? 'तुमच्या खात्यात लॉग इन करा' : 'Securely access your account'; ?>
+                        <?php echo $t['login_subtitle']; ?>
                     </p>
                 </div>
 
@@ -230,7 +230,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         <label class="form-label"><?php echo $t['email']; ?></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                            <input type="email" name="email" class="form-control" placeholder="example@mail.com"
+                            <input type="email" name="email" class="form-control" placeholder="<?php echo $t['email_placeholder']; ?>"
                                 required>
                         </div>
                     </div>
@@ -257,7 +257,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     <p class="small text-muted mb-0">
                         <?php echo $t['dont_have_account']; ?>
                         <a href="register.php" class="text-primary text-decoration-none fw-bold ms-1">
-                            <?php echo ($lang === 'mr') ? 'नोंदणी करा' : 'Sign Up'; ?>
+                            <?php echo $t['sign_up']; ?>
                         </a>
                     </p>
                 </div>
@@ -268,12 +268,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <footer class="ant-footer">
         <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
             <div class="small text-muted">
-                &copy; <?php echo date("Y"); ?> <?php echo $t['title']; ?>. All rights reserved.
+                <?php echo sprintf($t['copyright_footer_title'], date("Y"), $t['title']); ?>
             </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="text-start">
                     <div style="font-size: 11px;" class="fw-bold">Yojana Gawade</div>
-                    <div style="font-size: 9px;" class="text-uppercase text-primary fw-bold">Full Stack Developer</div>
+                    <div style="font-size: 9px;" class="text-uppercase text-primary fw-bold"><?php echo $t['full_stack_developer']; ?></div>
                 </div>
             </div>
         </div>
@@ -295,3 +295,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 </body>
 
 </html>
+
+
+
+
+

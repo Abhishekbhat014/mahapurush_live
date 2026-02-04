@@ -35,7 +35,6 @@ if ($isLoggedIn && $con) {
         }
     }
 }
-
 ?>
 <style>
     .ant-header {
@@ -119,9 +118,9 @@ if ($isLoggedIn && $con) {
                 <a href="index.php" class="ant-menu-item"><?php echo $t['home']; ?></a>
                 <a href="about.php" class="ant-menu-item"><?php echo $t['about']; ?></a>
                 <a href="panchang.php" class="ant-menu-item"><?php echo $t['panchang']; ?></a>
-                <a href="gallery.php" class="ant-menu-item">Gallery</a>
+                <a href="gallery.php" class="ant-menu-item"><?php echo $t['gallery']; ?></a>
                 <div class="dropdown">
-                    <a class="ant-menu-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Committee</a>
+                    <a class="ant-menu-item dropdown-toggle" href="#" data-bs-toggle="dropdown"><?php echo $t['committee']; ?></a>
                     <ul class="dropdown-menu border-0 shadow-lg p-3 mt-0"
                         style="border-radius: 12px; min-width: 200px;">
 
@@ -145,9 +144,7 @@ if ($isLoggedIn && $con) {
 
                         <li>
                             <a class="dropdown-item fw-bold text-primary small text-center rounded-pill"
-                                href="committee.php">
-                                View All Members
-                            </a>
+                                href="committee.php"><?php echo $t['view_all_members']; ?></a>
                         </li>
                     </ul>
                 </div>
@@ -157,11 +154,12 @@ if ($isLoggedIn && $con) {
         <div class="d-flex align-items-center gap-3">
             <div class="dropdown">
                 <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <i class="bi bi-translate me-1"></i> <?= ($currentLang == 'mr') ? 'मराठी' : 'English'; ?>
+                    <i class="bi bi-translate me-1"></i>
+                    <?= ($currentLang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
-                    <li><a class="dropdown-item small fw-medium" href="?lang=en">English</a></li>
-                    <li><a class="dropdown-item small fw-medium" href="?lang=mr">मराठी (Marathi)</a></li>
+                    <li><a class="dropdown-item small fw-medium" href="?lang=en"><?php echo $t['lang_english']; ?></a></li>
+                    <li><a class="dropdown-item small fw-medium" href="?lang=mr"><?php echo $t['lang_marathi_full']; ?></a></li>
                 </ul>
             </div>
 
@@ -170,8 +168,7 @@ if ($isLoggedIn && $con) {
                     <div class="user-pill-header shadow-sm">
                         <img src="<?= $headerPhoto ?>" class="rounded-circle" width="28" height="28"
                             style="object-fit: cover;">
-                        <span
-                            class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name'] ?? 'User') ?></span>
+                        <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name'] ?? $t['user']) ?></span>
                     </div>
                 </a>
             <?php else: ?>

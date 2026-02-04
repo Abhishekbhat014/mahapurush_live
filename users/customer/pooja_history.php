@@ -19,9 +19,9 @@ $data = $result->get_result();
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="<?php echo $lang; ?>">
 <head>
-    <title>My Poojas</title>
+    <title><?php echo $t['my_poojas']; ?> - <?php echo $t['title']; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
@@ -34,16 +34,16 @@ $data = $result->get_result();
         <div class="col-lg-9">
             <div class="card dashboard-card">
                 <div class="card-body p-4">
-                    <h4 class="fw-bold mb-4">My Pooja Bookings</h4>
+                    <h4 class="fw-bold mb-4"><?php echo $t['my_pooja_bookings']; ?></h4>
 
                     <table class="table">
                         <thead>
                         <tr>
-                            <th>Pooja</th>
-                            <th>Date</th>
-                            <th>Slot</th>
-                            <th>Fee</th>
-                            <th>Status</th>
+                            <th><?php echo $t['pooja']; ?></th>
+                            <th><?php echo $t['date']; ?></th>
+                            <th><?php echo $t['time_slot']; ?></th>
+                            <th><?php echo $t['fee']; ?></th>
+                            <th><?php echo $t['status']; ?></th>
                         </tr>
                         </thead>
                         <tbody>
@@ -51,7 +51,7 @@ $data = $result->get_result();
                             <tr>
                                 <td><?php echo $row['type']; ?></td>
                                 <td><?php echo date('d M Y', strtotime($row['pooja_date'])); ?></td>
-                                <td><?php echo ucfirst($row['time_slot'] ?? '-'); ?></td>
+                                <td><?php echo ucfirst($row['time_slot'] ?? $t['not_available']); ?></td>
                                 <td>₹<?php echo number_format($row['fee'], 2); ?></td>
                                 <td>
                                     <span class="badge bg-secondary">

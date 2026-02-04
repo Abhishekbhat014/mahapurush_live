@@ -5,7 +5,7 @@ $dbPath = __DIR__ . '/../config/db.php';
 if (file_exists($dbPath)) {
     require $dbPath;
 } else {
-    die("Database connection file missing.");
+    die($t['db_connection_missing']);
 }
 
 $error = '';
@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else if ($password !== $confirm) {
         $error = $t['err_pass_mismatch'];
     } else if (!preg_match('/^[0-9]{10}$/', $phone)) {
-        $error = ($lang === 'mr') ? 'अवैध फोन नंबर.' : 'Invalid phone number.';
+        $error = $t['err_invalid_phone'];
     }
 
     if (empty($error)) {
@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $check->execute();
         $checkResult = $check->get_result();
         if ($checkResult->num_rows > 0) {
-            $error = ($lang === 'mr') ? 'ईमेल किंवा फोन आधीच नोंदणीकृत आहे.' : 'Email or Phone already registered.';
+            $error = $t['err_email_or_phone_exists'];
         }
         $check->close();
     }
@@ -45,9 +45,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $fileExt = strtolower(pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION));
             $allowed = ['jpg', 'png', 'jpeg', 'webp'];
             if (!in_array($fileExt, $allowed)) {
-                $error = "Invalid file type.";
+                $error = $t['err_invalid_file_type'];
             } elseif ($_FILES['photo']['size'] > 2 * 1024 * 1024) {
-                $error = "File size must be under 2MB.";
+                $error = $t['err_file_size'];
             } else {
                 $photoName = uniqid('user_', true) . '.' . $fileExt;
                 $uploadDir = __DIR__ . '/../uploads/users/';
@@ -254,14 +254,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <input type="email" name="email" class="form-control" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label"><?php echo ($lang === 'mr') ? 'फोन' : 'Phone'; ?></label>
+                            <label class="form-label"><?php echo $t['phone']; ?></label>
                             <input type="text" name="phone" class="form-control" pattern="[0-9]{10}" required>
                         </div>
                     </div>
 
                     <div class="mb-3">
                         <label
-                            class="form-label"><?php echo ($lang === 'mr') ? 'प्रोफाइल फोटो (ऐच्छिक)' : 'Profile Photo (Optional)'; ?></label>
+                            class="form-label"><?php echo $t['profile_photo_optional']; ?></label>
                         <input type="file" name="photo" class="form-control" accept="image/*">
                     </div>
 
@@ -305,12 +305,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <footer class="ant-footer">
         <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-            <div class="small text-muted">&copy; <?php echo date("Y"); ?> <?php echo $t['title']; ?>.</div>
+            <div class="small text-muted"><?php echo sprintf($t['copyright_footer_title'], date("Y"), $t['title']); ?></div>
             <div class="d-flex align-items-center gap-3">
                 <img src="../assets/images/dev/Yojana.jpeg" width="32" height="32" class="rounded-circle">
                 <div class="text-start">
                     <div style="font-size: 11px;" class="fw-bold">Yojana Gawade</div>
-                    <div style="font-size: 9px;" class="text-uppercase text-primary fw-bold">Full Stack Developer</div>
+                    <div style="font-size: 9px;" class="text-uppercase text-primary fw-bold"><?php echo $t['full_stack_developer']; ?></div>
                 </div>
             </div>
         </div>
@@ -332,3 +332,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </body>
 
 </html>
+

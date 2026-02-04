@@ -14,13 +14,13 @@ require '../../includes/receipt_helper.php';
 
 $isLoggedIn = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
 $uid = $_SESSION['user_id'] ?? NULL;
-$userName = $_SESSION['user_name'] ?? "User";
+$userName = $_SESSION['user_name'] ?? $t['user'];
 $currentPage = 'donate.php';
 
 // --- Fetch Latest Profile Photo and Name for Header ---
 $uQuery = mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1");
 $uRow = mysqli_fetch_assoc($uQuery);
-$displayName = $isLoggedIn ? ($uRow['first_name'] . ' ' . $uRow['last_name']) : "Guest";
+$displayName = $isLoggedIn ? ($uRow['first_name'] . ' ' . $uRow['last_name']) : $t['guest'];
 $loggedInUserPhoto = !empty($uRow['photo'])
     ? '../../uploads/users/' . basename($uRow['photo'])
     : 'https://ui-avatars.com/api/?name=' . urlencode($displayName) . '&background=random';
@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
     $note = trim($_POST['note'] ?? '');
 
     if ($donorName === '' || !is_numeric($amount) || $amount <= 0) {
-        $error = ($lang === 'mr') ? 'कृपया वैध नाव आणि रक्कम भरा.' : 'Please enter a valid name and amount.';
+        $error = $t['err_valid_name_amount'];
     } else {
         $con->begin_transaction();
         try {
@@ -51,10 +51,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
             attachReceiptToPayment($con, $paymentId, $receiptId);
 
             $con->commit();
-            $success = ($lang === 'mr') ? "धन्यवाद! तुमची पावती तयार झाली आहे." : "Thank you! Your receipt has been generated.";
+            $success = $t['donation_receipt_generated'];
         } catch (Exception $e) {
             $con->rollback();
-            $error = ($lang === 'mr') ? 'काहीतरी चूक झाली.' : 'Something went wrong.';
+            $error = $t['something_went_wrong'];
         }
     }
 }
@@ -242,7 +242,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
                     <div class="container">
                         <h2 class="fw-bold mb-1"><?php echo $t['donations']; ?></h2>
                         <p class="text-secondary mb-0">
-                            <?php echo ($lang === 'mr') ? 'तुमचे योगदान मंदिराच्या विकासासाठी उपयुक्त ठरेल.' : 'Your contribution helps in temple maintenance and community services.'; ?>
+                            <?php echo $t['donations_subtitle']; ?>
                         </p>
                     </div>
                 </div>
@@ -273,25 +273,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
                             <form method="POST">
                                 <div class="mb-3">
                                     <label
-                                        class="form-label"><?php echo ($lang === 'mr') ? 'पूर्ण नाव' : 'Full Name'; ?></label>
+                                        class="form-label"><?php echo $t['full_name']; ?></label>
                                     <input type="text" name="name" class="form-control"
                                         value="<?= $isLoggedIn ? htmlspecialchars($displayName) : '' ?>"
-                                        placeholder="Enter your name" required>
+                                        placeholder="<?php echo $t['full_name_placeholder']; ?>" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label
-                                        class="form-label"><?php echo ($lang === 'mr') ? 'रक्कम (₹)' : 'Amount (₹)'; ?></label>
+                                    <label class="form-label"><?php echo $t['amount_inr']; ?></label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light border-end-0">₹</span>
                                         <input type="number" name="amount" class="form-control" min="1"
-                                            placeholder="0.00" required>
+                                            placeholder="<?php echo $t['amount_placeholder']; ?>" required>
                                     </div>
                                 </div>
                                 <div class="mb-4">
-                                    <label
-                                        class="form-label"><?php echo ($lang === 'mr') ? 'टीप (ऐच्छिक)' : 'Note (Optional)'; ?></label>
+                                    <label class="form-label"><?php echo $t['note_optional']; ?></label>
                                     <textarea name="note" class="form-control" rows="3"
-                                        placeholder="Purpose of donation..."></textarea>
+                                        placeholder="<?php echo $t['donation_note_placeholder']; ?>"></textarea>
                                 </div>
                                 <button type="submit" class="ant-btn-primary"><i
                                         class="bi bi-shield-check me-2"></i><?php echo $t['donate_btn']; ?></button>
@@ -307,3 +305,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
 </body>
 
 </html>
+

@@ -1,5 +1,6 @@
 <?php
 session_start();
+require '../../includes/lang.php';
 require '../../config/db.php';
 
 if (empty($_SESSION['logged_in'])) {
@@ -20,7 +21,7 @@ $stmt->execute();
 $res = $stmt->get_result();
 
 if ($res->num_rows === 0) {
-    die("Invalid Pooja Type");
+    die($t['err_invalid_pooja_type']);
 }
 
 $fee = $res->fetch_assoc()['fee'];

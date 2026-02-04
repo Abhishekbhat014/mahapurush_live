@@ -46,7 +46,7 @@ if ($con && $con !== false) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $t['title']; ?> - Official Portal</title>
+    <title><?php echo $t['title']; ?> - <?php echo $t['official_portal']; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -152,9 +152,9 @@ if ($con && $con !== false) {
             </span>
             <h1><?php echo $t['welcome_title']; ?></h1>
             <div class="d-flex justify-content-center gap-3 mt-4">
-                <a href="donate.php" class="ant-btn-primary-big shadow-sm">Donate Now</a>
+                <a href="donate.php" class="ant-btn-primary-big shadow-sm"><?php echo $t['donate_btn']; ?></a>
                 <a href="pooja.php" class="btn btn-outline-dark px-5 py-2 fw-bold"
-                    style="border-radius: 8px; height: 50px; display: flex; align-items: center;">Book a Pooja</a>
+                    style="border-radius: 8px; height: 50px; display: flex; align-items: center;"><?php echo $t['book_pooja_btn']; ?></a>
             </div>
         </div>
     </section>
@@ -163,12 +163,12 @@ if ($con && $con !== false) {
 
         <div class="row align-items-center g-5 mb-5 pb-4">
             <div class="col-lg-6">
-                <img src="<?= $temple['photo'] ?>" class="temple-img-main" alt="Temple Image">
+                <img src="<?= $temple['photo'] ?>" class="temple-img-main" alt="<?php echo $t['temple_image_alt']; ?>">
             </div>
             <div class="col-lg-6">
-                <span class="text-primary fw-bold text-uppercase small mb-2 d-block" style="letter-spacing: 1px;">Our
-                    Sacred Heritage</span>
-                <h2 class="fw-bold mb-4">About <?= $t['title'] ?></h2>
+                <span class="text-primary fw-bold text-uppercase small mb-2 d-block"
+                    style="letter-spacing: 1px;"><?php echo $t['our_sacred_heritage']; ?></span>
+                <h2 class="fw-bold mb-4"><?php echo $t['about_label']; ?> <?= $t['title'] ?></h2>
                 <p class="text-secondary fs-5 mb-4" style="line-height: 1.8;">
                     <?php
                     // Show first 300 characters of description as a summary
@@ -177,23 +177,25 @@ if ($con && $con !== false) {
                 </p>
                 <div class="d-flex gap-4 mb-4">
                     <div>
-                        <h4 class="fw-bold text-primary mb-0">Daily</h4>
-                        <span class="small text-muted text-uppercase fw-bold">Aarti & Puja</span>
+                        <h4 class="fw-bold text-primary mb-0"><?php echo $t['daily']; ?></h4>
+                        <span
+                            class="small text-muted text-uppercase fw-bold"><?php echo $t['aarti_puja']; ?></span>
                     </div>
                     <div class="vr opacity-25"></div>
                     <div>
-                        <h4 class="fw-bold text-primary mb-0">Infinite</h4>
-                        <span class="small text-muted text-uppercase fw-bold">Blessings</span>
+                        <h4 class="fw-bold text-primary mb-0"><?php echo $t['infinite']; ?></h4>
+                        <span
+                            class="small text-muted text-uppercase fw-bold"><?php echo $t['blessings']; ?></span>
                     </div>
                 </div>
                 <a href="about.php" class="btn btn-link text-primary fw-bold p-0 text-decoration-none">
-                    Read our full history <i class="bi bi-arrow-right ms-1"></i>
+                    <?php echo $t['read_full_history']; ?> <i class="bi bi-arrow-right ms-1"></i>
                 </a>
             </div>
         </div>
 
         <div class="mb-5 pt-4">
-            <h4 class="fw-bold mb-4">Temple Services</h4>
+            <h4 class="fw-bold mb-4"><?php echo $t['temple_services']; ?></h4>
             <div class="row g-4">
                 <?php
                 $icons = ['calendar2-check', 'heart-fill', 'people-fill', 'shop-window'];
@@ -204,8 +206,7 @@ if ($con && $con !== false) {
                             <div class="ant-card-body text-center">
                                 <div class="service-icon"><i class="bi bi-<?= $icons[$i] ?>"></i></div>
                                 <div class="fw-bold mb-2"><?= $serviceTitles[$i] ?></div>
-                                <div class="small text-muted d-none d-md-block">Dedicated rituals and services for all
-                                    devotees.</div>
+                                <div class="small text-muted d-none d-md-block"><?php echo $t['service_desc']; ?></div>
                             </div>
                         </div>
                     </div>
@@ -217,7 +218,7 @@ if ($con && $con !== false) {
 
         <div class="row g-5">
             <div class="col-lg-8">
-                <h4 class="fw-bold mb-4">Upcoming Events</h4>
+                <h4 class="fw-bold mb-4"><?php echo $t['upcoming_events']; ?></h4>
                 <?php if ($eventQuery && mysqli_num_rows($eventQuery) > 0): ?>
                     <?php while ($event = mysqli_fetch_assoc($eventQuery)): ?>
                         <div class="ant-card mb-4 border-0">
@@ -230,44 +231,44 @@ if ($con && $con !== false) {
                                 </div>
                                 <div class="flex-grow-1">
                                     <h5 class="fw-bold mb-1"><?= htmlspecialchars($event['name']) ?></h5>
-                                    <div class="small text-muted"><i class="bi bi-clock me-1"></i> <?= $event['duration'] ?>
-                                    </div>
+                                <div class="small text-muted"><i class="bi bi-clock me-1"></i> <?= $event['duration'] ?>
                                 </div>
-                                <a href="events.php?id=<?= $event['id'] ?>"
-                                    class="btn btn-light btn-sm px-4 rounded-pill border fw-bold text-primary">Details</a>
                             </div>
-                        </div>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <div class="ant-card">
-                        <div class="ant-card-body text-center py-5">
-                            <i class="bi bi-calendar-x fs-1 text-muted opacity-25 mb-3"></i>
-                            <p class="text-muted mb-0">Stay tuned for upcoming spiritual gatherings.</p>
+                            <a href="events.php?id=<?= $event['id'] ?>"
+                                class="btn btn-light btn-sm px-4 rounded-pill border fw-bold text-primary"><?php echo $t['details']; ?></a>
                         </div>
                     </div>
-                <?php endif; ?>
-            </div>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <div class="ant-card">
+                    <div class="ant-card-body text-center py-5">
+                        <i class="bi bi-calendar-x fs-1 text-muted opacity-25 mb-3"></i>
+                        <p class="text-muted mb-0"><?php echo $t['no_upcoming_events']; ?></p>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
 
             <div class="col-lg-4">
                 <div class="ant-card sticky-top" style="top: 88px; z-index: 1;">
                     <div class="ant-card-body">
-                        <h5 class="fw-bold mb-4">Contact Us</h5>
+                        <h5 class="fw-bold mb-4"><?php echo $t['contact_us']; ?></h5>
                         <div class="d-flex gap-3 mb-4">
                             <div class="text-primary fs-5"><i class="bi bi-geo-alt-fill"></i></div>
                             <div>
                                 <small class="text-uppercase text-muted fw-bold d-block mb-1"
-                                    style="font-size: 10px;">Location</small>
+                                    style="font-size: 10px;"><?php echo $t['location']; ?></small>
                                 <span
-                                    class="small text-dark fw-medium"><?= htmlspecialchars($temple['location'] ?? 'Visit us') ?></span>
+                                    class="small text-dark fw-medium"><?= htmlspecialchars($temple['location'] ?? $t['visit_us']) ?></span>
                             </div>
                         </div>
                         <div class="d-flex gap-3">
                             <div class="text-primary fs-5"><i class="bi bi-telephone-fill"></i></div>
                             <div>
                                 <small class="text-uppercase text-muted fw-bold d-block mb-1"
-                                    style="font-size: 10px;">Phone</small>
+                                    style="font-size: 10px;"><?php echo $t['phone']; ?></small>
                                 <span
-                                    class="small text-dark fw-medium"><?= htmlspecialchars($temple['contact'] ?? 'Call us') ?></span>
+                                    class="small text-dark fw-medium"><?= htmlspecialchars($temple['contact'] ?? $t['call_us']) ?></span>
                             </div>
                         </div>
                     </div>
