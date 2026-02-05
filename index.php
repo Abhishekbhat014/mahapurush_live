@@ -153,7 +153,7 @@ if ($con && $con !== false) {
             <h1><?php echo $t['welcome_title']; ?></h1>
             <div class="d-flex justify-content-center gap-3 mt-4">
                 <a href="donate.php" class="ant-btn-primary-big shadow-sm"><?php echo $t['donate_btn']; ?></a>
-                <a href="pooja.php" class="btn btn-outline-dark px-5 py-2 fw-bold"
+                <a href="auth/login.php" class="btn btn-outline-dark px-5 py-2 fw-bold"
                     style="border-radius: 8px; height: 50px; display: flex; align-items: center;"><?php echo $t['book_pooja_btn']; ?></a>
             </div>
         </div>
@@ -178,14 +178,12 @@ if ($con && $con !== false) {
                 <div class="d-flex gap-4 mb-4">
                     <div>
                         <h4 class="fw-bold text-primary mb-0"><?php echo $t['daily']; ?></h4>
-                        <span
-                            class="small text-muted text-uppercase fw-bold"><?php echo $t['aarti_puja']; ?></span>
+                        <span class="small text-muted text-uppercase fw-bold"><?php echo $t['aarti_puja']; ?></span>
                     </div>
                     <div class="vr opacity-25"></div>
                     <div>
                         <h4 class="fw-bold text-primary mb-0"><?php echo $t['infinite']; ?></h4>
-                        <span
-                            class="small text-muted text-uppercase fw-bold"><?php echo $t['blessings']; ?></span>
+                        <span class="small text-muted text-uppercase fw-bold"><?php echo $t['blessings']; ?></span>
                     </div>
                 </div>
                 <a href="about.php" class="btn btn-link text-primary fw-bold p-0 text-decoration-none">
@@ -231,23 +229,23 @@ if ($con && $con !== false) {
                                 </div>
                                 <div class="flex-grow-1">
                                     <h5 class="fw-bold mb-1"><?= htmlspecialchars($event['name']) ?></h5>
-                                <div class="small text-muted"><i class="bi bi-clock me-1"></i> <?= $event['duration'] ?>
+                                    <div class="small text-muted"><i class="bi bi-clock me-1"></i> <?= $event['duration'] ?>
+                                    </div>
                                 </div>
+                                <a href="events.php?id=<?= $event['id'] ?>"
+                                    class="btn btn-light btn-sm px-4 rounded-pill border fw-bold text-primary"><?php echo $t['details']; ?></a>
                             </div>
-                            <a href="events.php?id=<?= $event['id'] ?>"
-                                class="btn btn-light btn-sm px-4 rounded-pill border fw-bold text-primary"><?php echo $t['details']; ?></a>
+                        </div>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <div class="ant-card">
+                        <div class="ant-card-body text-center py-5">
+                            <i class="bi bi-calendar-x fs-1 text-muted opacity-25 mb-3"></i>
+                            <p class="text-muted mb-0"><?php echo $t['no_upcoming_events']; ?></p>
                         </div>
                     </div>
-                <?php endwhile; ?>
-            <?php else: ?>
-                <div class="ant-card">
-                    <div class="ant-card-body text-center py-5">
-                        <i class="bi bi-calendar-x fs-1 text-muted opacity-25 mb-3"></i>
-                        <p class="text-muted mb-0"><?php echo $t['no_upcoming_events']; ?></p>
-                    </div>
-                </div>
-            <?php endif; ?>
-        </div>
+                <?php endif; ?>
+            </div>
 
             <div class="col-lg-4">
                 <div class="ant-card sticky-top" style="top: 88px; z-index: 1;">

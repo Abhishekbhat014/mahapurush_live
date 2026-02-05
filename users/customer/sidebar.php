@@ -23,6 +23,18 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <i class="bi bi-person-circle"></i> <span><?php echo $t['pooja_bookings']; ?></span>
         </a>
 
+        <a href="contribute.php" class="nav-link-custom <?= ($currentPage == 'contribute.php') ? 'active' : '' ?>">
+            <i class="bi bi-box-seam"></i> <span><?php echo $t['contribution']; ?></span>
+        </a>
+
+        <a href="my_requests.php" class="nav-link-custom <?= ($currentPage == 'my_requests.php') ? 'active' : '' ?>">
+            <i class="bi bi-hourglass-split"></i> <span><?php echo $t['my_requests']; ?></span>
+        </a>
+
+        <a href="my_receipts.php" class="nav-link-custom <?= ($currentPage == 'my_receipts.php') ? 'active' : '' ?>">
+            <i class="bi bi-receipt-cutoff"></i> <span><?php echo $t['receipts']; ?></span>
+        </a>
+
         <a href="profile.php" class="nav-link-custom <?= ($currentPage == 'profile.php') ? 'active' : '' ?>">
             <i class="bi bi-person-circle"></i> <span><?php echo $t['my_profile']; ?></span>
         </a>
@@ -48,7 +60,10 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         <a href="dashboard.php" class="nav-link-custom <?= ($currentPage == 'dashboard.php') ? 'active' : '' ?>">
             <i class="bi bi-grid-1x2"></i> <?php echo $t['dashboard']; ?>
         </a>
-        <a href="../donate.php" class="nav-link-custom"><i class="bi bi-heart-fill"></i> <?php echo $t['make_donation']; ?></a>
+        <a href="donate.php" class="nav-link-custom"><i class="bi bi-heart-fill"></i> <?php echo $t['make_donation']; ?></a>
+        <a href="contribute.php" class="nav-link-custom"><i class="bi bi-box-seam"></i> <?php echo $t['contribution']; ?></a>
+        <a href="my_requests.php" class="nav-link-custom"><i class="bi bi-hourglass-split"></i> <?php echo $t['my_requests']; ?></a>
+        <a href="my_receipts.php" class="nav-link-custom"><i class="bi bi-receipt-cutoff"></i> <?php echo $t['receipts']; ?></a>
         <a href="profile.php" class="nav-link-custom <?= ($currentPage == 'profile.php') ? 'active' : '' ?>">
             <i class="bi bi-person-circle"></i> <?php echo $t['my_profile']; ?></a>
     </div>

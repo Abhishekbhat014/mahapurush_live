@@ -8,6 +8,8 @@ if (empty($_SESSION['logged_in'])) {
     exit;
 }
 
+$currLang = $_SESSION['lang'] ?? 'en';
+
 require __DIR__ . '/../../config/db.php';
 $uid = (int) $_SESSION['user_id'];
 $successMsg = '';
@@ -52,7 +54,7 @@ if (isset($_POST['change_password'])) {
 $user = mysqli_fetch_assoc(mysqli_query($con, "SELECT * FROM users WHERE id='$uid' LIMIT 1"));
 $userPhotoUrl = !empty($user['photo'])
     ? '../../uploads/users/' . $user['photo']
-    : 'https://ui-avatars.com/api/?name=' . urlencode($user['first_name'] . ' ' . $user['last_name']) . '&background=1677ff&color=fff';
+    : 'https://ui-avatars.com/api/?name=' . urlencode($user['first_name'] . ' ' . $user['last_name']) . '&background=random';
 
 $currentPage = 'profile.php';
 ?>
@@ -205,6 +207,21 @@ $currentPage = 'profile.php';
             gap: 10px;
         }
 
+        .lang-btn {
+            border: none;
+            background: #f5f5f5;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+
+        .lang-btn:hover {
+            background: #e6f4ff;
+            color: #1677ff;
+        }
+
         .ant-divider {
             height: 1px;
             background: var(--ant-border-color);
@@ -225,12 +242,32 @@ $currentPage = 'profile.php';
                     <i class="bi bi-flower1 text-warning me-2"></i><?php echo $t['title']; ?>
                 </a>
             </div>
-            <div class="user-pill shadow-sm">
-                <img src="<?= htmlspecialchars($userPhotoUrl) ?>" class="rounded-circle" width="28" height="28"
-                    style="object-fit: cover;">
-                <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
-                <div class="vr mx-2 text-muted opacity-25"></div>
-                <a href="../../auth/logout.php" class="text-danger"><i class="bi bi-power"></i></a>
+            <div class="d-flex align-items-center gap-3">
+                <div class="dropdown">
+                    <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-translate me-1"></i>
+                        <?= ($currLang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                        <li>
+                            <a class="dropdown-item small fw-medium <?= ($currLang == 'en') ? 'active' : '' ?>"
+                                href="?lang=en" aria-current="<?= ($currLang == 'en') ? 'true' : 'false' ?>">
+                                <?php echo $t['lang_english']; ?>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item small fw-medium <?= ($currLang == 'mr') ? 'active' : '' ?>"
+                                href="?lang=mr" aria-current="<?= ($currLang == 'mr') ? 'true' : 'false' ?>">
+                                <?php echo $t['lang_marathi_full']; ?>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="user-pill shadow-sm">
+                    <img src="<?= htmlspecialchars($userPhotoUrl) ?>" class="rounded-circle" width="28" height="28"
+                        style="object-fit: cover;">
+                    <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                </div>
             </div>
         </div>
     </header>

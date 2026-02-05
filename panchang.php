@@ -199,91 +199,43 @@ $yogaName = $yoga['name'] ?? $t['unknown'];
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:wght@400;700&display=swap"
-        rel="stylesheet">
-
     <style>
-        /* ===============================
-           SHIVA THEME VARIABLES
-        =============================== */
         :root {
-            --shiva-blue-light: #e3f2fd;
-            --shiva-blue-deep: #1565c0;
-            --shiva-saffron: #ff9800;
-            --shiva-saffron-light: #fff3e0;
-            --text-dark: #2c3e50;
-            --text-muted: #607d8b;
-            --bg-body: #fdfbf7;
+            --ant-primary: #1677ff;
+            --ant-primary-hover: #4096ff;
+            --ant-bg-layout: #f0f2f5;
+            --ant-border-color: #f0f0f0;
+            --ant-text: rgba(0, 0, 0, 0.88);
+            --ant-text-sec: rgba(0, 0, 0, 0.45);
+            --ant-radius: 12px;
+            --ant-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08);
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, var(--bg-body) 0%, var(--shiva-blue-light) 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--ant-bg-layout);
+            color: var(--ant-text);
             min-height: 100vh;
-            color: var(--text-dark);
-            display: flex;
-            flex-direction: column;
-        }
-
-        body {
             -webkit-user-select: none;
-            /* Chrome, Safari */
-            -moz-user-select: none;
-            /* Firefox */
-            -ms-user-select: none;
-            /* IE/Edge */
             user-select: none;
-        }
-
-        h1,
-        h2,
-        h3,
-        h4,
-        .navbar-brand {
-            font-family: 'Playfair Display', serif;
-        }
-
-        /* Navbar */
-        .navbar {
-            background: #ffffff;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.04);
-            padding: 1rem 0;
-        }
-
-        .navbar-brand {
-            font-weight: 700;
-            color: var(--shiva-saffron) !important;
-            font-size: 1.5rem;
-        }
-
-        .nav-link {
-            color: var(--text-dark);
-            font-weight: 500;
-        }
-
-        .nav-link:hover,
-        .nav-link.active {
-            color: var(--shiva-saffron);
         }
 
         /* Header */
         .panchang-header {
-            padding: 60px 0 40px;
+            padding: 70px 0 40px;
             text-align: center;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            background: white;
+            border-bottom: 1px solid var(--ant-border-color);
+            background: radial-gradient(circle at top right, #e6f4ff 0%, #ffffff 80%);
         }
 
         /* Cards */
         .panchang-card {
-            background: white;
-            border: none;
-            border-radius: 16px;
+            background: #fff;
+            border: 1px solid var(--ant-border-color);
+            border-radius: var(--ant-radius);
             padding: 2rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            box-shadow: var(--ant-shadow);
             height: 100%;
-            border-top: 4px solid var(--shiva-saffron);
             transition: transform 0.3s;
         }
 
@@ -292,7 +244,7 @@ $yogaName = $yoga['name'] ?? $t['unknown'];
         }
 
         .data-label {
-            color: var(--text-muted);
+            color: var(--ant-text-sec);
             font-size: 0.85rem;
             font-weight: 600;
             text-transform: uppercase;
@@ -303,19 +255,15 @@ $yogaName = $yoga['name'] ?? $t['unknown'];
         .data-value {
             font-size: 1.35rem;
             font-weight: 700;
-            color: var(--shiva-blue-deep);
+            color: var(--ant-primary);
         }
 
         .sun-card {
-            background-color: var(--shiva-saffron-light);
-            border-top-color: var(--shiva-blue-deep);
+            background-color: #f6f9ff;
         }
 
-        /* Footer */
-        footer {
-            background-color: #263238;
-            color: #eceff1;
-            padding: 2rem 0;
+        /* Footer spacing helper */
+        .ant-footer {
             margin-top: auto;
         }
     </style>
@@ -323,43 +271,7 @@ $yogaName = $yoga['name'] ?? $t['unknown'];
 
 <body>
 
-    <nav class="navbar navbar-expand-lg sticky-top">
-        <div class="container">
-            <a class="navbar-brand" href="index.php">
-                <i class="bi bi-brightness-high-fill me-2"></i><?php echo $t['title']; ?>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item"><a class="nav-link" href="index.php"><?php echo $t['home']; ?></a></li>
-                    <li class="nav-item"><a class="nav-link active"
-                            href="panchang.php"><?php echo $t['panchang']; ?></a></li>
-
-                    <li class="nav-item dropdown ms-lg-2">
-                        <a class="nav-link dropdown-toggle text-primary fw-bold" href="#" data-bs-toggle="dropdown">
-    <i class="bi bi-translate me-1"></i> <?= ($lang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
-</a>
-<ul class="dropdown-menu dropdown-menu-end">
-    <li><a class="dropdown-item" href="?date=<?php echo $dateInput; ?>&lang=en"><?php echo $t['lang_english']; ?></a></li>
-    <li><a class="dropdown-item" href="?date=<?php echo $dateInput; ?>&lang=mr"><?php echo $t['lang_marathi_full']; ?></a></li>
-</ul>
-                    </li>
-
-                    <li class="nav-item ms-lg-3">
-                        <?php if ($isLoggedIn) { ?>
-                            <a class="btn btn-outline-primary btn-sm rounded-pill px-3"
-                                href="auth/redirect.php"><?php echo $t['dashboard']; ?></a>
-                        <?php } else { ?>
-                            <a class="btn btn-outline-primary btn-sm rounded-pill px-3"
-                                href="auth/login.php"><?php echo $t['login']; ?></a>
-                        <?php } ?>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <?php include 'includes/header.php'; ?>
 
     <header class="panchang-header">
         <div class="container">
@@ -370,8 +282,10 @@ $yogaName = $yoga['name'] ?? $t['unknown'];
             <form action="" method="GET" class="mx-auto" style="max-width: 300px;">
                 <div class="input-group">
                     <input type="date" name="date" class="form-control rounded-start-pill ps-3 border-secondary"
-                        value="<?php echo date('Y-m-d', strtotime($dateInput)); ?>" <button type="submit"
-                        class="btn btn-warning text-white rounded-end-pill px-4 fw-bold"><?php echo $t['go']; ?></button>
+                        value="<?php echo date('Y-m-d', strtotime($dateInput)); ?>">
+                    <button type="submit" class="btn btn-primary rounded-end-pill px-4 fw-bold">
+                        <?php echo $t['go']; ?>
+                    </button>
                 </div>
             </form>
         </div>
@@ -391,7 +305,7 @@ $yogaName = $yoga['name'] ?? $t['unknown'];
 
                     <div class="row g-4">
                         <div class="col-md-12">
-                            <div class="p-4 rounded-3" style="background-color: var(--shiva-blue-light);">
+                        <div class="p-4 rounded-3" style="background-color: #f0f6ff;">
                                 <div class="data-label text-primary"><?php echo $t['current_tithi(lunar_day)']; ?></div>
                                 <div class="data-value" style="font-size: 1.8rem;">
                                     <?php echo "Demo"; ?>
@@ -452,14 +366,7 @@ $yogaName = $yoga['name'] ?? $t['unknown'];
         </div>
     </div>
 
-    <footer class="text-center">
-        <div class="container">
-            <small class="text-white-50">
-                &copy; <?php echo date("Y"); ?> <?php echo $t['title']; ?> |
-                <span class="text-white"><?php echo $t['copyright']; ?></span>
-            </small>
-        </div>
-    </footer>
+    <?php include 'includes/footer.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

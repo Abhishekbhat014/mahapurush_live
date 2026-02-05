@@ -40,19 +40,6 @@ while ($row = mysqli_fetch_assoc($catQuery)) {
             min-height: 100vh;
         }
 
-        /* --- Cohesive Header (Glassmorphism) --- */
-        .ant-header {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(12px);
-            height: 72px;
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid var(--ant-border-color);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
         /* --- Hero Section (Consistent with Index) --- */
         .ant-hero {
             background: radial-gradient(circle at top right, #e6f4ff 0%, #ffffff 70%);
@@ -112,14 +99,6 @@ while ($row = mysqli_fetch_assoc($catQuery)) {
             letter-spacing: 1px;
         }
 
-        /* --- Footer (Consistent Signature) --- */
-        .ant-footer {
-            background: #fff;
-            padding: 60px 0 30px;
-            border-top: 1px solid var(--ant-border-color);
-            margin-top: 60px;
-        }
-
         .ant-divider {
             height: 1px;
             background: linear-gradient(90deg, transparent, var(--ant-border-color), transparent);
@@ -136,28 +115,7 @@ while ($row = mysqli_fetch_assoc($catQuery)) {
 
 <body>
 
-    <header class="ant-header">
-        <div class="container d-flex align-items-center justify-content-between">
-            <a href="index.php" class="fw-bold text-dark text-decoration-none fs-4 d-flex align-items-center">
-                <i class="bi bi-bank2 text-primary me-2"></i><?php echo $t['title']; ?>
-            </a>
-            <div class="d-flex align-items-center gap-3">
-                <div class="dropdown">
-                    <button class="btn btn-light btn-sm border-0 shadow-sm dropdown-toggle" data-bs-toggle="dropdown">
-    <i class="bi bi-translate me-1"></i> <?= ($lang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
-</button>
-<ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg p-2">
-    <li><a class="dropdown-item small rounded-2" href="?lang=en"><?php echo $t['lang_english']; ?></a></li>
-    <li><a class="dropdown-item small rounded-2" href="?lang=mr"><?php echo $t['lang_marathi_full']; ?></a></li>
-</ul>
-                </div>
-                <a href="index.php" class="btn btn-primary btn-sm px-4"
-                    style="border-radius: 8px; background: var(--ant-primary); border: none;">
-                    <?php echo $t['home']; ?>
-                </a>
-            </div>
-        </div>
-    </header>
+    <?php include 'includes/header.php'; ?>
 
     <section class="ant-hero">
         <div class="container">
@@ -217,37 +175,7 @@ while ($row = mysqli_fetch_assoc($catQuery)) {
         <?php endforeach; ?>
     </main>
 
-    <footer class="ant-footer">
-        <div class="container">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-4">
-                <div class="text-center text-md-start">
-                    <div class="fw-bold text-dark fs-5 mb-1"><i
-                            class="bi bi-bank2 text-primary me-2"></i><?php echo $t['title']; ?></div>
-                    <div class="small text-muted"><?php echo sprintf($t['all_rights_reserved_year'], date("Y")); ?></div>
-                </div>
-
-                <div class="d-flex gap-4 fs-5 text-secondary">
-                    <i class="bi bi-facebook"></i>
-                    <i class="bi bi-instagram"></i>
-                    <i class="bi bi-youtube"></i>
-                </div>
-
-                <div class="d-flex align-items-center gap-3 bg-light p-2 px-3 rounded-pill shadow-sm">
-                    <img src="assets/images/dev/Yojana.jpeg" width="36" height="36"
-                        class="rounded-circle border border-white">
-                    <div class="text-start" style="line-height: 1.2;">
-                        <div style="font-size: 11px;" class="fw-bold text-dark">Yojana Gawade</div>
-                        <div style="font-size: 9px;" class="text-primary fw-bold text-uppercase letter-spacing-1">
-                            <?php echo $t['developer']; ?></div>
-                    </div>
-                </div>
-            </div>
-            <div class="ant-divider"></div>
-            <div class="text-center small text-muted opacity-50">
-                <?php echo $t['designed_with_devotion']; ?>
-            </div>
-        </div>
-    </footer>
+    <?php include 'includes/footer.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

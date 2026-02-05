@@ -3,6 +3,8 @@ session_start();
 require '../../includes/lang.php';
 require '../../config/db.php';
 
+$currLang = $_SESSION['lang'] ?? 'en';
+
 $userId = $_SESSION['user_id'];
 
 $result = $con->prepare("
@@ -23,9 +25,110 @@ $data = $result->get_result();
 <head>
     <title><?php echo $t['my_poojas']; ?> - <?php echo $t['title']; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --ant-primary: #1677ff;
+            --ant-bg-layout: #f0f2f5;
+            --ant-border-color: #f0f0f0;
+            --ant-text: rgba(0, 0, 0, 0.88);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--ant-bg-layout);
+            color: var(--ant-text);
+        }
+
+        .ant-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            height: 64px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--ant-border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .user-pill {
+            background: #fff;
+            padding: 6px 16px;
+            border-radius: 50px;
+            border: 1px solid var(--ant-border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        .lang-btn {
+            border: none;
+            background: #f5f5f5;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+
+        .lang-btn:hover {
+            background: #e6f4ff;
+            color: #1677ff;
+        }
+    </style>
 </head>
 
 <body>
+<?php
+$uRow = mysqli_fetch_assoc(mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$userId' LIMIT 1"));
+$userName = $_SESSION['user_name'] ?? $t['user'];
+$userPhotoUrl = !empty($uRow['photo'])
+    ? '../../uploads/users/' . basename($uRow['photo'])
+    : 'https://ui-avatars.com/api/?name=' . urlencode($userName) . '&background=random';
+?>
+
+    <header class="ant-header shadow-sm">
+        <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                    <i class="bi bi-list"></i>
+                </button>
+                <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
+                    <i class="bi bi-flower1 text-warning me-2"></i><?php echo $t['title']; ?>
+                </a>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="dropdown">
+                    <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-translate me-1"></i>
+                        <?= ($currLang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                        <li>
+                            <a class="dropdown-item small fw-medium <?= ($currLang == 'en') ? 'active' : '' ?>"
+                                href="?lang=en" aria-current="<?= ($currLang == 'en') ? 'true' : 'false' ?>">
+                                <?php echo $t['lang_english']; ?>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item small fw-medium <?= ($currLang == 'mr') ? 'active' : '' ?>"
+                                href="?lang=mr" aria-current="<?= ($currLang == 'mr') ? 'true' : 'false' ?>">
+                                <?php echo $t['lang_marathi_full']; ?>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="user-pill shadow-sm">
+                    <img src="<?= htmlspecialchars($userPhotoUrl) ?>" class="rounded-circle" width="28" height="28"
+                        style="object-fit: cover;">
+                    <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($userName) ?></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
 <div class="container py-5">
     <div class="row">
 

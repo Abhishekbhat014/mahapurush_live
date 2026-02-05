@@ -18,6 +18,12 @@ $poojaTypes = $con->query("SELECT id, type, fee FROM pooja_type ORDER BY type");
 
 // Sidebar Active Logic
 $currentPage = basename($_SERVER['PHP_SELF']);
+
+// User photo for header
+$uRow = mysqli_fetch_assoc(mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$userId' LIMIT 1"));
+$userPhotoUrl = !empty($uRow['photo'])
+    ? '../../uploads/users/' . basename($uRow['photo'])
+    : 'https://ui-avatars.com/api/?name=' . urlencode($userName) . '&background=random';
 ?>
 
 <!DOCTYPE html>
@@ -162,6 +168,21 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             gap: 10px;
         }
 
+        .lang-btn {
+            border: none;
+            background: #f5f5f5;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+
+        .lang-btn:hover {
+            background: #e6f4ff;
+            color: #1677ff;
+        }
+
         .ant-divider {
             height: 1px;
             background: var(--ant-border-color);
@@ -185,16 +206,30 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
             <div class="d-flex align-items-center gap-3">
                 <div class="dropdown">
-                    <button class="btn btn-light btn-sm dropdown-toggle border" data-bs-toggle="dropdown">
-    <i class="bi bi-translate me-1"></i> <?= ($currLang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
-</button>
-<ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
-    <li><a class="dropdown-item small" href="?lang=en"><?php echo $t['lang_english']; ?></a></li>
-    <li><a class="dropdown-item small" href="?lang=mr"><?php echo $t['lang_marathi_full']; ?></a></li>
-</ul>
+                    <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-translate me-1"></i>
+                        <?= ($currLang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                        <li>
+                            <a class="dropdown-item small fw-medium <?= ($currLang == 'en') ? 'active' : '' ?>"
+                                href="?lang=en" aria-current="<?= ($currLang == 'en') ? 'true' : 'false' ?>">
+                                <?php echo $t['lang_english']; ?>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item small fw-medium <?= ($currLang == 'mr') ? 'active' : '' ?>"
+                                href="?lang=mr" aria-current="<?= ($currLang == 'mr') ? 'true' : 'false' ?>">
+                                <?php echo $t['lang_marathi_full']; ?>
+                            </a>
+                        </li>
+                    </ul>
                 </div>
-                <div class="vr mx-2 text-muted opacity-25"></div>
-                <span class="small fw-bold text-secondary"><?= htmlspecialchars($userName) ?></span>
+                <div class="user-pill shadow-sm">
+                    <img src="<?= htmlspecialchars($userPhotoUrl) ?>" class="rounded-circle" width="28" height="28"
+                        style="object-fit: cover;">
+                    <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($userName) ?></span>
+                </div>
             </div>
         </div>
     </header>

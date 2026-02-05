@@ -12,9 +12,20 @@ $currentLang = $_SESSION['lang'] ?? 'en';
 // Fetch committee for dropdown
 $headerMembers = [];
 if ($con) {
-    $cmRes = mysqli_query($con, "SELECT first_name FROM users u JOIN user_roles ur ON u.id = ur.user_id JOIN roles r ON ur.role_id = r.id WHERE r.name != 'customer' LIMIT 3");
-    while ($row = mysqli_fetch_assoc($cmRes)) {
-        $headerMembers[] = $row;
+    $cmRes = mysqli_query(
+        $con,
+        "SELECT u.first_name, u.last_name, u.photo
+         FROM users u
+         JOIN user_roles ur ON u.id = ur.user_id
+         JOIN roles r ON ur.role_id = r.id
+         WHERE r.name != 'customer'
+         ORDER BY r.name, u.first_name
+         LIMIT 3"
+    );
+    if ($cmRes) {
+        while ($row = mysqli_fetch_assoc($cmRes)) {
+            $headerMembers[] = $row;
+        }
     }
 }
 
@@ -106,7 +117,6 @@ if ($isLoggedIn && $con) {
         color: #1677ff;
     }
 </style>
-
 <header class="ant-header">
     <div class="container d-flex align-items-center justify-content-between">
         <a href="index.php" class="fw-bold text-dark text-decoration-none fs-4 d-flex align-items-center">
@@ -120,22 +130,38 @@ if ($isLoggedIn && $con) {
                 <a href="panchang.php" class="ant-menu-item"><?php echo $t['panchang']; ?></a>
                 <a href="gallery.php" class="ant-menu-item"><?php echo $t['gallery']; ?></a>
                 <div class="dropdown">
-                    <a class="ant-menu-item dropdown-toggle" href="#" data-bs-toggle="dropdown"><?php echo $t['committee']; ?></a>
+                    <a class="ant-menu-item dropdown-toggle" href="#"
+                        data-bs-toggle="dropdown"><?php echo $t['committee']; ?></a>
                     <ul class="dropdown-menu border-0 shadow-lg p-3 mt-0"
                         style="border-radius: 12px; min-width: 200px;">
 
-
-                        <li class="mb-2">
-                            <div class="d-flex align-items-center gap-2 px-2 py-1">
-                                <img src="<?= $headerPhoto ?>" class="rounded-circle border shadow-sm"
-                                    style="width:28px;height:28px;object-fit:cover;">
-
-                                <span class="small fw-medium text-dark">
-                                    <?= htmlspecialchars($headerName) ?>
-                                </span>
-
-                            </div>
-                        </li>
+                        <?php if (!empty($headerMembers)): ?>
+                            <?php foreach ($headerMembers as $member): ?>
+                                <?php
+                                $memberName = trim(($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? ''));
+                                if (!empty($member['photo'])) {
+                                    $memberPhoto = 'uploads/users/' . basename($member['photo']);
+                                } else {
+                                    $memberPhoto = 'https://ui-avatars.com/api/?name=' . urlencode($memberName) . '&background=random';
+                                }
+                                ?>
+                                <li class="mb-2">
+                                    <div class="d-flex align-items-center gap-2 px-2 py-1">
+                                        <img src="<?= $memberPhoto ?>" class="rounded-circle border shadow-sm"
+                                            style="width:28px;height:28px;object-fit:cover;">
+                                        <span class="small fw-medium text-dark">
+                                            <?= htmlspecialchars($memberName ?: ($t['member'] ?? 'Member')) ?>
+                                        </span>
+                                    </div>
+                                </li>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <li class="mb-2">
+                                <div class="px-2 py-1 small text-muted">
+                                    <?= htmlspecialchars($t['no_members_found'] ?? 'No members found') ?>
+                                </div>
+                            </li>
+                        <?php endif; ?>
 
 
                         <li>
@@ -158,8 +184,18 @@ if ($isLoggedIn && $con) {
                     <?= ($currentLang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
-                    <li><a class="dropdown-item small fw-medium" href="?lang=en"><?php echo $t['lang_english']; ?></a></li>
-                    <li><a class="dropdown-item small fw-medium" href="?lang=mr"><?php echo $t['lang_marathi_full']; ?></a></li>
+                    <li>
+                        <a class="dropdown-item small fw-medium <?= ($currentLang == 'en') ? 'active' : '' ?>"
+                            href="?lang=en" aria-current="<?= ($currentLang == 'en') ? 'true' : 'false' ?>">
+                            <?php echo $t['lang_english']; ?>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item small fw-medium <?= ($currentLang == 'mr') ? 'active' : '' ?>"
+                            href="?lang=mr" aria-current="<?= ($currentLang == 'mr') ? 'true' : 'false' ?>">
+                            <?php echo $t['lang_marathi_full']; ?>
+                        </a>
+                    </li>
                 </ul>
             </div>
 
@@ -168,7 +204,8 @@ if ($isLoggedIn && $con) {
                     <div class="user-pill-header shadow-sm">
                         <img src="<?= $headerPhoto ?>" class="rounded-circle" width="28" height="28"
                             style="object-fit: cover;">
-                        <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name'] ?? $t['user']) ?></span>
+                        <span
+                            class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name'] ?? $t['user']) ?></span>
                     </div>
                 </a>
             <?php else: ?>

@@ -15,7 +15,7 @@ $currentPage = 'payments.php';
 // --- Header Identity Logic ---
 $uQuery = mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1");
 $uRow = mysqli_fetch_assoc($uQuery);
-$loggedInUserPhoto = !empty($uRow['photo']) ? '../../uploads/users/' . basename($uRow['photo']) : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=1677ff&color=fff';
+$loggedInUserPhoto = !empty($uRow['photo']) ? '../../uploads/users/' . basename($uRow['photo']) : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=random';
 
 // Fetch payments with Receipt Joining
 $sql = "SELECT p.id, r.receipt_no, p.donor_name, p.amount, p.payment_method, p.status, p.created_at

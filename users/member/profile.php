@@ -56,7 +56,7 @@ if (isset($_POST['change_password'])) {
 $user = mysqli_fetch_assoc(mysqli_query($con, "SELECT * FROM users WHERE id='$uid' LIMIT 1"));
 $userPhotoUrl = !empty($user['photo'])
     ? '../../uploads/users/' . basename($user['photo'])
-    : 'https://ui-avatars.com/api/?name=' . urlencode($user['first_name'] . ' ' . $user['last_name']) . '&background=1677ff&color=fff';
+    : 'https://ui-avatars.com/api/?name=' . urlencode($user['first_name'] . ' ' . $user['last_name']) . '&background=random';
 
 $currentPage = 'profile.php';
 ?>

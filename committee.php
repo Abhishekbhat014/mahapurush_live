@@ -85,18 +85,6 @@ if ($result) {
             min-height: 100vh;
         }
 
-        /* --- Header --- */
-        .ant-header {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            height: 72px;
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid var(--ant-border-color);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
 
         /* --- Page Hero --- */
         .ant-page-hero {
@@ -117,12 +105,29 @@ if ($result) {
 
         /* --- Filter Bar --- */
         .filter-container {
-            background: #fff;
-            padding: 12px;
-            border-radius: 16px;
+            background: linear-gradient(180deg, #ffffff 0%, #f6f9ff 100%);
+            padding: 16px;
+            border-radius: 18px;
             border: 1px solid var(--ant-border-color);
             box-shadow: var(--ant-shadow);
             margin-bottom: 50px;
+        }
+
+        .search-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f8fbff;
+            border: 1px solid #d9e6ff;
+            padding: 10px 14px;
+            border-radius: 999px;
+            transition: 0.2s;
+        }
+
+        .search-pill:focus-within {
+            border-color: var(--ant-primary);
+            box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.15);
+            background: #fff;
         }
 
         .form-control,
@@ -130,6 +135,7 @@ if ($result) {
             border: none;
             box-shadow: none !important;
             font-size: 14px;
+            background: transparent;
         }
 
         .btn-ant-primary {
@@ -178,11 +184,8 @@ if ($result) {
             text-transform: uppercase;
         }
 
-        /* --- Footer --- */
+        /* --- Footer spacing helper --- */
         .ant-footer {
-            background: #fff;
-            padding: 60px 0 30px;
-            border-top: 1px solid var(--ant-border-color);
             margin-top: 60px;
         }
     </style>
@@ -190,21 +193,7 @@ if ($result) {
 
 <body>
 
-    <header class="ant-header">
-        <div class="container d-flex align-items-center justify-content-between">
-            <a href="index.php" class="fw-bold text-dark text-decoration-none fs-4 d-flex align-items-center">
-                <i class="bi bi-bank2 text-primary me-2"></i><?php echo $t['title']; ?>
-            </a>
-            <div class="d-flex align-items-center gap-3">
-                <a href="index.php"
-                    class="text-secondary text-decoration-none small fw-medium"><?php echo $t['home']; ?></a>
-                <a href="auth/login.php" class="btn btn-primary btn-sm px-4"
-                    style="border-radius: 8px; background: var(--ant-primary); border: none;">
-                    <?php echo $t['login']; ?>
-                </a>
-            </div>
-        </div>
-    </header>
+    <?php include 'includes/header.php'; ?>
 
     <div class="ant-page-hero">
         <div class="container">
@@ -223,16 +212,18 @@ if ($result) {
         <div class="row justify-content-center">
             <div class="col-lg-10">
                 <div class="filter-container">
-                    <form method="GET" action="" class="row g-2 align-items-center">
-                        <div class="col-md-5 d-flex align-items-center px-3 border-end">
-                            <i class="bi bi-search text-muted me-2"></i>
-                            <input type="text" name="search" class="form-control"
-                                placeholder="<?php echo $t['search_member_name']; ?>..."
-                                value="<?php echo htmlspecialchars($search); ?>">
+                    <form method="GET" action="" class="row g-2 align-items-center" id="committeeFilterForm">
+                        <div class="col-md-5">
+                            <div class="search-pill">
+                                <i class="bi bi-search text-muted"></i>
+                                <input type="text" name="search" class="form-control"
+                                    placeholder="<?php echo $t['search_member_name']; ?>..."
+                                    value="<?php echo htmlspecialchars($search); ?>">
+                            </div>
                         </div>
-                        <div class="col-md-4 d-flex align-items-center px-3 border-end">
+                        <div class="col-md-4 d-flex align-items-center px-3 border-start">
                             <i class="bi bi-funnel text-muted me-2"></i>
-                            <select name="role" class="form-select">
+                            <select name="role" class="form-select" id="roleFilterSelect">
                                 <option value=""><?php echo $t['all_roles']; ?></option>
                                 <?php foreach ($userRoles as $role): ?>
                                     <option value="<?php echo $role['id']; ?>" <?php echo ($roleId == $role['id']) ? 'selected' : ''; ?>>
@@ -242,8 +233,6 @@ if ($result) {
                             </select>
                         </div>
                         <div class="col-md-3 d-flex justify-content-end gap-2 px-3">
-                            <button type="submit"
-                                class="btn-ant-primary flex-grow-1"><?php echo $t['filter']; ?></button>
                             <?php if (!empty($search) || !empty($roleId)): ?>
                                 <a href="committee.php" class="btn btn-light rounded-pill"><i class="bi bi-x-lg"></i></a>
                             <?php endif; ?>
@@ -279,22 +268,20 @@ if ($result) {
         </div>
     </div>
 
-    <footer class="ant-footer">
-        <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-            <div class="small text-muted">
-                <?php echo sprintf($t['copyright_footer_title'], date("Y"), $t['title']); ?>
-            </div>
-            <div class="d-flex align-items-center gap-3">
-
-                <div class="text-start">
-                    <div style="font-size: 11px;" class="fw-bold">Yojana Gawade</div>
-                    <div style="font-size: 9px;" class="text-uppercase text-primary fw-bold"><?php echo $t['full_stack_developer']; ?></div>
-                </div>
-            </div>
-        </div>
-    </footer>
+    <?php include 'includes/footer.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            var roleSelect = document.getElementById('roleFilterSelect');
+            var filterForm = document.getElementById('committeeFilterForm');
+            if (roleSelect && filterForm) {
+                roleSelect.addEventListener('change', function () {
+                    filterForm.submit();
+                });
+            }
+        })();
+    </script>
 </body>
 
 </html>

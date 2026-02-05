@@ -22,7 +22,7 @@ if ($cmQuery) {
 $loggedInUserPhoto = '';
 if ($isLoggedIn) {
     $uRow = mysqli_fetch_assoc(mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1"));
-    $loggedInUserPhoto = !empty($uRow['photo']) ? 'uploads/users/' . basename($uRow['photo']) : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=1677ff&color=fff';
+    $loggedInUserPhoto = !empty($uRow['photo']) ? 'uploads/users/' . basename($uRow['photo']) : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=random';
 }
 ?>
 
@@ -236,8 +236,8 @@ if ($isLoggedIn) {
             </div>
             <div class="col-lg-6">
                 <div class="ant-card overflow-hidden border-0 shadow-lg">
-                    <img src="https://images.unsplash.com/photo-1609766418204-94aae0ecf0cc?auto=format&fit=crop&q=80&w=1200"
-                        class="img-fluid" alt="<?php echo $t['temple_architecture_alt']; ?>">
+                    <img src="assets\images\temple.png" class="img-fluid"
+                        alt="<?php echo $t['temple_architecture_alt']; ?>">
                 </div>
             </div>
         </div>
