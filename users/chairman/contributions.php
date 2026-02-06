@@ -10,43 +10,46 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 }
 
 $uid = (int) $_SESSION['user_id'];
-$currentPage = 'pooja_approvals.php';
+$currentPage = 'contributions.php';
+$currLang = $_SESSION['lang'] ?? 'en';
 $success = '';
 $error = '';
 
 // --- Header Identity Logic ---
 $uQuery = mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1");
 $uRow = mysqli_fetch_assoc($uQuery);
-$loggedInUserPhoto = !empty($uRow['photo']) ? '../../uploads/users/' . basename($uRow['photo']) : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=1677ff&color=fff';
+$loggedInUserPhoto = !empty($uRow['photo'])
+    ? '../../uploads/users/' . basename($uRow['photo'])
+    : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=random';
 
 /* ============================
-   HANDLE STATUS UPDATE
+   HANDLE APPROVE / REJECT
 ============================ */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pooja_id'], $_POST['new_status'])) {
-    $poojaId = (int) $_POST['pooja_id'];
-    $newStatus = $_POST['new_status'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id = (int) $_POST['contribution_id'];
+    $action = $_POST['action'];
 
-    if (in_array($newStatus, ['completed', 'cancelled'])) {
-        $stmt = $con->prepare("UPDATE pooja SET status=? WHERE id=? AND status IN ('pending','paid')");
-        $stmt->bind_param("si", $newStatus, $poojaId);
+    if (in_array($action, ['approved', 'rejected'])) {
+        $stmt = $con->prepare("UPDATE contributions SET status=? WHERE id=? AND status='pending'");
+        $stmt->bind_param("si", $action, $id);
 
         if ($stmt->execute()) {
-            $success = sprintf($t['pooja_status_updated'], $newStatus === 'completed' ? $t['completed'] : $t['cancelled']);
+            $success = sprintf($t['contribution_action_success'], $action === 'approved' ? $t['approved'] : $t['rejected']);
         } else {
-            $error = $t['status_update_failed'];
+            $error = $t['contribution_update_failed'];
         }
     }
 }
 
 /* ============================
-   FETCH ALL BOOKINGS
+   FETCH PENDING CONTRIBUTIONS
 ============================ */
-$sql = "SELECT p.id, pt.type AS pooja_name, p.pooja_date, p.time_slot, p.status, p.fee, u.first_name, u.last_name, p.created_at
-        FROM pooja p
-        JOIN pooja_type pt ON pt.id = p.pooja_type_id
-        JOIN users u ON u.id = p.user_id
-        ORDER BY p.pooja_date ASC, p.created_at DESC";
-$result = mysqli_query($con, $sql);
+$sql = "SELECT c.id, c.title, c.quantity, c.unit, c.created_at, ct.type AS category, c.contributor_name
+        FROM contributions c
+        JOIN contribution_type ct ON ct.id = c.contribution_type_id
+        WHERE c.status = 'pending'
+        ORDER BY c.created_at ASC";
+$rows = mysqli_query($con, $sql);
 ?>
 
 <!DOCTYPE html>
@@ -55,7 +58,7 @@ $result = mysqli_query($con, $sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $t['pooja_management']; ?> -
+    <title><?php echo $t['contributions_approval']; ?> -
         <?= $t['title'] ?>
     </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -74,7 +77,6 @@ $result = mysqli_query($con, $sql);
             --ant-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08);
         }
 
-        /* Prevent Text Selection */
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--ant-bg-layout);
@@ -155,47 +157,14 @@ $result = mysqli_query($con, $sql);
             font-size: 14px;
         }
 
-        /* Status Badge DNA */
-        .ant-badge {
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 4px;
-            text-transform: uppercase;
-        }
-
-        .badge-pending {
-            background: #fff7e6;
-            color: #fa8c16;
-            border: 1px solid #ffd591;
-        }
-
-        .badge-paid {
-            background: #e6f4ff;
-            color: #1677ff;
-            border: 1px solid #91caff;
-        }
-
-        .badge-completed {
-            background: #f6ffed;
-            color: #52c41a;
-            border: 1px solid #b7eb8f;
-        }
-
-        .badge-cancelled {
-            background: #fff1f0;
-            color: #f5222d;
-            border: 1px solid #ffa39e;
-        }
-
+        /* Button DNA */
         .btn-ant-success {
             background: var(--ant-success);
             color: #fff;
             border: none;
             border-radius: 6px;
             font-weight: 600;
-            padding: 6px 12px;
-            font-size: 13px;
+            padding: 6px 16px;
             transition: 0.3s;
         }
 
@@ -204,18 +173,17 @@ $result = mysqli_query($con, $sql);
             transform: translateY(-1px);
         }
 
-        .btn-ant-danger {
+        .btn-ant-reject {
             background: transparent;
             color: var(--ant-error);
             border: 1px solid var(--ant-error);
             border-radius: 6px;
             font-weight: 600;
-            padding: 6px 12px;
-            font-size: 13px;
+            padding: 6px 16px;
             transition: 0.3s;
         }
 
-        .btn-ant-danger:hover {
+        .btn-ant-reject:hover {
             background: #fff1f0;
             color: #ff7875;
             border-color: #ff7875;
@@ -231,6 +199,21 @@ $result = mysqli_query($con, $sql);
             gap: 10px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
         }
+
+        .lang-btn {
+            border: none;
+            background: #f5f5f5;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+
+        .lang-btn:hover {
+            background: #e6f4ff;
+            color: #1677ff;
+        }
     </style>
 </head>
 
@@ -239,21 +222,44 @@ $result = mysqli_query($con, $sql);
     <header class="ant-header shadow-sm">
         <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
-                <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i
-                        class="bi bi-list"></i></button>
+                <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                    <i class="bi bi-list"></i>
+                </button>
                 <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
                     <i class="bi bi-flower1 text-warning me-2"></i>
                     <?= $t['title'] ?>
                 </a>
             </div>
-            <div class="user-pill">
-                <img src="<?= $loggedInUserPhoto ?>" class="rounded-circle" width="28" height="28"
-                    style="object-fit: cover;">
-                <span class="small fw-bold d-none d-md-inline">
-                    <?= htmlspecialchars($_SESSION['user_name']) ?>
-                </span>
-                <div class="vr mx-2 text-muted opacity-25"></div>
-                <a href="../../auth/logout.php" class="text-danger"><i class="bi bi-power"></i></a>
+            <div class="d-flex align-items-center gap-3">
+                <div class="dropdown">
+                    <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-translate me-1"></i>
+                        <?= ($currLang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                        <li>
+                            <a class="dropdown-item small fw-medium <?= ($currLang == 'en') ? 'active' : '' ?>"
+                                href="?lang=en" aria-current="<?= ($currLang == 'en') ? 'true' : 'false' ?>">
+                                <?php echo $t['lang_english']; ?>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item small fw-medium <?= ($currLang == 'mr') ? 'active' : '' ?>"
+                                href="?lang=mr" aria-current="<?= ($currLang == 'mr') ? 'true' : 'false' ?>">
+                                <?php echo $t['lang_marathi_full']; ?>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="user-pill">
+                    <img src="<?= $loggedInUserPhoto ?>" class="rounded-circle" width="28" height="28"
+                        style="object-fit: cover;">
+                    <span class="small fw-bold d-none d-md-inline">
+                        <?= htmlspecialchars($_SESSION['user_name']) ?>
+                    </span>
+                    <div class="vr mx-2 text-muted opacity-25"></div>
+                    <a href="../../auth/logout.php" class="text-danger"><i class="bi bi-power"></i></a>
+                </div>
             </div>
         </div>
     </header>
@@ -264,8 +270,8 @@ $result = mysqli_query($con, $sql);
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1"><?php echo $t['pooja_bookings']; ?></h2>
-                    <p class="text-secondary mb-0"><?php echo $t['pooja_bookings_subtitle']; ?></p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['contributions_approval']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['contributions_approval_subtitle']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -291,76 +297,56 @@ $result = mysqli_query($con, $sql);
                             <table class="table ant-table mb-0">
                                 <thead>
                                     <tr>
-                                        <th><?php echo $t['devotee_name']; ?></th>
-                                        <th><?php echo $t['pooja_type']; ?></th>
-                                        <th><?php echo $t['schedule']; ?></th>
-                                        <th><?php echo $t['fee']; ?></th>
-                                        <th><?php echo $t['status']; ?></th>
+                                        <th><?php echo $t['contributor']; ?></th>
+                                        <th><?php echo $t['item_name']; ?></th>
+                                        <th><?php echo $t['category']; ?></th>
+                                        <th><?php echo $t['quantity']; ?></th>
+                                        <th><?php echo $t['submitted_on']; ?></th>
                                         <th class="text-end"><?php echo $t['actions']; ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php if (mysqli_num_rows($result) > 0): ?>
-                                        <?php while ($r = mysqli_fetch_assoc($result)):
-                                            $statusClass = match ($r['status']) {
-                                                'pending' => 'badge-pending',
-                                                'paid' => 'badge-paid',
-                                                'completed' => 'badge-completed',
-                                                'cancelled' => 'badge-cancelled',
-                                                default => ''
-                                            };
-                                            ?>
+                                    <?php if (mysqli_num_rows($rows) > 0): ?>
+                                        <?php while ($r = mysqli_fetch_assoc($rows)): ?>
                                             <tr>
                                                 <td class="fw-bold">
-                                                    <?= htmlspecialchars($r['first_name'] . ' ' . $r['last_name']) ?>
+                                                    <?= htmlspecialchars($r['contributor_name']) ?>
                                                 </td>
                                                 <td class="text-primary fw-medium">
-                                                    <?= htmlspecialchars($r['pooja_name']) ?>
+                                                    <?= htmlspecialchars($r['title']) ?>
                                                 </td>
-                                                <td>
-                                                    <div class="fw-medium">
-                                                        <?= date('d M Y', strtotime($r['pooja_date'])) ?>
-                                                    </div>
-                                                    <small class="text-muted text-uppercase" style="font-size: 10px;">
-                                                        <?= $r['time_slot'] ?? $t['anytime'] ?>
-                                                    </small>
-                                                </td>
-                                                <td class="fw-bold">₹
-                                                    <?= number_format($r['fee'], 0) ?>
-                                                </td>
-                                                <td><span class="ant-badge <?= $statusClass ?>">
-                                                        <?= $r['status'] === 'pending' ? $t['pending'] : ($r['status'] === 'paid' ? $t['paid'] : ($r['status'] === 'completed' ? $t['completed'] : $t['cancelled'])) ?>
+                                                <td><span class="badge bg-light text-dark border">
+                                                        <?= htmlspecialchars($r['category']) ?>
                                                     </span></td>
+                                                <td>
+                                                    <?= number_format($r['quantity'], 2) ?> <span class="text-muted small">
+                                                        <?= $r['unit'] ?>
+                                                    </span>
+                                                </td>
+                                                <td class="text-secondary small">
+                                                    <?= date('d M Y', strtotime($r['created_at'])) ?>
+                                                </td>
                                                 <td class="text-end">
-                                                    <?php if (in_array($r['status'], ['pending', 'paid'])): ?>
-                                                        <div class="d-flex justify-content-end gap-2">
-                                                            <form method="POST" class="needs-validation" novalidate>
-                                                                <input type="hidden" name="pooja_id" value="<?= $r['id'] ?>">
-                                                                <input type="hidden" name="new_status" value="completed">
-                                                                <button type="submit" class="btn-ant-success"
-                                                                    title="<?php echo $t['mark_completed']; ?>">
-                                                                    <i class="bi bi-check2"></i> <?php echo $t['done']; ?>
-                                                                </button>
-                                                            </form>
-                                                            <form method="POST" class="needs-validation" novalidate>
-                                                                <input type="hidden" name="pooja_id" value="<?= $r['id'] ?>">
-                                                                <input type="hidden" name="new_status" value="cancelled">
-                                                                <button type="submit" class="btn-ant-danger" title="<?php echo $t['cancel_booking']; ?>">
-                                                                    <i class="bi bi-x-lg"></i>
-                                                                </button>
-                                                            </form>
-                                                        </div>
-                                                    <?php else: ?>
-                                                        <span class="text-muted small"><?php echo $t['archived']; ?></span>
-                                                    <?php endif; ?>
+                                                    <div class="d-flex justify-content-end gap-2">
+                                                        <form method="POST" class="needs-validation" novalidate>
+                                                            <input type="hidden" name="contribution_id" value="<?= $r['id'] ?>">
+                                                            <input type="hidden" name="action" value="approved">
+                                                            <button type="submit" class="btn-ant-success"><?php echo $t['approve']; ?></button>
+                                                        </form>
+                                                        <form method="POST" class="needs-validation" novalidate>
+                                                            <input type="hidden" name="contribution_id" value="<?= $r['id'] ?>">
+                                                            <input type="hidden" name="action" value="rejected">
+                                                            <button type="submit" class="btn-ant-reject"><?php echo $t['reject']; ?></button>
+                                                        </form>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         <?php endwhile; ?>
                                     <?php else: ?>
                                         <tr>
                                             <td colspan="6" class="text-center py-5 text-muted">
-                                                <i class="bi bi-calendar2-x fs-1 opacity-25 d-block mb-3"></i>
-                                                <?php echo $t['no_bookings_scheduled']; ?>
+                                                <i class="bi bi-clipboard-check fs-1 opacity-25 d-block mb-3"></i>
+                                                <?php echo $t['no_pending_contributions']; ?>
                                             </td>
                                         </tr>
                                     <?php endif; ?>

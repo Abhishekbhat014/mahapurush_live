@@ -1,55 +1,41 @@
 <?php
 session_start();
-require __DIR__ . '/../../includes/lang.php';
 require __DIR__ . '/../../config/db.php';
+require __DIR__ . '/../../includes/lang.php';
 
-if (empty($_SESSION['logged_in'])) {
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: ../../auth/login.php");
     exit;
 }
 
+$uid = (int) $_SESSION['user_id'];
+$currentPage = 'pooja_requests.php';
 $currLang = $_SESSION['lang'] ?? 'en';
 
-$uid = (int) ($_SESSION['user_id'] ?? 0);
-$userName = $_SESSION['user_name'] ?? $t['user'];
-$currentPage = 'my_receipts.php';
+$uQuery = mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1");
+$uRow = mysqli_fetch_assoc($uQuery);
+$loggedInUserPhoto = !empty($uRow['photo'])
+    ? '../../uploads/users/' . basename($uRow['photo'])
+    : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=random';
 
-// Fetch receipts for customer (donations + pooja)
-$receipts = [];
-if ($uid > 0) {
-    $sql = "
-        SELECT
-            r.receipt_no,
-            r.issued_on,
-            r.purpose,
-            r.amount
-        FROM receipt r
-        WHERE r.user_id = ?
-        ORDER BY r.issued_on DESC
-    ";
-    $stmt = $con->prepare($sql);
-    $stmt->bind_param("i", $uid);
-    $stmt->execute();
-    $receipts = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-}
-
-// Fetch user photo for header
-$uRow = mysqli_fetch_assoc(mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1"));
-$displayName = trim(($uRow['first_name'] ?? '') . ' ' . ($uRow['last_name'] ?? ''));
-$userPhotoUrl = !empty($uRow['photo'])
-    ? '../../uploads/users/' . $uRow['photo']
-    : 'https://ui-avatars.com/api/?name=' . urlencode($displayName ?: $userName) . '&background=random';
+$sql = "SELECT p.id, pt.type AS pooja_name, p.pooja_date, p.time_slot, p.status, p.fee, u.first_name, u.last_name
+        FROM pooja p
+        JOIN pooja_type pt ON pt.id = p.pooja_type_id
+        JOIN users u ON u.id = p.user_id
+        ORDER BY p.pooja_date ASC, p.created_at DESC";
+$result = mysqli_query($con, $sql);
 ?>
 
 <!DOCTYPE html>
-<html lang="<?php echo $lang; ?>">
+<html lang="<?= $lang ?>">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $t['receipt_history']; ?> - <?php echo $t['title']; ?></title>
+    <title><?php echo $t['pooja_requests'] ?? 'Pooja Requests'; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
     <style>
         :root {
             --ant-primary: #1677ff;
@@ -65,6 +51,7 @@ $userPhotoUrl = !empty($uRow['photo'])
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--ant-bg-layout);
             color: var(--ant-text);
+            -webkit-user-select: none;
             user-select: none;
         }
 
@@ -120,10 +107,7 @@ $userPhotoUrl = !empty($uRow['photo'])
             border: 1px solid var(--ant-border-color);
             border-radius: var(--ant-radius);
             box-shadow: var(--ant-shadow);
-        }
-
-        .ant-card-body {
-            padding: 0;
+            overflow: hidden;
         }
 
         .ant-table th {
@@ -143,30 +127,21 @@ $userPhotoUrl = !empty($uRow['photo'])
             font-size: 14px;
         }
 
-        .purpose-badge {
+        .badge-status {
             font-size: 11px;
             font-weight: 600;
             padding: 4px 10px;
-            border-radius: 6px;
+            border-radius: 4px;
             text-transform: uppercase;
+            background: #fffbe6;
+            color: #faad14;
+            border: 1px solid #ffe58f;
         }
 
-        .badge-pooja {
-            background: #fff7e6;
-            color: #fa8c16;
-            border: 1px solid #ffd591;
-        }
-
-        .badge-donation {
-            background: #f6ffed;
-            color: #52c41a;
-            border: 1px solid #b7eb8f;
-        }
-
-        .receipt-no {
-            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-            color: var(--ant-primary);
-            font-weight: 600;
+        .action-btn {
+            font-size: 12px;
+            border-radius: 999px;
+            padding: 6px 12px;
         }
 
         .user-pill {
@@ -202,10 +177,12 @@ $userPhotoUrl = !empty($uRow['photo'])
     <header class="ant-header shadow-sm">
         <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
-                <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i
-                        class="bi bi-list"></i></button>
+                <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                    <i class="bi bi-list"></i>
+                </button>
                 <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
-                    <i class="bi bi-flower1 text-warning me-2"></i><?php echo $t['title']; ?>
+                    <i class="bi bi-flower1 text-warning me-2"></i>
+                    <?= $t['title'] ?>
                 </a>
             </div>
             <div class="d-flex align-items-center gap-3">
@@ -229,10 +206,12 @@ $userPhotoUrl = !empty($uRow['photo'])
                         </li>
                     </ul>
                 </div>
-                <div class="user-pill shadow-sm">
-                    <img src="<?= htmlspecialchars($userPhotoUrl) ?>" class="rounded-circle" width="28" height="28"
+                <div class="user-pill">
+                    <img src="<?= $loggedInUserPhoto ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
-                    <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($userName) ?></span>
+                    <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                    <div class="vr mx-2 text-muted opacity-25"></div>
+                    <a href="../../auth/logout.php" class="text-danger"><i class="bi bi-power"></i></a>
                 </div>
             </div>
         </div>
@@ -244,59 +223,58 @@ $userPhotoUrl = !empty($uRow['photo'])
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1"><?php echo $t['receipt_history']; ?></h2>
-                    <p class="text-secondary mb-0"><?php echo $t['receipt_history_subtitle']; ?></p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['pooja_requests'] ?? 'Pooja Requests'; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['pooja_requests_subtitle'] ?? 'Approve, assign, edit, or delete requests.'; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
                     <div class="ant-card">
-                        <div class="ant-card-body">
-                            <div class="table-responsive">
-                                <table class="table ant-table mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th><?php echo $t['receipt_no']; ?></th>
-                                            <th><?php echo $t['type']; ?></th>
-                                            <th><?php echo $t['amount']; ?></th>
-                                            <th><?php echo $t['issued_date']; ?></th>
-                                            <th class="text-end"><?php echo $t['action']; ?></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php if (!empty($receipts)): ?>
-                                            <?php foreach ($receipts as $r):
-                                                $badgeClass = 'badge-' . $r['purpose']; ?>
-                                                <tr>
-                                                    <td class="receipt-no">#<?= htmlspecialchars($r['receipt_no']) ?></td>
-                                                    <td>
-                                                        <span class="purpose-badge <?= $badgeClass ?>">
-                                                            <?= $r['purpose'] === 'pooja' ? $t['pooja'] : $t['donation'] ?>
-                                                        </span>
-                                                    </td>
-                                                    <td class="fw-bold">₹<?= number_format($r['amount'], 2) ?></td>
-                                                    <td class="text-secondary small">
-                                                        <?= date("d M Y, h:i A", strtotime($r['issued_on'])) ?>
-                                                    </td>
-                                                    <td class="text-end">
-                                                        <a href="../receipt/view.php?no=<?= urlencode($r['receipt_no']) ?>"
-                                                            class="btn btn-light btn-sm border rounded-pill px-3 fw-medium">
-                                                            <i class="bi bi-file-earmark-text me-1"></i>
-                                                            <?php echo $t['view']; ?>
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table ant-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th><?php echo $t['devotee_name'] ?? 'Devotee'; ?></th>
+                                        <th><?php echo $t['pooja_type'] ?? 'Pooja Type'; ?></th>
+                                        <th><?php echo $t['schedule'] ?? 'Schedule'; ?></th>
+                                        <th><?php echo $t['fee'] ?? 'Fee'; ?></th>
+                                        <th><?php echo $t['status'] ?? 'Status'; ?></th>
+                                        <th class="text-end"><?php echo $t['actions'] ?? 'Actions'; ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (mysqli_num_rows($result) > 0): ?>
+                                        <?php while ($r = mysqli_fetch_assoc($result)): ?>
                                             <tr>
-                                                <td colspan="5" class="text-center py-5 text-muted">
-                                                    <i class="bi bi-file-earmark-x d-block fs-1 opacity-25 mb-3"></i>
-                                                    <?php echo $t['no_receipts_found']; ?>
+                                                <td class="fw-bold"><?= htmlspecialchars($r['first_name'] . ' ' . $r['last_name']) ?></td>
+                                                <td class="text-primary fw-medium"><?= htmlspecialchars($r['pooja_name']) ?></td>
+                                                <td>
+                                                    <div class="fw-medium"><?= date('d M Y', strtotime($r['pooja_date'])) ?></div>
+                                                    <small class="text-muted text-uppercase" style="font-size: 10px;">
+                                                        <?= $r['time_slot'] ?? ($t['anytime'] ?? 'Anytime') ?>
+                                                    </small>
+                                                </td>
+                                                <td class="fw-bold">&#8377;<?= number_format($r['fee'], 0) ?></td>
+                                                <td><span class="badge-status"><?= htmlspecialchars($r['status']) ?></span></td>
+                                                <td class="text-end">
+                                                    <div class="d-inline-flex gap-2">
+                                                        <button class="btn btn-success btn-sm action-btn" disabled><?php echo $t['approve'] ?? 'Approve'; ?></button>
+                                                        <button class="btn btn-outline-primary btn-sm action-btn" disabled><?php echo $t['assign'] ?? 'Assign'; ?></button>
+                                                        <button class="btn btn-light btn-sm action-btn border" disabled><?php echo $t['edit'] ?? 'Edit'; ?></button>
+                                                        <button class="btn btn-outline-danger btn-sm action-btn" disabled><?php echo $t['delete'] ?? 'Delete'; ?></button>
+                                                    </div>
                                                 </td>
                                             </tr>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
-                            </div>
+                                        <?php endwhile; ?>
+                                    <?php else: ?>
+                                        <tr>
+                                            <td colspan="6" class="text-center py-5 text-muted">
+                                                <i class="bi bi-calendar2-x fs-1 opacity-25 d-block mb-3"></i>
+                                                <?php echo $t['no_bookings_scheduled'] ?? 'No requests found.'; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

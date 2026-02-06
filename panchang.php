@@ -279,7 +279,7 @@ $yogaName = $yoga['name'] ?? $t['unknown'];
             <p class="lead text-muted mb-4">
                 <i class="bi bi-geo-alt-fill me-1"></i> <?php echo $t['mumbai']; ?> &bull; <?php echo $displayDate; ?>
             </p>
-            <form action="" method="GET" class="mx-auto" style="max-width: 300px;">
+            <form action="" method="GET" class="mx-auto needs-validation" style="max-width: 300px;" novalidate>
                 <div class="input-group">
                     <input type="date" name="date" class="form-control rounded-start-pill ps-3 border-secondary"
                         value="<?php echo date('Y-m-d', strtotime($dateInput)); ?>">
@@ -369,6 +369,21 @@ $yogaName = $yoga['name'] ?? $t['unknown'];
     <?php include 'includes/footer.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    </script>
 </body>
 
 </html>

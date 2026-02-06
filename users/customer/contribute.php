@@ -308,7 +308,7 @@ $currentPage = 'contribute.php';
                             <div class="ant-card">
                                 <div class="ant-card-head"><?php echo $t['contribution_details']; ?></div>
                                 <div class="ant-card-body">
-                                    <form method="POST">
+                                    <form method="POST" class="needs-validation" novalidate>
                                         <div class="row g-4">
                                             <div class="col-md-6">
                                                 <label class="form-label"><?php echo $t['contribution_category']; ?> <span
@@ -321,6 +321,7 @@ $currentPage = 'contribute.php';
                                                         </option>
                                                     <?php endwhile; ?>
                                                 </select>
+                                                <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
                                             </div>
 
                                             <div class="col-md-6">
@@ -328,6 +329,7 @@ $currentPage = 'contribute.php';
                                                         class="text-danger">*</span></label>
                                                 <input type="text" name="title" class="form-control"
                                                     placeholder="<?php echo $t['item_name_placeholder']; ?>" required>
+                                                <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
                                             </div>
 
                                             <div class="col-md-6">
@@ -335,6 +337,7 @@ $currentPage = 'contribute.php';
                                                         class="text-danger">*</span></label>
                                                 <input type="number" step="0.01" name="quantity" class="form-control"
                                                     placeholder="<?php echo $t['amount_placeholder']; ?>" required>
+                                                <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
                                             </div>
 
                                             <div class="col-md-6">
@@ -347,6 +350,7 @@ $currentPage = 'contribute.php';
                                                     <option value="bags"><?php echo $t['unit_bags']; ?></option>
                                                     <option value="quintal"><?php echo $t['unit_quintal']; ?></option>
                                                 </select>
+                                                <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
                                             </div>
 
                                             <div class="col-12">
@@ -375,6 +379,21 @@ $currentPage = 'contribute.php';
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    </script>
 </body>
 
 </html>

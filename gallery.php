@@ -8,6 +8,10 @@ $catQuery = mysqli_query($con, "SELECT * FROM gallery_category ORDER BY id ASC")
 while ($row = mysqli_fetch_assoc($catQuery)) {
     $categories[] = $row;
 }
+
+$imgCountRes = mysqli_query($con, "SELECT COUNT(*) AS cnt FROM gallery WHERE type = 'image'");
+$imgCountRow = $imgCountRes ? mysqli_fetch_assoc($imgCountRes) : ['cnt' => 0];
+$totalImages = (int) ($imgCountRow['cnt'] ?? 0);
 ?>
 
 <!DOCTYPE html>
@@ -131,48 +135,56 @@ while ($row = mysqli_fetch_assoc($catQuery)) {
     </section>
 
     <main class="container">
-        <?php foreach ($categories as $cat): ?>
-            <div class="mb-5">
-                <div class="d-flex align-items-center gap-3 mb-4">
-                    <span class="ant-tag"><?= htmlspecialchars($cat['type']) ?></span>
-                    <div class="flex-grow-1" style="height: 1px; background: var(--ant-border-color);"></div>
-                </div>
-
-                <div class="row g-4">
-                    <?php
-                    $catId = $cat['id'];
-                    $imgQuery = mysqli_query($con, "SELECT * FROM gallery WHERE gallery_category_id = $catId AND type = 'image' ORDER BY created_at DESC");
-                    while ($img = mysqli_fetch_assoc($imgQuery)): ?>
-                        <div class="col-6 col-md-4 col-lg-3">
-                            <div class="ant-card" data-bs-toggle="modal" data-bs-target="#imgModal<?= $img['id'] ?>">
-                                <div class="ant-card-cover">
-                                    <img src="gallery/<?= htmlspecialchars($img['content']) ?>" loading="lazy"
-                                        alt="<?php echo $t['gallery_image_alt']; ?>">
-                                </div>
-                                <div
-                                    class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center opacity-0 bg-dark bg-opacity-25 transition-all hover-opacity-100">
-                                    <i class="bi bi-eye text-white fs-2"></i>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="modal fade" id="imgModal<?= $img['id'] ?>" tabindex="-1">
-                            <div class="modal-dialog modal-dialog-centered modal-lg">
-                                <div class="modal-content shadow-lg">
-                                    <div class="modal-body p-1 bg-dark">
-                                        <img src="gallery/<?= htmlspecialchars($img['content']) ?>" class="img-fluid w-100">
-                                    </div>
-                                    <div class="modal-footer border-0 justify-content-end py-2">
-                                        <button type="button" class="btn btn-light btn-sm px-4" data-bs-dismiss="modal"
-                                            style="border-radius: 6px;"><?php echo $t['close']; ?></button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endwhile; ?>
-                </div>
+        <?php if ($totalImages === 0): ?>
+            <div class="alert border-0 shadow-sm text-center"
+                style="background: #f8f9fa; color: var(--ant-text-sec); border-radius: 12px;">
+                <i class="bi bi-images fs-2 d-block mb-2" style="opacity: 0.4;"></i>
+                <?php echo $t['no_gallery_items'] ?? 'No gallery images available right now.'; ?>
             </div>
-        <?php endforeach; ?>
+        <?php else: ?>
+            <?php foreach ($categories as $cat): ?>
+                <div class="mb-5">
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <span class="ant-tag"><?= htmlspecialchars($cat['type']) ?></span>
+                        <div class="flex-grow-1" style="height: 1px; background: var(--ant-border-color);"></div>
+                    </div>
+
+                    <div class="row g-4">
+                        <?php
+                        $catId = $cat['id'];
+                        $imgQuery = mysqli_query($con, "SELECT * FROM gallery WHERE gallery_category_id = $catId AND type = 'image' ORDER BY created_at DESC");
+                        while ($img = mysqli_fetch_assoc($imgQuery)): ?>
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <div class="ant-card" data-bs-toggle="modal" data-bs-target="#imgModal<?= $img['id'] ?>">
+                                    <div class="ant-card-cover">
+                                        <img src="gallery/<?= htmlspecialchars($img['content']) ?>" loading="lazy"
+                                            alt="<?php echo $t['gallery_image_alt']; ?>">
+                                    </div>
+                                    <div
+                                        class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center opacity-0 bg-dark bg-opacity-25 transition-all hover-opacity-100">
+                                        <i class="bi bi-eye text-white fs-2"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal fade" id="imgModal<?= $img['id'] ?>" tabindex="-1">
+                                <div class="modal-dialog modal-dialog-centered modal-lg">
+                                    <div class="modal-content shadow-lg">
+                                        <div class="modal-body p-1 bg-dark">
+                                            <img src="gallery/<?= htmlspecialchars($img['content']) ?>" class="img-fluid w-100">
+                                        </div>
+                                        <div class="modal-footer border-0 justify-content-end py-2">
+                                            <button type="button" class="btn btn-light btn-sm px-4" data-bs-dismiss="modal"
+                                                style="border-radius: 6px;"><?php echo $t['close']; ?></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
     </main>
 
     <?php include 'includes/footer.php'; ?>

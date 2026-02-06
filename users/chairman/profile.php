@@ -42,10 +42,10 @@ if (isset($_POST['update_details'])) {
             $fileTmp = $_FILES['photo']['tmp_name'];
             $fileExt = strtolower(pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION));
             $allowed = ['jpg', 'png', 'jpeg', 'webp'];
-            if (!in_array($fileExt, $allowed)) {
-                $errorMsg = $t['err_invalid_file_type'];
+            if (!in_array($fileExt, $allowed, true)) {
+                $errorMsg = $t['err_invalid_file_type'] ?? 'Invalid file type.';
             } elseif ($_FILES['photo']['size'] > 2 * 1024 * 1024) {
-                $errorMsg = $t['err_file_size'];
+                $errorMsg = $t['err_file_size'] ?? 'File is too large.';
             } else {
                 $photoName = uniqid('user_', true) . '.' . $fileExt;
                 $uploadDir = __DIR__ . '/../../uploads/users/';
@@ -72,7 +72,7 @@ if (isset($_POST['update_details'])) {
                 }
             }
             $_SESSION['user_name'] = $fName . ' ' . $lName;
-            $successMsg = $t['profile_details_updated'];
+            $successMsg = $t['profile_details_updated'] ?? 'Profile updated successfully.';
         } else {
             if ($photoName) {
                 $newPath = __DIR__ . '/../../uploads/users/' . basename($photoName);
@@ -80,7 +80,7 @@ if (isset($_POST['update_details'])) {
                     unlink($newPath);
                 }
             }
-            $errorMsg = $t['profile_update_failed'];
+            $errorMsg = $t['profile_update_failed'] ?? 'Unable to update profile.';
         }
     }
 }
@@ -100,16 +100,16 @@ if (isset($_POST['change_password'])) {
     $userRow = mysqli_fetch_assoc(mysqli_query($con, "SELECT password FROM users WHERE id='$uid'"));
 
     if (empty($errorMsg)) {
-        if (password_verify($currentPass, $userRow['password'])) {
+        if ($userRow && password_verify($currentPass, $userRow['password'])) {
             if ($newPass === $confirmPass) {
                 $hashedNew = password_hash($newPass, PASSWORD_DEFAULT);
                 mysqli_query($con, "UPDATE users SET password='$hashedNew' WHERE id='$uid'");
-                $successMsg = $t['password_updated'];
+                $successMsg = $t['password_updated'] ?? 'Password updated.';
             } else {
-                $errorMsg = $t['new_passwords_mismatch'];
+                $errorMsg = $t['new_passwords_mismatch'] ?? 'Passwords must match.';
             }
         } else {
-            $errorMsg = $t['incorrect_current_password'];
+            $errorMsg = $t['incorrect_current_password'] ?? 'Incorrect current password.';
         }
     }
 }
@@ -330,8 +330,7 @@ $currentPage = 'profile.php';
                 <div class="user-pill shadow-sm">
                     <img src="<?= htmlspecialchars($userPhotoUrl) ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
-                    <span
-                        class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                    <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
                 </div>
             </div>
         </div>
@@ -370,40 +369,36 @@ $currentPage = 'profile.php';
                                     <h5 class="fw-bold mb-1">
                                         <?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?>
                                     </h5>
-                                    <p class="text-muted small mb-0"><?php echo $t['member_since']; ?>
-                                        <?= date("M Y", strtotime($user['created_at'])) ?>
-                                    </p>
+                                    <p class="text-muted small mb-0"><?php echo $t['chairman_role'] ?? 'Chairman'; ?></p>
+                                </div>
+                            </div>
 
-                                    <div class="ant-divider"></div>
-
-                                    <div class="text-start">
-                                        <h6 class="fw-bold mb-3 small text-uppercase" style="letter-spacing: 1px;">
-                                            <?php echo $t['security_settings']; ?>
-                                        </h6>
-                                        <form method="POST" class="needs-validation" novalidate>
-                                            <div class="mb-3">
-                                                <label class="form-label"><?php echo $t['current_password']; ?></label>
-                                                <input type="password" name="current_password" class="form-control"
-                                                    required>
-                                                <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label"><?php echo $t['new_password']; ?></label>
-                                                <input type="password" name="new_password" class="form-control" required
-                                                    minlength="6">
-                                                <div class="invalid-feedback"><?php echo $t['password_min_length'] ?? 'Password must be at least 6 characters.'; ?></div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label
-                                                    class="form-label"><?php echo $t['confirm_new_password']; ?></label>
-                                                <input type="password" name="confirm_password" class="form-control"
-                                                    required minlength="6">
-                                                <div class="invalid-feedback"><?php echo $t['new_passwords_mismatch'] ?? 'Passwords must match.'; ?></div>
-                                            </div>
-                                            <button type="submit" name="change_password"
-                                                class="btn btn-outline-danger w-100 rounded-pill btn-sm fw-bold"><?php echo $t['update_password']; ?></button>
-                                        </form>
-                                    </div>
+                            <div class="ant-card">
+                                <div class="ant-card-head"><?php echo $t['security_settings']; ?></div>
+                                <div class="ant-card-body">
+                                    <form method="POST" class="needs-validation" novalidate>
+                                        <div class="mb-3">
+                                            <label class="form-label"><?php echo $t['current_password']; ?></label>
+                                            <input type="password" name="current_password" class="form-control" required>
+                                            <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label"><?php echo $t['new_password']; ?></label>
+                                            <input type="password" name="new_password" class="form-control" required
+                                                minlength="6">
+                                            <div class="invalid-feedback"><?php echo $t['password_min_length'] ?? 'Password must be at least 6 characters.'; ?></div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label"><?php echo $t['confirm_new_password']; ?></label>
+                                            <input type="password" name="confirm_password" class="form-control" required
+                                                minlength="6">
+                                            <div class="invalid-feedback"><?php echo $t['new_passwords_mismatch'] ?? 'Passwords must match.'; ?></div>
+                                        </div>
+                                        <button type="submit" name="change_password"
+                                            class="btn btn-outline-danger w-100 rounded-pill btn-sm fw-bold">
+                                            <?php echo $t['update_password']; ?>
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -443,8 +438,7 @@ $currentPage = 'profile.php';
                                                     <?php echo $t['email_verified_cannot_change']; ?></div>
                                             </div>
                                             <div class="col-md-12 mb-3">
-                                                <label
-                                                    class="form-label"><?php echo $t['profile_photo_optional']; ?></label>
+                                                <label class="form-label"><?php echo $t['profile_photo_optional']; ?></label>
                                                 <input type="file" name="photo" class="form-control" accept="image/*">
                                                 <div class="form-text small" style="font-size: 11px;">
                                                     <?php echo $t['profile_photo_hint'] ?? 'JPG, PNG, or WEBP up to 2MB.'; ?>
@@ -457,8 +451,9 @@ $currentPage = 'profile.php';
                                         <div class="d-flex justify-content-end gap-3">
                                             <a href="dashboard.php" class="btn btn-light px-4 border"
                                                 style="border-radius: 8px;"><?php echo $t['cancel']; ?></a>
-                                            <button type="submit" name="update_details"
-                                                class="ant-btn-primary px-5"><?php echo $t['save_profile_changes']; ?></button>
+                                            <button type="submit" name="update_details" class="ant-btn-primary px-5">
+                                                <?php echo $t['save_profile_changes']; ?>
+                                            </button>
                                         </div>
                                     </form>
                                 </div>

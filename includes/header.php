@@ -7,7 +7,7 @@ require_once __DIR__ . '/lang.php';
 
 $isLoggedIn = $_SESSION['logged_in'] ?? false;
 $uid = $_SESSION['user_id'] ?? null;
-$currentLang = $_SESSION['lang'] ?? 'en';
+$currentLang = $lang ?? ($_SESSION['lang'] ?? ($_COOKIE['lang'] ?? 'en'));
 
 // Fetch committee for dropdown
 $headerMembers = [];
@@ -48,6 +48,12 @@ if ($isLoggedIn && $con) {
 }
 ?>
 <style>
+    body,
+    body * {
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
     .ant-header {
         background: rgba(255, 255, 255, 0.9);
         backdrop-filter: blur(12px);

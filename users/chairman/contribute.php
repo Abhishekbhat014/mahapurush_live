@@ -2,9 +2,9 @@
 // =========================================================
 // 1. SESSION + AUTH
 // =========================================================
+session_start();
 require __DIR__ . '/../../includes/lang.php';
 require __DIR__ . '/../../includes/receipt_helper.php';
-
 
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: ../../auth/login.php");
@@ -19,6 +19,8 @@ require __DIR__ . '/../../config/db.php';
 $uid = (int) $_SESSION['user_id'];
 $successMsg = '';
 $errorMsg = '';
+$currentPage = 'contribute.php';
+$currLang = $_SESSION['lang'] ?? 'en';
 
 // =========================================================
 // 3. HANDLE FORM SUBMISSION (WITH RECEIPT TRACKING)
@@ -29,18 +31,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_contribution']
 
     try {
         $typeId = (int) ($_POST['contribution_type_id'] ?? 0);
-        $title = trim($_POST['title']);
-        $qty = (float) $_POST['quantity'];
-        $unit = trim($_POST['unit']);
-        $desc = trim($_POST['description']);
+        $title = trim($_POST['title'] ?? '');
+        $qty = (float) ($_POST['quantity'] ?? 0);
+        $unit = trim($_POST['unit'] ?? '');
+        $desc = trim($_POST['description'] ?? '');
         $contributorName = $_SESSION['user_name'];
 
         if ($typeId <= 0 || $title === '' || $qty <= 0) {
             throw new Exception($t['err_fill_required_fields']);
         }
 
-        // --- Step A: Generate Receipt for tracking ---
-// --- Step A: Create receipt using helper ---
+        // --- Step A: Create receipt using helper ---
         $receiptId = createReceipt(
             $con,
             $uid,
@@ -48,7 +49,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_contribution']
             0.00,
             'contributions'
         );
-
 
         // --- Step B: Insert Contribution linked to Receipt ---
         $stmt = $con->prepare("
@@ -61,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_contribution']
         $stmt->execute();
 
         mysqli_commit($con);
+        $successMsg = $t['contribution_submitted_success'] ?? $t['success'];
 
     } catch (Exception $e) {
         mysqli_rollback($con);
@@ -73,9 +74,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_contribution']
 // =========================================================
 $types = mysqli_query($con, "SELECT id, type FROM contribution_type ORDER BY type ASC");
 $uRow = mysqli_fetch_assoc(mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1"));
-$userPhotoUrl = !empty($uRow['photo']) ? '../../uploads/users/' . basename($uRow['photo']) : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=random';
-
-$currentPage = 'contribute.php';
+$userPhotoUrl = !empty($uRow['photo'])
+    ? '../../uploads/users/' . basename($uRow['photo'])
+    : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=random';
 ?>
 
 <!DOCTYPE html>
@@ -100,22 +101,10 @@ $currentPage = 'contribute.php';
             --ant-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08);
         }
 
-        /* Prevent Text Selection */
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--ant-bg-layout);
             color: var(--ant-text);
-            -webkit-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-
-        /* Allow Selection in Inputs */
-        input,
-        textarea,
-        select {
-            user-select: text !important;
-            -webkit-user-select: text !important;
         }
 
         .ant-header {
@@ -229,6 +218,21 @@ $currentPage = 'contribute.php';
             gap: 10px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
         }
+
+        .lang-btn {
+            border: none;
+            background: #f5f5f5;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+
+        .lang-btn:hover {
+            background: #e6f4ff;
+            color: #1677ff;
+        }
     </style>
 </head>
 
@@ -243,10 +247,32 @@ $currentPage = 'contribute.php';
                     <i class="bi bi-flower1 text-warning me-2"></i><?php echo $t['title']; ?>
                 </a>
             </div>
-            <div class="user-pill shadow-sm">
-                <img src="<?= htmlspecialchars($userPhotoUrl) ?>" class="rounded-circle" width="28" height="28"
-                    style="object-fit: cover;">
-                <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
+            <div class="d-flex align-items-center gap-3">
+                <div class="dropdown">
+                    <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-translate me-1"></i>
+                        <?= ($currLang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                        <li>
+                            <a class="dropdown-item small fw-medium <?= ($currLang == 'en') ? 'active' : '' ?>"
+                                href="?lang=en" aria-current="<?= ($currLang == 'en') ? 'true' : 'false' ?>">
+                                <?php echo $t['lang_english']; ?>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item small fw-medium <?= ($currLang == 'mr') ? 'active' : '' ?>"
+                                href="?lang=mr" aria-current="<?= ($currLang == 'mr') ? 'true' : 'false' ?>">
+                                <?php echo $t['lang_marathi_full']; ?>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="user-pill shadow-sm">
+                    <img src="<?= htmlspecialchars($userPhotoUrl) ?>" class="rounded-circle" width="28" height="28"
+                        style="object-fit: cover;">
+                    <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                </div>
             </div>
         </div>
     </header>

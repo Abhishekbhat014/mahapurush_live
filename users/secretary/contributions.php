@@ -287,12 +287,12 @@ $rows = mysqli_query($con, $sql);
                                                 </td>
                                                 <td class="text-end">
                                                     <div class="d-flex justify-content-end gap-2">
-                                                        <form method="POST">
+                                                        <form method="POST" class="needs-validation" novalidate>
                                                             <input type="hidden" name="contribution_id" value="<?= $r['id'] ?>">
                                                             <input type="hidden" name="action" value="approved">
                                                             <button type="submit" class="btn-ant-success"><?php echo $t['approve']; ?></button>
                                                         </form>
-                                                        <form method="POST">
+                                                        <form method="POST" class="needs-validation" novalidate>
                                                             <input type="hidden" name="contribution_id" value="<?= $r['id'] ?>">
                                                             <input type="hidden" name="action" value="rejected">
                                                             <button type="submit" class="btn-ant-reject"><?php echo $t['reject']; ?></button>
@@ -319,6 +319,21 @@ $rows = mysqli_query($con, $sql);
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    </script>
 </body>
 
 </html>

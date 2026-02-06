@@ -1,33 +1,65 @@
 <?php
 session_start();
-require '../../includes/lang.php';
-require '../../config/db.php';
+require __DIR__ . '/../../includes/lang.php';
 
-$currLang = $_SESSION['lang'] ?? 'en';
-
-if (empty($_SESSION['logged_in'])) {
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: ../../auth/login.php");
     exit;
 }
 
-$userId = $_SESSION['user_id'];
-$userName = $_SESSION['user_name'] ?? $t['user'];
+require __DIR__ . '/../../config/db.php';
 
-// fetch pooja types
-$poojaTypes = $con->query("SELECT id, type, fee FROM pooja_type ORDER BY type");
+$uid = (int) $_SESSION['user_id'];
+$successMsg = '';
+$errorMsg = '';
+$currentPage = 'pooja_book.php';
+$currLang = $_SESSION['lang'] ?? 'en';
 
-// Sidebar Active Logic
-$currentPage = basename($_SERVER['PHP_SELF']);
+// --- Handle Booking ---
+if (isset($_POST['book_pooja'])) {
+    $poojaTypeId = (int) ($_POST['pooja_type_id'] ?? 0);
+    $poojaDate = mysqli_real_escape_string($con, $_POST['pooja_date'] ?? '');
+    $timeSlot = mysqli_real_escape_string($con, $_POST['time_slot'] ?? '');
+    $description = mysqli_real_escape_string($con, $_POST['notes'] ?? '');
 
-// User photo for header
-$uRow = mysqli_fetch_assoc(mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$userId' LIMIT 1"));
-$userPhotoUrl = !empty($uRow['photo'])
-    ? '../../uploads/users/' . basename($uRow['photo'])
-    : 'https://ui-avatars.com/api/?name=' . urlencode($userName) . '&background=random';
+    if (empty($poojaTypeId) || empty($poojaDate)) {
+        $errorMsg = $t['err_select_pooja_date'];
+    } else {
+        $fee = 0;
+        $feeQuery = mysqli_query($con, "SELECT fee FROM pooja_type WHERE id = '$poojaTypeId' LIMIT 1");
+        if ($feeQuery && $f = mysqli_fetch_assoc($feeQuery)) {
+            $fee = $f['fee'] ?? 0;
+        }
+
+        $sql = "INSERT INTO pooja (user_id, pooja_type_id, pooja_date, time_slot, description, fee, status)
+                VALUES ('$uid', '$poojaTypeId', '$poojaDate', '$timeSlot', '$description', '$fee', 'pending')";
+
+        if (mysqli_query($con, $sql)) {
+            $successMsg = $t['pooja_request_submitted'];
+        } else {
+            $errorMsg = $t['booking_failed_try_again'];
+        }
+    }
+}
+
+// --- Fetch Available Poojas ---
+$poojaList = [];
+$q = mysqli_query($con, "SELECT id, type, fee FROM pooja_type ORDER BY type ASC");
+while ($row = mysqli_fetch_assoc($q)) {
+    $poojaList[] = $row;
+}
+
+// --- Header Profile Photo ---
+$uQuery = mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1");
+if ($uRow = mysqli_fetch_assoc($uQuery)) {
+    $loggedInUserPhoto = !empty($uRow['photo'])
+        ? '../../uploads/users/' . basename($uRow['photo'])
+        : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=random';
+}
 ?>
 
 <!DOCTYPE html>
-<html lang="<?php echo $currLang; ?>">
+<html lang="<?php echo $lang; ?>">
 
 <head>
     <meta charset="UTF-8">
@@ -35,7 +67,6 @@ $userPhotoUrl = !empty($uRow['photo'])
     <title><?php echo $t['book_pooja']; ?> - <?php echo $t['title']; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-
     <style>
         :root {
             --ant-primary: #1677ff;
@@ -54,7 +85,6 @@ $userPhotoUrl = !empty($uRow['photo'])
             color: var(--ant-text);
         }
 
-        /* --- Header --- */
         .ant-header {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(12px);
@@ -67,7 +97,6 @@ $userPhotoUrl = !empty($uRow['photo'])
             z-index: 1000;
         }
 
-        /* --- Sidebar Style (Matches Dashboard) --- */
         .ant-sidebar {
             background: #fff;
             border-right: 1px solid var(--ant-border-color);
@@ -103,12 +132,10 @@ $userPhotoUrl = !empty($uRow['photo'])
             margin-bottom: 32px;
         }
 
-        /* --- Form Card --- */
         .ant-card {
             background: #fff;
             border: 1px solid var(--ant-border-color);
             border-radius: var(--ant-radius);
-            box-shadow: var(--ant-shadow);
         }
 
         .ant-card-body {
@@ -119,7 +146,6 @@ $userPhotoUrl = !empty($uRow['photo'])
             padding: 16px 32px;
             border-bottom: 1px solid var(--ant-border-color);
             font-weight: 700;
-            font-size: 18px;
         }
 
         .form-label {
@@ -137,8 +163,7 @@ $userPhotoUrl = !empty($uRow['photo'])
             transition: all 0.2s;
         }
 
-        .form-control:focus,
-        .form-select:focus {
+        .form-control:focus {
             border-color: var(--ant-primary);
             box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
         }
@@ -150,7 +175,6 @@ $userPhotoUrl = !empty($uRow['photo'])
             padding: 10px 24px;
             border-radius: 8px;
             font-weight: 600;
-            box-shadow: 0 2px 0 rgba(5, 145, 255, 0.1);
         }
 
         .ant-btn-primary:hover {
@@ -166,6 +190,7 @@ $userPhotoUrl = !empty($uRow['photo'])
             display: flex;
             align-items: center;
             gap: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
         }
 
         .lang-btn {
@@ -182,12 +207,6 @@ $userPhotoUrl = !empty($uRow['photo'])
             background: #e6f4ff;
             color: #1677ff;
         }
-
-        .ant-divider {
-            height: 1px;
-            background: var(--ant-border-color);
-            margin: 15px 20px;
-        }
     </style>
 </head>
 
@@ -203,7 +222,6 @@ $userPhotoUrl = !empty($uRow['photo'])
                     <i class="bi bi-flower1 text-warning me-2"></i><?php echo $t['title']; ?>
                 </a>
             </div>
-
             <div class="d-flex align-items-center gap-3">
                 <div class="dropdown">
                     <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
@@ -226,9 +244,9 @@ $userPhotoUrl = !empty($uRow['photo'])
                     </ul>
                 </div>
                 <div class="user-pill shadow-sm">
-                    <img src="<?= htmlspecialchars($userPhotoUrl) ?>" class="rounded-circle" width="28" height="28"
+                    <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
-                    <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($userName) ?></span>
+                    <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
                 </div>
             </div>
         </div>
@@ -236,34 +254,48 @@ $userPhotoUrl = !empty($uRow['photo'])
 
     <div class="container-fluid">
         <div class="row">
+
             <?php include 'sidebar.php'; ?>
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
                     <h2 class="fw-bold mb-1"><?php echo $t['book_pooja']; ?></h2>
-                    <p class="text-secondary mb-0"><?php echo $t['pooja_book_subtitle']; ?></p>
+                    <p class="text-secondary mb-0"><?php echo $t['pooja_schedule_subtitle']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
                     <div class="row justify-content-center">
-                        <div class="col-xl-8">
-                            <div class="ant-card">
-                                <div class="ant-card-head">
-                                    <i class="bi bi-calendar2-plus me-2 text-primary"></i><?php echo $t['new_booking_request']; ?>
+                        <div class="col-lg-8">
+
+                            <?php if ($successMsg): ?>
+                                <div class="alert border-0 shadow-sm d-flex align-items-center mb-4"
+                                    style="background: #f6ffed; color: #52c41a; border-radius: 8px;">
+                                    <i class="bi bi-check-circle-fill me-2"></i> <?= $successMsg ?>
                                 </div>
+                            <?php endif; ?>
+
+                            <?php if ($errorMsg): ?>
+                                <div class="alert border-0 shadow-sm d-flex align-items-center mb-4"
+                                    style="background: #fff2f0; color: #ff4d4f; border-radius: 8px;">
+                                    <i class="bi bi-exclamation-circle-fill me-2"></i> <?= $errorMsg ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="ant-card shadow-sm">
+                                <div class="ant-card-head"><?php echo $t['pooja_details']; ?></div>
                                 <div class="ant-card-body">
-                                    <form method="POST" action="pooja-book-save.php" class="needs-validation" novalidate>
+                                    <form method="POST" class="needs-validation" novalidate>
                                         <div class="mb-4">
-                                            <label class="form-label"><?php echo $t['pooja_type']; ?> <span
+                                            <label class="form-label"><?php echo $t['select_pooja_service_label']; ?> <span
                                                     class="text-danger">*</span></label>
                                             <select name="pooja_type_id" class="form-select" required>
-                                                <option value="" disabled selected><?php echo $t['select_pooja_service']; ?></option>
-                                                <?php while ($row = $poojaTypes->fetch_assoc()) { ?>
-                                                    <option value="<?php echo $row['id']; ?>">
-                                                        <?php echo htmlspecialchars($row['type']); ?>
-                                                        (₹<?php echo number_format($row['fee'], 2); ?>)
+                                                <option value="" disabled selected><?php echo $t['choose_service']; ?></option>
+                                                <?php foreach ($poojaList as $p): ?>
+                                                    <option value="<?= $p['id'] ?>">
+                                                        <?= htmlspecialchars($p['type']) ?>
+                                                        <?= $p['fee'] ? '(₹' . number_format($p['fee']) . ')' : '' ?>
                                                     </option>
-                                                <?php } ?>
+                                                <?php endforeach; ?>
                                             </select>
                                             <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
                                         </div>
@@ -272,14 +304,13 @@ $userPhotoUrl = !empty($uRow['photo'])
                                             <div class="col-md-6 mb-4">
                                                 <label class="form-label"><?php echo $t['preferred_date']; ?> <span
                                                         class="text-danger">*</span></label>
-                                                <input type="date" name="pooja_date" min="<?php echo date('Y-m-d'); ?>"
-                                                    class="form-control" required>
+                                                <input type="date" name="pooja_date" class="form-control"
+                                                    min="<?= date('Y-m-d') ?>" required>
                                                 <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
                                             </div>
                                             <div class="col-md-6 mb-4">
                                                 <label class="form-label"><?php echo $t['time_slot']; ?></label>
                                                 <select name="time_slot" class="form-select">
-                                                    <option value=""><?php echo $t['any_time']; ?></option>
                                                     <option value="morning"><?php echo $t['morning']; ?></option>
                                                     <option value="afternoon"><?php echo $t['afternoon']; ?></option>
                                                     <option value="evening"><?php echo $t['evening']; ?></option>
@@ -288,17 +319,15 @@ $userPhotoUrl = !empty($uRow['photo'])
                                         </div>
 
                                         <div class="mb-4">
-                                            <label class="form-label"><?php echo $t['special_instructions']; ?></label>
-                                            <textarea name="description" class="form-control" rows="4"
-                                                placeholder="<?php echo $t['special_instructions_placeholder']; ?>"></textarea>
+                                            <label class="form-label"><?php echo $t['special_requests_notes']; ?></label>
+                                            <textarea name="notes" class="form-control" rows="4"
+                                                placeholder="<?php echo $t['special_requests_placeholder']; ?>"></textarea>
                                         </div>
 
-                                        <div class="d-flex justify-content-end gap-3 pt-2">
+                                        <div class="d-flex gap-3 justify-content-end mt-2">
                                             <a href="dashboard.php" class="btn btn-light px-4 border"
                                                 style="border-radius: 8px;"><?php echo $t['cancel']; ?></a>
-                                            <button type="submit" class="ant-btn-primary px-5">
-                                                <?php echo $t['confirm_booking']; ?>
-                                            </button>
+                                            <button type="submit" name="book_pooja" class="ant-btn-primary"><?php echo $t['confirm_request']; ?></button>
                                         </div>
                                     </form>
                                 </div>
@@ -329,4 +358,3 @@ $userPhotoUrl = !empty($uRow['photo'])
 </body>
 
 </html>
-

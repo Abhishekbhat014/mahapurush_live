@@ -5,13 +5,6 @@
 session_start();
 require __DIR__ . '/../../includes/lang.php';
 
-if (empty($_SESSION['logged_in'])) {
-    header("Location: ../../auth/login.php");
-    exit;
-}
-
-$currLang = $_SESSION['lang'] ?? 'en';
-
 // =========================================================
 // 2. DATABASE CONNECTION
 // =========================================================
@@ -19,15 +12,21 @@ $dbPath = __DIR__ . '/../../config/db.php';
 require $dbPath;
 require '../../includes/receipt_helper.php';
 
-$isLoggedIn = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    header("Location: ../../auth/login.php");
+    exit;
+}
+
 $uid = $_SESSION['user_id'] ?? NULL;
 $userName = $_SESSION['user_name'] ?? $t['user'];
-$currentPage = 'donate.php';
+$currentPage = 'donations.php';
+$currLang = $_SESSION['lang'] ?? 'en';
 
 // --- Fetch Latest Profile Photo and Name for Header ---
 $uQuery = mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1");
 $uRow = mysqli_fetch_assoc($uQuery);
-$displayName = $isLoggedIn ? ($uRow['first_name'] . ' ' . $uRow['last_name']) : $t['guest'];
+$displayName = ($uRow['first_name'] ?? '') . ' ' . ($uRow['last_name'] ?? '');
+$displayName = trim($displayName) !== '' ? $displayName : $userName;
 $loggedInUserPhoto = !empty($uRow['photo'])
     ? '../../uploads/users/' . basename($uRow['photo'])
     : 'https://ui-avatars.com/api/?name=' . urlencode($displayName) . '&background=random';
@@ -35,7 +34,6 @@ $loggedInUserPhoto = !empty($uRow['photo'])
 // --- FORM HANDLING ---
 $error = '';
 $success = '';
-$receiptNo = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
     $donorName = trim($_POST['name'] ?? '');
     $amount = trim($_POST['amount'] ?? '');
@@ -57,16 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
 
             // 3. Attach receipt
             attachReceiptToPayment($con, $paymentId, $receiptId);
-
-            // 4. Fetch receipt number for redirect button
-            $rStmt = $con->prepare("SELECT receipt_no FROM receipt WHERE id = ? LIMIT 1");
-            if ($rStmt) {
-                $rStmt->bind_param("i", $receiptId);
-                $rStmt->execute();
-                $rStmt->bind_result($receiptNo);
-                $rStmt->fetch();
-                $rStmt->close();
-            }
 
             $con->commit();
             $success = $t['donation_receipt_generated'];
@@ -240,10 +228,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
     <header class="ant-header shadow-sm">
         <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
-                <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i
-                        class="bi bi-list"></i></button>
+                <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                    <i class="bi bi-list"></i>
+                </button>
                 <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
-                    <i class="bi bi-flower1 text-warning me-2"></i><?php echo $t['title']; ?>
+                    <i class="bi bi-flower1 text-warning me-2"></i><?= $t['title'] ?>
                 </a>
             </div>
             <div class="d-flex align-items-center gap-3">
@@ -278,7 +267,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
 
     <div class="container-fluid">
         <div class="row">
-
             <?php include 'sidebar.php'; ?>
 
             <main class="col-lg-10 p-0">
@@ -311,15 +299,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
                                 <div class="alert border-0 small py-3 text-center mb-4"
                                     style="background: #f6ffed; color: #52c41a; border-radius: 8px;">
                                     <i class="bi bi-check-circle-fill me-2"></i> <?= htmlspecialchars($success) ?>
-                                    <?php if (!empty($receiptNo)): ?>
-                                        <div class="mt-3">
-                                            <a href="../receipt/view.php?no=<?= urlencode($receiptNo) ?>"
-                                                class="btn btn-success btn-sm rounded-pill px-4">
-                                                <i class="bi bi-receipt-cutoff me-1"></i>
-                                                <?= htmlspecialchars($t['view_receipt'] ?? 'View Receipt') ?>
-                                            </a>
-                                        </div>
-                                    <?php endif; ?>
                                 </div>
                             <?php endif; ?>
 
@@ -327,7 +306,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
                                 <div class="mb-3">
                                     <label class="form-label"><?php echo $t['full_name']; ?></label>
                                     <input type="text" name="name" class="form-control"
-                                        value="<?= $isLoggedIn ? htmlspecialchars($displayName) : '' ?>"
+                                        value="<?= htmlspecialchars($displayName) ?>"
                                         placeholder="<?php echo $t['full_name_placeholder']; ?>" required>
                                     <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
                                 </div>

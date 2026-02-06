@@ -231,7 +231,7 @@ $currentPage = 'member_directory.php';
                             <p class="text-secondary mb-0 small"><?php echo $t['member_directory_subtitle']; ?></p>
                         </div>
                         <div style="min-width: 320px;">
-                            <form method="GET" class="input-group shadow-sm">
+                            <form method="GET" class="input-group shadow-sm needs-validation" novalidate>
                                 <span class="input-group-text bg-white border-end-0"><i
                                         class="bi bi-search text-muted"></i></span>
                                 <input type="text" name="search" class="form-control border-start-0"
@@ -339,6 +339,21 @@ $currentPage = 'member_directory.php';
                 setTimeout(() => { btn.innerHTML = icon; btn.style.background = ''; btn.style.color = ''; }, 2000);
             });
         }
+    </script>
+    <script>
+        (function () {
+            'use strict';
+            var forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
     </script>
 </body>
 

@@ -13,7 +13,16 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 }
 
 $uid = (int) $_SESSION['user_id'];
-$role = $_SESSION['role'] ?? 'member'; // Changed to check standard 'role'
+$role = $_SESSION['primary_role'] ?? ($_SESSION['role'] ?? 'member');
+
+$backUrl = '../customer/my_receipts.php';
+if ($role === 'chairman') {
+    $backUrl = '../chairman/receipts.php';
+} elseif ($role === 'secretary') {
+    $backUrl = '../secretary/receipts.php';
+} elseif ($role === 'member') {
+    $backUrl = '../member/my_receipts.php';
+}
 
 /* ---------------------------
    INPUT VALIDATION
@@ -76,117 +85,160 @@ if (isset($q)) {
             --ant-border: #f0f0f0;
             --ant-text: rgba(0, 0, 0, 0.88);
             --ant-text-sec: rgba(0, 0, 0, 0.45);
+            --ant-bg: #f0f2f5;
+            --ant-success: #52c41a;
         }
 
         body {
-            background-color: #f0f2f5;
+            background-color: var(--ant-bg);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             color: var(--ant-text);
             -webkit-user-select: none;
             user-select: none;
         }
 
-        /* The Virtual Paper */
-        .receipt-container {
-            max-width: 800px;
-            margin: 40px auto;
+        .page-wrap {
+            max-width: 1100px;
+            margin: 24px auto 40px;
+            padding: 0 16px;
+        }
+
+        .receipt-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .receipt-card {
             background: #fff;
-            padding: 60px;
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--ant-border);
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+            padding: 24px;
             position: relative;
             overflow: hidden;
+            min-height: 360px;
         }
 
-        /* AntD Watermark */
-        .receipt-container::before {
+        .receipt-container {
+            display: none;
+        }
+
+        .receipt-card::before {
             content: "\F396";
-            /* bi-flower1 */
             font-family: "bootstrap-icons";
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 350px;
-            color: rgba(22, 119, 255, 0.03);
-            z-index: 0;
+            top: 16px;
+            right: 16px;
+            font-size: 48px;
+            color: rgba(22, 119, 255, 0.08);
         }
 
-        .receipt-content {
-            position: relative;
-            z-index: 1;
+        .receipt-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed var(--ant-border);
+            margin-bottom: 16px;
         }
 
-        .receipt-header {
-            border-bottom: 2px solid var(--ant-primary);
-            padding-bottom: 20px;
-            margin-bottom: 40px;
+        .temple-title {
+            font-weight: 800;
+            font-size: 18px;
+            color: #000;
         }
 
         .receipt-no {
             font-family: 'SFMono-Regular', Consolas, monospace;
             background: #e6f4ff;
             color: var(--ant-primary);
-            padding: 4px 12px;
+            padding: 3px 10px;
             border-radius: 4px;
             font-weight: 600;
             user-select: text !important;
+            display: inline-block;
         }
 
         .label-text {
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: var(--ant-text-sec);
             font-weight: 700;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
 
-        .data-text {
-            font-size: 16px;
+        .value-text {
+            font-size: 14px;
             font-weight: 600;
-            margin-bottom: 24px;
+            margin-bottom: 12px;
             color: #000;
+        }
+
+        .receipt-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px 20px;
+        }
+
+        .field-full {
+            grid-column: 1 / -1;
         }
 
         .amount-block {
             background: #fafafa;
-            padding: 30px;
-            border-radius: 12px;
+            padding: 14px 16px;
+            border-radius: 10px;
             border: 1px solid var(--ant-border);
             text-align: right;
-            margin-top: 20px;
+            margin-top: 8px;
         }
 
         .amount-val {
-            font-size: 32px;
+            font-size: 20px;
             font-weight: 800;
             color: var(--ant-primary);
             user-select: text !important;
         }
 
-        .verified-stamp {
-            border: 3px double #52c41a;
-            color: #52c41a;
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #f6ffed;
+            color: var(--ant-success);
+            border: 1px solid #b7eb8f;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .copy-badge {
             display: inline-block;
-            padding: 8px 20px;
-            border-radius: 8px;
-            font-weight: 900;
-            text-transform: uppercase;
-            transform: rotate(-12deg);
-            opacity: 0.7;
-            font-size: 18px;
-            position: absolute;
-            right: 40px;
-            bottom: 150px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            background: #f0f5ff;
+            color: #2f54eb;
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 6px;
         }
 
         .no-print-bar {
-            max-width: 800px;
-            margin: 20px auto;
+            max-width: 1100px;
+            margin: 16px auto 0;
+            padding: 0 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        @media (max-width: 991px) {
+            .receipt-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media print {
@@ -194,20 +246,26 @@ if (isset($q)) {
                 background: #fff;
             }
 
-            .receipt-container {
-                margin: 0;
-                padding: 40px;
-                box-shadow: none;
-                width: 100%;
-                max-width: 100%;
-            }
-
             .no-print-bar {
                 display: none !important;
             }
 
-            .receipt-container::before {
-                color: rgba(0, 0, 0, 0.02);
+            .page-wrap {
+                max-width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            .receipt-grid {
+                grid-template-columns: 1fr;
+                gap: 12mm;
+            }
+
+            .receipt-card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+                min-height: auto;
+                page-break-inside: avoid;
             }
         }
     </style>
@@ -216,13 +274,91 @@ if (isset($q)) {
 <body>
 
     <div class="no-print-bar">
-        <a href="javascript:history.back()" class="btn btn-light border rounded-pill px-4 fw-bold">
+        <a href="<?= htmlspecialchars($backUrl) ?>" class="btn btn-light border rounded-pill px-4 fw-bold">
             <i class="bi bi-arrow-left me-2"></i> <?php echo $t['back']; ?>
         </a>
         <button onclick="window.print()" class="btn btn-primary rounded-pill px-4 shadow-sm"
             style="background: var(--ant-primary); border:none;">
             <i class="bi bi-printer-fill me-2"></i> <?php echo $t['print_official_receipt']; ?>
         </button>
+    </div>
+
+    <div class="page-wrap">
+        <div class="receipt-grid">
+            <?php
+            $receiptCopies = [
+                $t['receipt_copy_customer'] ?? 'Customer Copy',
+                $t['receipt_copy_office'] ?? 'Office Copy'
+            ];
+            ?>
+            <?php foreach ($receiptCopies as $copyLabel): ?>
+                <section class="receipt-card">
+                    <div class="receipt-top">
+                        <div>
+                            <div class="temple-title"><?= htmlspecialchars($t['title']) ?></div>
+                            <div class="small text-muted"><?php echo $t['official_ack_receipt']; ?></div>
+                        </div>
+                        <div class="text-end">
+                            <div class="copy-badge"><?= htmlspecialchars($copyLabel) ?></div>
+                            <div class="label-text"><?php echo $t['receipt_number']; ?></div>
+                            <div class="receipt-no">#<?= htmlspecialchars($receipt['receipt_no']) ?></div>
+                        </div>
+                    </div>
+
+                    <div class="receipt-body">
+                        <div>
+                            <div class="label-text"><?php echo $t['contributor']; ?></div>
+                            <div class="value-text"><?= htmlspecialchars($details['name'] ?? $_SESSION['user_name']) ?></div>
+                        </div>
+
+                        <div class="text-end">
+                            <div class="label-text"><?php echo $t['transaction_status']; ?></div>
+                            <div class="status-pill"><?php echo $t['completed']; ?></div>
+                        </div>
+
+                        <div>
+                            <div class="label-text"><?php echo $t['purpose_of_payment']; ?></div>
+                            <div class="value-text">
+                                <span class="badge bg-light text-dark border fw-bold px-2"><?= ucfirst($receipt['purpose']) ?></span>
+                                <?php if ($source === 'pooja'): ?>
+                                    <div class="small text-muted mt-1"><?php echo $t['scheduled']; ?>:
+                                        <?= date('d M Y', strtotime($details['pooja_date'])) ?> (<?= $details['time_slot'] ?>)
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <div class="text-end">
+                            <div class="label-text"><?php echo $t['date_issued']; ?></div>
+                            <div class="value-text"><?= date('d F Y, h:i A', strtotime($receipt['issued_on'])) ?></div>
+                        </div>
+
+                        <?php if ($source === 'contributions'): ?>
+                            <div class="field-full">
+                                <div class="label-text"><?php echo $t['quantity_received']; ?></div>
+                                <div class="value-text"><?= htmlspecialchars($details['quantity'] . ' ' . $details['unit']) ?></div>
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="field-full amount-block">
+                            <div class="label-text"><?php echo $t['total_value_received']; ?></div>
+                            <div class="amount-val">
+                                <?= $receipt['amount'] > 0 ? '&#8377;' . number_format($receipt['amount'], 2) : ['in_kind'] ?>
+                            </div>
+                            <div class="small text-muted italic mt-1" style="font-size: 11px;">
+                                <?php echo $t['digital_document_note']; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 pt-3 border-top text-center">
+                        <div class="small text-muted">
+                            <?php echo $t['thank_you_support_devotion']; ?> <strong><?php echo $t['divine_blessings']; ?></strong>
+                        </div>
+                    </div>
+                </section>
+            <?php endforeach; ?>
+        </div>
     </div>
 
     <div class="receipt-container">
@@ -272,7 +408,7 @@ if (isset($q)) {
             <div class="amount-block">
                 <div class="label-text"><?php echo $t['total_value_received']; ?></div>
                 <div class="amount-val">
-                    <?= $receipt['amount'] > 0 ? '₹' . number_format($receipt['amount'], 2) : ['in_kind'] ?>
+                    <?= $receipt['amount'] > 0 ? '&#8377;' . number_format($receipt['amount'], 2) : ['in_kind'] ?>
                 </div>
                 <div class="small text-muted italic mt-2" style="font-size: 11px;">
                     <?php echo $t['digital_document_note']; ?>
@@ -290,7 +426,11 @@ if (isset($q)) {
         </div>
     </div>
 
+    <script>
+        document.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+        });
+    </script>
 </body>
 
 </html>
-

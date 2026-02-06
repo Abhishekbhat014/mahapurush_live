@@ -257,7 +257,7 @@ body {
                             <div class="ant-card shadow-sm">
                                 <div class="ant-card-head"><?php echo $t['pooja_details']; ?></div>
                                 <div class="ant-card-body">
-                                    <form method="POST">
+                                    <form method="POST" class="needs-validation" novalidate>
                                         <div class="mb-4">
                                             <label class="form-label"><?php echo $t['select_pooja_service_label']; ?> <span
                                                     class="text-danger">*</span></label>
@@ -270,6 +270,7 @@ body {
                                                     </option>
                                                 <?php endforeach; ?>
                                             </select>
+                                            <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
                                         </div>
 
                                         <div class="row">
@@ -278,6 +279,7 @@ body {
                                                         class="text-danger">*</span></label>
                                                 <input type="date" name="pooja_date" class="form-control"
                                                     min="<?= date('Y-m-d') ?>" required>
+                                                <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
                                             </div>
                                             <div class="col-md-6 mb-4">
                                                 <label class="form-label"><?php echo $t['time_slot']; ?></label>
@@ -311,6 +313,21 @@ body {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    </script>
 </body>
 
 </html>

@@ -279,21 +279,24 @@ $currentPage = 'profile.php';
                             <div class="ant-card">
                                 <div class="ant-card-head"><?php echo $t['change_password']; ?></div>
                                 <div class="ant-card-body">
-                                    <form method="POST">
+                                    <form method="POST" class="needs-validation" novalidate>
                                         <div class="mb-3">
                                             <label class="form-label"><?php echo $t['current_password']; ?></label>
                                             <input type="password" name="current_password" class="form-control"
                                                 required>
+                                            <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label"><?php echo $t['new_password']; ?></label>
                                             <input type="password" name="new_password" class="form-control" required
                                                 minlength="6">
+                                            <div class="invalid-feedback"><?php echo $t['password_min_length'] ?? 'Password must be at least 6 characters.'; ?></div>
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label"><?php echo $t['confirm_new_password']; ?></label>
                                             <input type="password" name="confirm_password" class="form-control"
                                                 required>
+                                            <div class="invalid-feedback"><?php echo $t['new_passwords_mismatch'] ?? 'Passwords must match.'; ?></div>
                                         </div>
                                         <button type="submit" name="change_password"
                                             class="ant-btn-primary w-100"><?php echo $t['update_password']; ?></button>
@@ -306,22 +309,25 @@ $currentPage = 'profile.php';
                             <div class="ant-card">
                                 <div class="ant-card-head"><?php echo $t['personal_information']; ?></div>
                                 <div class="ant-card-body">
-                                    <form method="POST">
+                                    <form method="POST" class="needs-validation" novalidate>
                                         <div class="row g-3">
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label"><?php echo $t['first_name']; ?></label>
                                                 <input type="text" name="first_name" class="form-control"
                                                     value="<?= htmlspecialchars($user['first_name']) ?>" required>
+                                                <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label"><?php echo $t['last_name']; ?></label>
                                                 <input type="text" name="last_name" class="form-control"
                                                     value="<?= htmlspecialchars($user['last_name']) ?>" required>
+                                                <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label"><?php echo $t['phone_number']; ?></label>
-                                                <input type="tel" name="phone" class="form-control"
+                                                <input type="tel" name="phone" class="form-control" pattern="[0-9]{10}"
                                                     value="<?= htmlspecialchars($user['phone']) ?>" required>
+                                                <div class="invalid-feedback"><?php echo $t['err_invalid_phone'] ?? 'Please enter a valid 10-digit phone number.'; ?></div>
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label"><?php echo $t['email_address']; ?></label>
@@ -345,6 +351,21 @@ $currentPage = 'profile.php';
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    </script>
 </body>
 
 </html>

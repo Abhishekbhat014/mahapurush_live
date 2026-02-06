@@ -45,10 +45,13 @@ $committeeMembers = [];
 $result = mysqli_query($con, $sql);
 if ($result) {
     while ($row = mysqli_fetch_assoc($result)) {
-        $photoPath = !empty($row['photo']) ? 'uploads/users/' . $row['photo'] : 'assets/img/default-user.png';
+        $memberName = trim($row['first_name'] . ' ' . $row['last_name']);
+        $photoPath = !empty($row['photo'])
+            ? 'uploads/users/' . basename($row['photo'])
+            : 'https://ui-avatars.com/api/?name=' . urlencode($memberName) . '&background=random';
         $committeeMembers[] = [
             'id' => $row['id'],
-            'name' => $row['first_name'] . ' ' . $row['last_name'],
+            'name' => $memberName,
             'photo' => $photoPath,
             'role' => ucfirst($row['role_name']),
         ];
@@ -212,7 +215,8 @@ if ($result) {
         <div class="row justify-content-center">
             <div class="col-lg-10">
                 <div class="filter-container">
-                    <form method="GET" action="" class="row g-2 align-items-center" id="committeeFilterForm">
+                    <form method="GET" action="" class="row g-2 align-items-center needs-validation"
+                        id="committeeFilterForm" novalidate>
                         <div class="col-md-5">
                             <div class="search-pill">
                                 <i class="bi bi-search text-muted"></i>
@@ -247,14 +251,11 @@ if ($result) {
                 <?php foreach ($committeeMembers as $member): ?>
                     <div class="col-12 col-sm-6 col-lg-3">
                         <div class="member-card">
-                            <img src="<?php echo htmlspecialchars($member['photo']); ?>" alt="<?php echo $t['member']; ?>" class="member-img">
+                            <img src="<?php echo htmlspecialchars($member['photo']); ?>" alt="<?php echo $t['member']; ?>"
+                                class="member-img">
                             <h6 class="fw-bold mb-1 text-dark"><?php echo htmlspecialchars($member['name']); ?></h6>
                             <span class="role-tag mb-3"><?php echo htmlspecialchars($member['role']); ?></span>
 
-                            <div class="d-flex justify-content-center gap-3 mt-2 text-muted opacity-50">
-                                <i class="bi bi-envelope fs-5"></i>
-                                <i class="bi bi-telephone fs-5"></i>
-                            </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -280,6 +281,21 @@ if ($result) {
                     filterForm.submit();
                 });
             }
+        })();
+    </script>
+    <script>
+        (function () {
+            'use strict';
+            var forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
         })();
     </script>
 </body>

@@ -270,20 +270,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
                                 </div>
                             <?php endif; ?>
 
-                            <form method="POST">
+                            <form method="POST" class="needs-validation" novalidate>
                                 <div class="mb-3">
                                     <label
                                         class="form-label"><?php echo $t['full_name']; ?></label>
                                     <input type="text" name="name" class="form-control"
                                         value="<?= $isLoggedIn ? htmlspecialchars($displayName) : '' ?>"
                                         placeholder="<?php echo $t['full_name_placeholder']; ?>" required>
+                                    <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label"><?php echo $t['amount_inr']; ?></label>
-                                    <div class="input-group">
+                                    <div class="input-group has-validation">
                                         <span class="input-group-text bg-light border-end-0">₹</span>
                                         <input type="number" name="amount" class="form-control" min="1"
                                             placeholder="<?php echo $t['amount_placeholder']; ?>" required>
+                                        <div class="invalid-feedback"><?php echo $t['amount_required'] ?? 'Please enter a valid amount.'; ?></div>
                                     </div>
                                 </div>
                                 <div class="mb-4">
@@ -302,6 +304,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            var forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    </script>
 </body>
 
 </html>

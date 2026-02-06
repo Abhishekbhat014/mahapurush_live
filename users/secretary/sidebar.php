@@ -2,6 +2,14 @@
 $currentPage = basename($_SERVER['PHP_SELF']);
 ?>
 
+<style>
+    body,
+    body * {
+        -webkit-user-select: none;
+        user-select: none;
+    }
+</style>
+
 <nav class="col-lg-2 d-none d-lg-flex flex-column ant-sidebar shadow-sm"
     style="height: calc(100vh - 64px); position: sticky; top: 64px;">
 
@@ -16,6 +24,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         <a href="dashboard.php" class="nav-link-custom <?= ($currentPage == 'dashboard.php') ? 'active' : '' ?>">
             <i class="bi bi-speedometer2"></i> <span><?php echo $t['dashboard']; ?></span>
         </a>
+
+        <div class="ant-divider" style="margin: 16px 20px; opacity: 0.5;"></div>
+        <small class="text-uppercase text-muted fw-bold px-4" style="font-size: 10px; letter-spacing: 1px; opacity: 0.6;">
+            <?php echo $t['management'] ?? 'Management'; ?>
+        </small>
 
         <a href="pooja_bookings.php"
             class="nav-link-custom <?= ($currentPage == 'pooja_bookings.php') ? 'active' : '' ?>">
@@ -42,6 +55,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         <a href="reports.php" class="nav-link-custom <?= ($currentPage == 'reports.php') ? 'active' : '' ?>">
             <i class="bi bi-bar-chart-line"></i> <span><?php echo $t['reports']; ?></span>
         </a>
+
+        <div class="ant-divider" style="margin: 16px 20px; opacity: 0.5;"></div>
+        <small class="text-uppercase text-muted fw-bold px-4" style="font-size: 10px; letter-spacing: 1px; opacity: 0.6;">
+            <?php echo $t['account'] ?? 'Account'; ?>
+        </small>
 
         <a href="profile.php" class="nav-link-custom <?= ($currentPage == 'profile.php') ? 'active' : '' ?>">
             <i class="bi bi-person-circle"></i> <span><?php echo $t['my_profile']; ?></span>
@@ -75,6 +93,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <i class="bi bi-speedometer2"></i> <?php echo $t['dashboard']; ?>
             </a>
 
+            <div class="ant-divider" style="margin: 16px 20px; opacity: 0.5;"></div>
+            <small class="text-uppercase text-muted fw-bold px-3" style="font-size: 10px; letter-spacing: 1px; opacity: 0.6;">
+                <?php echo $t['management'] ?? 'Management'; ?>
+            </small>
+
             <a href="pooja_bookings.php"
                 class="nav-link-custom <?= ($currentPage == 'pooja_bookings.php') ? 'active' : '' ?>">
                 <i class="bi bi-calendar-check"></i> <?php echo $t['pooja_bookings']; ?>
@@ -101,6 +124,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <i class="bi bi-bar-chart-line"></i> <?php echo $t['reports']; ?>
             </a>
 
+            <div class="ant-divider" style="margin: 16px 20px; opacity: 0.5;"></div>
+            <small class="text-uppercase text-muted fw-bold px-3" style="font-size: 10px; letter-spacing: 1px; opacity: 0.6;">
+                <?php echo $t['account'] ?? 'Account'; ?>
+            </small>
+
             <a href="profile.php" class="nav-link-custom <?= ($currentPage == 'profile.php') ? 'active' : '' ?>">
                 <i class="bi bi-person-circle"></i> <?php echo $t['my_profile']; ?>
             </a>
@@ -113,3 +141,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         </div>
     </div>
 </div>
+<script>
+    document.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+    });
+</script>

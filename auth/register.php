@@ -120,6 +120,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flex-direction: column;
         }
 
+        body,
+        body * {
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
         .ant-header {
             background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(12px);
@@ -206,8 +212,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <a href="../index.php" class="fw-bold text-dark text-decoration-none fs-4 d-flex align-items-center">
                 <i class="bi bi-bank2 text-primary me-2"></i><?php echo $t['title']; ?>
             </a>
-            <a href="login.php" class="text-secondary text-decoration-none small fw-medium">
-                <?php echo $t['login_here']; ?> <i class="bi bi-arrow-right ms-1"></i>
+            <a href="../index.php" class="text-secondary text-decoration-none small fw-medium">
+                <?php echo $t['home']; ?>
             </a>
         </div>
     </header>
@@ -236,55 +242,89 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 <?php endif; ?>
 
-                <form method="POST" enctype="multipart/form-data">
+                <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label"><?php echo $t['first_name']; ?></label>
-                            <input type="text" name="first_name" class="form-control" required>
+                            <div class="input-group has-validation">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input type="text" name="first_name" class="form-control" required>
+                                <div class="invalid-feedback">
+                                    <?php echo $t['field_required'] ?? 'This field is required.'; ?>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label"><?php echo $t['last_name']; ?></label>
-                            <input type="text" name="last_name" class="form-control" required>
+                            <div class="input-group has-validation">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input type="text" name="last_name" class="form-control" required>
+                                <div class="invalid-feedback">
+                                    <?php echo $t['field_required'] ?? 'This field is required.'; ?>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label"><?php echo $t['email']; ?></label>
-                            <input type="email" name="email" class="form-control" required>
+                            <div class="input-group has-validation">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input type="email" name="email" class="form-control" required>
+                                <div class="invalid-feedback">
+                                    <?php echo $t['err_invalid_email'] ?? 'Please enter a valid email.'; ?>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label"><?php echo $t['phone']; ?></label>
-                            <input type="text" name="phone" class="form-control" pattern="[0-9]{10}" required>
+                            <div class="input-group has-validation">
+                                <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                <input type="text" name="phone" class="form-control" pattern="[0-9]{10}" required>
+                                <div class="invalid-feedback">
+                                    <?php echo $t['err_invalid_phone'] ?? 'Please enter a valid 10-digit phone number.'; ?>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label
-                            class="form-label"><?php echo $t['profile_photo_optional']; ?></label>
-                        <input type="file" name="photo" class="form-control" accept="image/*">
+                        <label class="form-label"><?php echo $t['profile_photo_optional']; ?></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-image"></i></span>
+                            <input type="file" name="photo" class="form-control" accept="image/*">
+                        </div>
                     </div>
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label class="form-label"><?php echo $t['password']; ?></label>
-                            <div class="input-group">
+                            <div class="input-group has-validation">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
                                 <input type="password" name="password" class="form-control" id="reg_pass" required>
                                 <button class="btn btn-outline-secondary border-secondary-subtle" type="button"
                                     onclick="togglePass('reg_pass', this)">
                                     <i class="bi bi-eye"></i>
                                 </button>
+                                <div class="invalid-feedback">
+                                    <?php echo $t['field_required'] ?? 'This field is required.'; ?>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label"><?php echo $t['confirm_password']; ?></label>
-                            <div class="input-group">
+                            <div class="input-group has-validation">
+                                <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
                                 <input type="password" name="confirm_password" class="form-control" id="reg_confirm"
                                     required>
                                 <button class="btn btn-outline-secondary border-secondary-subtle" type="button"
                                     onclick="togglePass('reg_confirm', this)">
                                     <i class="bi bi-eye"></i>
                                 </button>
+                                <div class="invalid-feedback">
+                                    <?php echo $t['new_passwords_mismatch'] ?? 'Passwords must match.'; ?>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -296,7 +336,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <p class="small text-muted mb-0">
                         <?php echo $t['have_account']; ?>
                         <a href="login.php"
-                            class="text-primary text-decoration-none fw-bold ms-1"><?php echo $t['login_here']; ?></a>
+                            class="text-primary text-decoration-none fw-bold ms-1"><?php echo $t['login']; ?></a>
                     </p>
                 </div>
             </div>
@@ -305,13 +345,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <footer class="ant-footer">
         <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-            <div class="small text-muted"><?php echo sprintf($t['copyright_footer_title'], date("Y"), $t['title']); ?></div>
-            <div class="d-flex align-items-center gap-3">
-                <img src="../assets/images/dev/Yojana.jpeg" width="32" height="32" class="rounded-circle">
-                <div class="text-start">
-                    <div style="font-size: 11px;" class="fw-bold">Yojana Gawade</div>
-                    <div style="font-size: 9px;" class="text-uppercase text-primary fw-bold"><?php echo $t['full_stack_developer']; ?></div>
-                </div>
+            <div class="small text-muted"><?php echo sprintf($t['copyright_footer_title'], date("Y"), $t['title']); ?>
+            </div>
+            <div class="d-flex gap-3 small fw-bold">
+                <span class="text-primary">Developed By: Yojana Gawade</span>
             </div>
         </div>
     </footer>
@@ -329,7 +366,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     </script>
+    <script>
+        (function () {
+            'use strict';
+            var forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    </script>
+    <script>
+        document.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+        });
+    </script>
 </body>
 
 </html>
-

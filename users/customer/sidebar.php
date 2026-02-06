@@ -3,6 +3,14 @@
 $currentPage = basename($_SERVER['PHP_SELF']);
 ?>
 
+<style>
+    body,
+    body * {
+        -webkit-user-select: none;
+        user-select: none;
+    }
+</style>
+
 <nav class="col-lg-2 d-none d-lg-block ant-sidebar shadow-sm">
     <div class="px-4 mb-4">
         <small class="text-uppercase text-muted fw-bold" style="font-size: 10px; letter-spacing: 1px; opacity: 0.6;">
@@ -14,6 +22,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         <a href="dashboard.php" class="nav-link-custom <?= ($currentPage == 'dashboard.php') ? 'active' : '' ?>">
             <i class="bi bi-grid-1x2"></i> <span><?php echo $t['dashboard']; ?></span>
         </a>
+
+        <div class="ant-divider" style="margin: 16px 20px; opacity: 0.5;"></div>
+        <small class="text-uppercase text-muted fw-bold px-4" style="font-size: 10px; letter-spacing: 1px; opacity: 0.6;">
+            <?php echo $t['services'] ?? 'Services'; ?>
+        </small>
 
         <a href="donate.php" class=" nav-link-custom <?= ($currentPage == 'donate.php') ? 'active' : '' ?>">
             <i class="bi bi-heart-fill"></i> <span><?php echo $t['make_donation']; ?></span>
@@ -27,6 +40,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <i class="bi bi-box-seam"></i> <span><?php echo $t['contribution']; ?></span>
         </a>
 
+        <div class="ant-divider" style="margin: 16px 20px; opacity: 0.5;"></div>
+        <small class="text-uppercase text-muted fw-bold px-4" style="font-size: 10px; letter-spacing: 1px; opacity: 0.6;">
+            <?php echo $t['management'] ?? 'Management'; ?>
+        </small>
+
         <a href="my_requests.php" class="nav-link-custom <?= ($currentPage == 'my_requests.php') ? 'active' : '' ?>">
             <i class="bi bi-hourglass-split"></i> <span><?php echo $t['my_requests']; ?></span>
         </a>
@@ -34,6 +52,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         <a href="my_receipts.php" class="nav-link-custom <?= ($currentPage == 'my_receipts.php') ? 'active' : '' ?>">
             <i class="bi bi-receipt-cutoff"></i> <span><?php echo $t['receipts']; ?></span>
         </a>
+
+        <div class="ant-divider" style="margin: 16px 20px; opacity: 0.5;"></div>
+        <small class="text-uppercase text-muted fw-bold px-4" style="font-size: 10px; letter-spacing: 1px; opacity: 0.6;">
+            <?php echo $t['account'] ?? 'Account'; ?>
+        </small>
 
         <a href="profile.php" class="nav-link-custom <?= ($currentPage == 'profile.php') ? 'active' : '' ?>">
             <i class="bi bi-person-circle"></i> <span><?php echo $t['my_profile']; ?></span>
@@ -60,11 +83,29 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         <a href="dashboard.php" class="nav-link-custom <?= ($currentPage == 'dashboard.php') ? 'active' : '' ?>">
             <i class="bi bi-grid-1x2"></i> <?php echo $t['dashboard']; ?>
         </a>
+        <div class="ant-divider" style="margin: 16px 20px; opacity: 0.5;"></div>
+        <small class="text-uppercase text-muted fw-bold px-3" style="font-size: 10px; letter-spacing: 1px; opacity: 0.6;">
+            <?php echo $t['services'] ?? 'Services'; ?>
+        </small>
         <a href="donate.php" class="nav-link-custom"><i class="bi bi-heart-fill"></i> <?php echo $t['make_donation']; ?></a>
+        <a href="pooja_book.php" class="nav-link-custom"><i class="bi bi-person-circle"></i> <?php echo $t['pooja_bookings']; ?></a>
         <a href="contribute.php" class="nav-link-custom"><i class="bi bi-box-seam"></i> <?php echo $t['contribution']; ?></a>
+        <div class="ant-divider" style="margin: 16px 20px; opacity: 0.5;"></div>
+        <small class="text-uppercase text-muted fw-bold px-3" style="font-size: 10px; letter-spacing: 1px; opacity: 0.6;">
+            <?php echo $t['management'] ?? 'Management'; ?>
+        </small>
         <a href="my_requests.php" class="nav-link-custom"><i class="bi bi-hourglass-split"></i> <?php echo $t['my_requests']; ?></a>
         <a href="my_receipts.php" class="nav-link-custom"><i class="bi bi-receipt-cutoff"></i> <?php echo $t['receipts']; ?></a>
+        <div class="ant-divider" style="margin: 16px 20px; opacity: 0.5;"></div>
+        <small class="text-uppercase text-muted fw-bold px-3" style="font-size: 10px; letter-spacing: 1px; opacity: 0.6;">
+            <?php echo $t['account'] ?? 'Account'; ?>
+        </small>
         <a href="profile.php" class="nav-link-custom <?= ($currentPage == 'profile.php') ? 'active' : '' ?>">
             <i class="bi bi-person-circle"></i> <?php echo $t['my_profile']; ?></a>
     </div>
 </div>
+<script>
+    document.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+    });
+</script>

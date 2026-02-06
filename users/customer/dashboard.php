@@ -379,9 +379,11 @@ if ($con && $userId > 0) {
                                                         ?>
                                                         <tr>
                                                             <td class="fw-bold text-primary">
-                                                                #<?= htmlspecialchars($row['receipt_no'] ?? $t['not_available']) ?></td>
+                                                                #<?= htmlspecialchars($row['receipt_no'] ?? $t['not_available']) ?>
+                                                            </td>
                                                             <td class="fw-bold">₹<?= number_format($row['amount'], 2) ?></td>
-                                                            <td><span class="badge-soft <?= $statusClass ?>"><?= $statusLabel ?></span>
+                                                            <td><span
+                                                                    class="badge-soft <?= $statusClass ?>"><?= $statusLabel ?></span>
                                                             </td>
                                                             <td class="text-muted small">
                                                                 <?= date("d M Y", strtotime($row['created_at'])) ?>
@@ -389,7 +391,8 @@ if ($con && $userId > 0) {
                                                             <td class="text-end">
                                                                 <a href="../receipt/view.php?no=<?= $row['receipt_no']; ?>"
                                                                     class="btn btn-sm btn-light border px-3 rounded-pill">
-                                                                    <i class="bi bi-file-earmark-text"></i> <?php echo $t['view']; ?>
+                                                                    <i class="bi bi-file-earmark-text"></i>
+                                                                    <?php echo $t['view']; ?>
                                                                 </a>
                                                             </td>
                                                         </tr>
@@ -417,11 +420,14 @@ if ($con && $userId > 0) {
                                     <div class="d-flex align-items-center justify-content-between">
                                         <div>
                                             <div class="stat-label"><?php echo $t['donations']; ?></div>
-                                            <div class="stat-value">₹<?php echo number_format($donationTotal, 2); ?></div>
+                                            <div class="stat-value">₹<?php echo number_format($donationTotal, 2); ?>
+                                            </div>
                                         </div>
                                         <div class="text-primary fs-3"><i class="bi bi-heart-fill"></i></div>
                                     </div>
-                                    <div class="small text-muted mt-2"><?php echo $donationCount . ' ' . ($t['transactions'] ?? 'transactions'); ?></div>
+                                    <div class="small text-muted mt-2">
+                                        <?php echo $donationCount . ' ' . ($t['transactions'] ?? 'transactions'); ?>
+                                    </div>
                                     <div class="mt-3">
                                         <a href="donate.php" class="btn btn-outline-primary btn-sm rounded-pill px-3">
                                             <?php echo $t['donate_btn']; ?>
@@ -432,7 +438,8 @@ if ($con && $userId > 0) {
                                 <div class="ant-card">
                                     <div class="ant-card-head d-flex justify-content-between align-items-center">
                                         <span><?php echo $t['contribution']; ?></span>
-                                        <a href="contribute.php" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                        <a href="contribute.php"
+                                            class="btn btn-outline-primary btn-sm rounded-pill px-3">
                                             <i class="bi bi-plus-lg"></i> <?php echo $t['submit_contribution']; ?>
                                         </a>
                                     </div>
@@ -462,8 +469,11 @@ if ($con && $userId > 0) {
                                                             };
                                                             ?>
                                                             <tr>
-                                                                <td class="fw-bold text-dark"><?= htmlspecialchars($row['title']) ?></td>
-                                                                <td><span class="badge-soft <?= $statusClass ?>"><?= $statusLabel ?></span></td>
+                                                                <td class="fw-bold text-dark">
+                                                                    <?= htmlspecialchars($row['title']) ?></td>
+                                                                <td><span
+                                                                        class="badge-soft <?= $statusClass ?>"><?= $statusLabel ?></span>
+                                                                </td>
                                                                 <td class="text-muted small text-end">
                                                                     <?= date("d M Y", strtotime($row['created_at'])) ?>
                                                                 </td>
@@ -474,8 +484,10 @@ if ($con && $userId > 0) {
                                             </div>
                                         <?php } else { ?>
                                             <div class="text-center py-4">
-                                                <i class="bi bi-box-seam text-muted opacity-25" style="font-size: 2.5rem;"></i>
-                                                <div class="small text-muted mt-2"><?php echo $t['no_pending_material_contributions']; ?></div>
+                                                <i class="bi bi-box-seam text-muted opacity-25"
+                                                    style="font-size: 2.5rem;"></i>
+                                                <div class="small text-muted mt-2">
+                                                    <?php echo $t['no_pending_material_contributions']; ?></div>
                                             </div>
                                         <?php } ?>
                                     </div>
@@ -489,9 +501,11 @@ if ($con && $userId > 0) {
                                         </div>
                                         <div class="text-primary fs-3"><i class="bi bi-calendar-check"></i></div>
                                     </div>
-                                    <div class="small text-muted mt-2"><?php echo $t['pending_approval'] ?? $t['pending']; ?></div>
+                                    <div class="small text-muted mt-2">
+                                        <?php echo $t['pending_approval'] ?? $t['pending']; ?></div>
                                     <div class="mt-3 d-flex gap-2">
-                                        <a href="pooja_book.php" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                        <a href="pooja_book.php"
+                                            class="btn btn-outline-primary btn-sm rounded-pill px-3">
                                             <?php echo $t['book_pooja_btn']; ?>
                                         </a>
                                         <a href="my_requests.php" class="btn btn-light btn-sm rounded-pill px-3 border">
@@ -511,5 +525,3 @@ if ($con && $userId > 0) {
 </body>
 
 </html>
-
-

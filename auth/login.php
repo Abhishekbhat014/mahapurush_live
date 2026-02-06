@@ -99,6 +99,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             flex-direction: column;
         }
 
+        body,
+        body * {
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
         /* --- Header --- */
         .ant-header {
             background: rgba(255, 255, 255, 0.8);
@@ -225,19 +231,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     </div>
                 <?php endif; ?>
 
-                <form method="post">
+                <form method="post" class="needs-validation" novalidate>
                     <div class="mb-3">
                         <label class="form-label"><?php echo $t['email']; ?></label>
-                        <div class="input-group">
+                        <div class="input-group has-validation">
                             <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                            <input type="email" name="email" class="form-control" placeholder="<?php echo $t['email_placeholder']; ?>"
-                                required>
+                            <input type="email" name="email" class="form-control"
+                                placeholder="<?php echo $t['email_placeholder']; ?>" required>
+                            <div class="invalid-feedback">
+                                <?php echo $t['err_invalid_email'] ?? 'Please enter a valid email.'; ?></div>
                         </div>
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label"><?php echo $t['password']; ?></label>
-                        <div class="input-group">
+                        <div class="input-group has-validation">
                             <span class="input-group-text"><i class="bi bi-lock"></i></span>
                             <input type="password" name="password" class="form-control" id="id_password"
                                 placeholder="••••••••" required>
@@ -245,6 +253,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                                 id="togglePassword">
                                 <i class="bi bi-eye" id="toggleIcon"></i>
                             </button>
+                            <div class="invalid-feedback">
+                                <?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
                         </div>
                     </div>
 
@@ -271,9 +281,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <?php echo sprintf($t['copyright_footer_title'], date("Y"), $t['title']); ?>
             </div>
             <div class="d-flex align-items-center gap-3">
-                <div class="text-start">
-                    <div style="font-size: 11px;" class="fw-bold">Yojana Gawade</div>
-                    <div style="font-size: 9px;" class="text-uppercase text-primary fw-bold"><?php echo $t['full_stack_developer']; ?></div>
+                <div class="d-flex gap-3 small fw-bold">
+                    <span class="text-primary">Developed By: Yojana Gawade</span>
                 </div>
             </div>
         </div>
@@ -292,11 +301,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             toggleIcon.classList.toggle('bi-eye-slash');
         });
     </script>
+    <script>
+        (function () {
+            'use strict';
+            var forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    </script>
+    <script>
+        document.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+        });
+    </script>
 </body>
 
 </html>
-
-
-
-
-
