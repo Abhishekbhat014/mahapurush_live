@@ -1,12 +1,20 @@
 <?php
+require_once __DIR__ . '/../../includes/no_cache.php';
 session_start();
 require __DIR__ . '/../../config/db.php';
 require __DIR__ . '/../../includes/lang.php';
+require __DIR__ . '/../../includes/user_avatar.php';
 
 if (empty($_SESSION['logged_in'])) {
     header("Location: ../../auth/login.php");
     exit;
+
+
+
 }
+$availableRoles = $_SESSION['roles'] ?? [];
+$primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
+
 
 $currLang = $_SESSION['lang'] ?? 'en';
 
@@ -34,9 +42,8 @@ $q3->bind_param("i", $uid);
 $q3->execute();
 $payments = $q3->get_result()->fetch_all(MYSQLI_ASSOC);
 
-// User Photo
-$u = mysqli_fetch_assoc(mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1"));
-$userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']) : 'https://ui-avatars.com/api/?name=' . urlencode($u['first_name'] . ' ' . $u['last_name']) . '&background=random';
+// User Photo (session cached)
+$userPhoto = get_user_avatar_url('../../');
 ?>
 
 <!DOCTYPE html>
@@ -48,6 +55,7 @@ $userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']
     <title><?php echo $t['my_requests']; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="customer-responsive.css">
 
     <style>
         :root {
@@ -170,6 +178,32 @@ $userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']
             border: 1px solid #ffa39e;
         }
 
+        @media (max-width: 767.98px) {
+            .table-responsive-stack thead {
+                display: none;
+            }
+            .table-responsive-stack tr {
+                display: block;
+                border: 1px solid var(--ant-border-color);
+                border-radius: 12px;
+                margin-bottom: 12px;
+                padding: 6px 8px;
+            }
+            .table-responsive-stack td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border: none;
+                padding: 6px 8px;
+            }
+            .table-responsive-stack td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: var(--ant-text-sec);
+                padding-right: 12px;
+            }
+        }
+
         .user-pill {
             background: #fff;
             padding: 6px 16px;
@@ -204,9 +238,6 @@ $userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']
             <div class="d-flex align-items-center gap-3">
                 <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i
                         class="bi bi-list"></i></button>
-                <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
-                    <i class="bi bi-flower1 text-warning me-2"></i><?php echo $t['title']; ?>
-                </a>
             </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="dropdown">
@@ -229,7 +260,31 @@ $userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']
                         </li>
                     </ul>
                 </div>
-                <div class="user-pill shadow-sm">
+                
+                <?php if (!empty($availableRoles) && count($availableRoles) > 1): ?>
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <i class="bi bi-person-badge me-1"></i>
+                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                            <?php foreach ($availableRoles as $role):
+                                $roleLabel = ucwords(str_replace('_', ' ', $role));
+                                ?>
+                                <li>
+                                    <form action="../../auth/switch_role.php" method="post" class="px-2 py-1">
+                                        <button type="submit" name="role" value="<?= htmlspecialchars($role) ?>"
+                                            class="dropdown-item small fw-medium <?= ($role === $primaryRole) ? 'active' : '' ?>">
+                                            <?= htmlspecialchars($roleLabel) ?>
+                                        </button>
+                                    </form>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
+            <div class="user-pill shadow-sm">
                     <img src="<?= htmlspecialchars($userPhoto) ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
                     <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
@@ -244,6 +299,9 @@ $userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
+                    <div class="small text-muted mb-1">
+                        <?php echo $t['dashboard']; ?> / <?php echo $t['my_requests']; ?>
+                    </div>
                     <h2 class="fw-bold mb-1"><?php echo $t['my_requests']; ?></h2>
                     <p class="text-secondary mb-0"><?php echo $t['my_requests_subtitle']; ?></p>
                 </div>
@@ -254,7 +312,7 @@ $userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']
                         <div class="ant-card-head"><i class="bi bi-box-seam me-2 text-primary"></i>
                             <?php echo $t['material_contributions']; ?></div>
                         <div class="table-responsive">
-                            <table class="table ant-table mb-0">
+                            <table class="table ant-table mb-0 table-responsive-stack">
                                 <thead>
                                     <tr>
                                         <th><?php echo $t['item_name']; ?></th>
@@ -267,13 +325,13 @@ $userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']
                                 <tbody>
                                     <?php if ($contributions): foreach ($contributions as $c): ?>
                                             <tr>
-                                                <td class="fw-bold"><?= htmlspecialchars($c['title']) ?></td>
-                                                <td class="text-secondary"><?= htmlspecialchars($c['type']) ?></td>
-                                                <td><?= $c['quantity'] . ' ' . $c['unit'] ?></td>
-                                                <td><span class="ant-badge <?= $c['status'] == 'pending' ? 'badge-pending' : 'badge-rejected' ?>">
+                                                <td data-label="<?php echo $t['item_name']; ?>" class="fw-bold"><?= htmlspecialchars($c['title']) ?></td>
+                                                <td data-label="<?php echo $t['category']; ?>" class="text-secondary"><?= htmlspecialchars($c['type']) ?></td>
+                                                <td data-label="<?php echo $t['quantity']; ?>"><?= $c['quantity'] . ' ' . $c['unit'] ?></td>
+                                                <td data-label="<?php echo $t['status']; ?>"><span class="ant-badge <?= $c['status'] == 'pending' ? 'badge-pending' : 'badge-rejected' ?>">
                                                         <?= ($c['status'] == 'pending') ? $t['pending'] : $t['rejected']; ?></span>
                                                 </td>
-                                                <td class="text-muted small"><?= date('d M Y', strtotime($c['created_at'])) ?></td>
+                                                <td data-label="<?php echo $t['date']; ?>" class="text-muted small"><?= date('d M Y', strtotime($c['created_at'])) ?></td>
                                             </tr>
                                         <?php endforeach; else: ?>
                                         <tr>
@@ -289,7 +347,7 @@ $userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']
                         <div class="ant-card-head"><i class="bi bi-calendar-event me-2 text-primary"></i>
                             <?php echo $t['pending_pooja_bookings']; ?></div>
                         <div class="table-responsive">
-                            <table class="table ant-table mb-0">
+                            <table class="table ant-table mb-0 table-responsive-stack">
                                 <thead>
                                     <tr>
                                         <th><?php echo $t['pooja_name']; ?></th>
@@ -301,10 +359,10 @@ $userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']
                                 <tbody>
                                     <?php if ($poojas): foreach ($poojas as $p): ?>
                                             <tr>
-                                                <td class="fw-bold"><?= htmlspecialchars($p['type']) ?></td>
-                                                <td><?= date('d M Y', strtotime($p['pooja_date'])) ?></td>
-                                                <td class="text-secondary"><?= ucfirst($p['time_slot'] ?? $t['any_time']) ?></td>
-                                                <td><span class="ant-badge badge-pending"><?php echo $t['pending_approval']; ?></span></td>
+                                                <td data-label="<?php echo $t['pooja_name']; ?>" class="fw-bold"><?= htmlspecialchars($p['type']) ?></td>
+                                                <td data-label="<?php echo $t['scheduled_date']; ?>"><?= date('d M Y', strtotime($p['pooja_date'])) ?></td>
+                                                <td data-label="<?php echo $t['time_slot']; ?>" class="text-secondary"><?= ucfirst($p['time_slot'] ?? $t['any_time']) ?></td>
+                                                <td data-label="<?php echo $t['status']; ?>"><span class="ant-badge badge-pending"><?php echo $t['pending_approval']; ?></span></td>
                                             </tr>
                                         <?php endforeach; else: ?>
                                         <tr>
@@ -320,7 +378,7 @@ $userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']
                         <div class="ant-card-head"><i class="bi bi-exclamation-octagon me-2 text-danger"></i>
                             <?php echo $t['payment_issues']; ?></div>
                         <div class="table-responsive">
-                            <table class="table ant-table mb-0">
+                            <table class="table ant-table mb-0 table-responsive-stack">
                                 <thead>
                                     <tr>
                                         <th><?php echo $t['amount']; ?></th>
@@ -332,12 +390,12 @@ $userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']
                                 <tbody>
                                     <?php if ($payments): foreach ($payments as $p): ?>
                                             <tr>
-                                                <td class="fw-bold text-dark">₹<?= number_format($p['amount'], 2) ?></td>
-                                                <td><span class="text-uppercase small fw-bold text-muted"><?= $p['payment_method'] ?></span></td>
-                                                <td><span class="ant-badge <?= $p['status'] == 'failed' ? 'badge-failed' : 'badge-pending' ?>">
+                                                <td data-label="<?php echo $t['amount']; ?>" class="fw-bold text-dark">₹<?= number_format($p['amount'], 2) ?></td>
+                                                <td data-label="<?php echo $t['method']; ?>"><span class="text-uppercase small fw-bold text-muted"><?= $p['payment_method'] ?></span></td>
+                                                <td data-label="<?php echo $t['issue_status']; ?>"><span class="ant-badge <?= $p['status'] == 'failed' ? 'badge-failed' : 'badge-pending' ?>">
                                                         <?= ($p['status'] == 'failed') ? $t['failed'] : $t['pending']; ?></span>
                                                 </td>
-                                                <td class="text-muted small"><?= date('d M Y', strtotime($p['created_at'])) ?></td>
+                                                <td data-label="<?php echo $t['transaction_date']; ?>" class="text-muted small"><?= date('d M Y', strtotime($p['created_at'])) ?></td>
                                             </tr>
                                         <?php endforeach; else: ?>
                                         <tr>

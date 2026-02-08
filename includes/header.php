@@ -4,6 +4,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/lang.php';
+require_once __DIR__ . '/user_avatar.php';
 
 $isLoggedIn = $_SESSION['logged_in'] ?? false;
 $uid = $_SESSION['user_id'] ?? null;
@@ -14,12 +15,12 @@ $headerMembers = [];
 if ($con) {
     $cmRes = mysqli_query(
         $con,
-        "SELECT u.first_name, u.last_name, u.photo
-         FROM users u
-         JOIN user_roles ur ON u.id = ur.user_id
-         JOIN roles r ON ur.role_id = r.id
-         WHERE r.name != 'customer'
-         ORDER BY r.name, u.first_name
+        "SELECT u.first_name, u.last_name, u.photo 
+         FROM users u 
+         JOIN user_roles ur ON u.id = ur.user_id 
+         JOIN roles r ON ur.role_id = r.id 
+         WHERE r.name != 'customer' 
+         ORDER BY r.name, u.first_name 
          LIMIT 3"
     );
     if ($cmRes) {
@@ -29,22 +30,9 @@ if ($con) {
     }
 }
 
-// Fetch user photo
-if ($isLoggedIn && $con) {
-    $uRes = mysqli_fetch_assoc(mysqli_query(
-        $con,
-        "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1"
-    ));
-
-    if ($uRes) {
-        $headerName = trim(($uRes['first_name'] ?? '') . ' ' . ($uRes['last_name'] ?? ''));
-
-        if (!empty($uRes['photo'])) {
-            $headerPhoto = 'uploads/users/' . basename($uRes['photo']);
-        } else {
-            $headerPhoto = 'https://ui-avatars.com/api/?name=' . urlencode($headerName) . '&background=random';
-        }
-    }
+// Use session cached user photo for header avatar
+if ($isLoggedIn) {
+    $headerPhoto = get_user_avatar_url('');
 }
 ?>
 <style>
@@ -122,7 +110,30 @@ if ($isLoggedIn && $con) {
         background: #e6f4ff;
         color: #1677ff;
     }
+
+    /* --- HOVER DROPDOWN LOGIC (Desktop Only) --- */
+    @media (min-width: 992px) {
+        .ant-header .dropdown:hover>.dropdown-menu {
+            display: block;
+            margin-top: 0;
+            /* Important: Removes gap so mouse doesn't fall through */
+            animation: fadeIn 0.2s ease-in-out;
+        }
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 </style>
+
 <header class="ant-header">
     <div class="container d-flex align-items-center justify-content-between">
         <a href="index.php" class="fw-bold text-dark text-decoration-none fs-4 d-flex align-items-center">
@@ -135,12 +146,13 @@ if ($isLoggedIn && $con) {
                 <a href="about.php" class="ant-menu-item"><?php echo $t['about']; ?></a>
                 <a href="panchang.php" class="ant-menu-item"><?php echo $t['panchang']; ?></a>
                 <a href="gallery.php" class="ant-menu-item"><?php echo $t['gallery']; ?></a>
+
                 <div class="dropdown">
-                    <a class="ant-menu-item dropdown-toggle" href="#"
-                        data-bs-toggle="dropdown"><?php echo $t['committee']; ?></a>
+                    <a class="ant-menu-item dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <?php echo $t['committee']; ?>
+                    </a>
                     <ul class="dropdown-menu border-0 shadow-lg p-3 mt-0"
                         style="border-radius: 12px; min-width: 200px;">
-
                         <?php if (!empty($headerMembers)): ?>
                             <?php foreach ($headerMembers as $member): ?>
                                 <?php
@@ -168,7 +180,6 @@ if ($isLoggedIn && $con) {
                                 </div>
                             </li>
                         <?php endif; ?>
-
 
                         <li>
                             <hr class="dropdown-divider opacity-50">
@@ -210,8 +221,7 @@ if ($isLoggedIn && $con) {
                     <div class="user-pill-header shadow-sm">
                         <img src="<?= $headerPhoto ?>" class="rounded-circle" width="28" height="28"
                             style="object-fit: cover;">
-                        <span
-                            class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name'] ?? $t['user']) ?></span>
+                        <span class="small fw-bold d-none d-md-inline">Dashboard</span>
                     </div>
                 </a>
             <?php else: ?>

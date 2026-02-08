@@ -1,144 +1,98 @@
 <?php
-// Determine which page is active to apply the 'active' class
+require_once __DIR__ . '/../../includes/no_cache.php';
 $currentPage = basename($_SERVER['PHP_SELF']);
 ?>
+<link rel="stylesheet" href="../../css/sidebar.css">
 
-<style>
-    body,
-    body * {
-        -webkit-user-select: none;
-        user-select: none;
-    }
-</style>
-
-<nav class="col-lg-2 d-none d-lg-flex flex-column ant-sidebar shadow-sm"
-    style="height: calc(100vh - 64px); position: sticky; top: 64px;">
+<nav class="col-lg-2 d-none d-lg-block sb-sidebar shadow-sm p-0">
     <div class="px-4 py-4">
-        <small class="text-uppercase text-muted fw-bold" style="font-size: 10px; letter-spacing: 1px; opacity: 0.6;">
-            <?php echo $t['member_portal']; ?>
+        <small class="text-uppercase text-muted fw-bold sb-title" style="margin-top: 0;">
+            <?php echo $t['member_portal'] ?? 'Member Portal'; ?>
         </small>
     </div>
 
-    <div class="nav flex-column flex-grow-1">
-        <a href="dashboard.php" class="nav-link-custom <?= ($currentPage == 'dashboard.php') ? 'active' : '' ?>">
-            <i class="bi bi-grid-1x2"></i> <span><?php echo $t['dashboard']; ?></span>
+    <div class="nav flex-column">
+        <a href="../../index.php" class="sb-link">
+            <i class="bi bi-house"></i> <span>
+                <?php echo $t['home'] ?? 'Home'; ?>
+            </span>
+        </a>
+        <a href="dashboard.php" class="sb-link <?= ($currentPage == 'dashboard.php') ? 'sb-active' : '' ?>">
+            <i class="bi bi-grid-1x2"></i>
+            <span><?php echo $t['dashboard'] ?? 'Dashboard'; ?></span>
         </a>
 
-        <div class="ant-divider" style="margin: 16px 20px; opacity: 0.5;"></div>
-        <small class="text-uppercase text-muted fw-bold px-4" style="font-size: 10px; letter-spacing: 1px; opacity: 0.6;">
-            <?php echo $t['services'] ?? 'Services'; ?>
-        </small>
-
-        <a href="pooja_book.php" class="nav-link-custom <?= ($currentPage == 'pooja_book.php') ? 'active' : '' ?>">
-            <i class="bi bi-calendar-check"></i> <span><?php echo $t['bookings']; ?></span>
+        <a href="pooja_requests.php" class="sb-link <?= ($currentPage == 'pooja_requests.php') ? 'sb-active' : '' ?>">
+            <i class="bi bi-calendar-check"></i>
+            <span><?php echo $t['pooja_requests'] ?? 'Pooja Requests (View Only)'; ?></span>
         </a>
 
-        <a href="committee_info.php"
-            class="nav-link-custom <?= ($currentPage == 'committee_info.php') ? 'active' : '' ?>">
-            <i class="bi bi-people"></i> <span><?php echo $t['committee']; ?></span>
+        <a href="events.php" class="sb-link <?= ($currentPage == 'events.php') ? 'sb-active' : '' ?>">
+            <i class="bi bi-calendar-event"></i>
+            <span><?php echo $t['events'] ?? 'Events'; ?></span>
         </a>
 
-        <a href="donate.php" class="nav-link-custom <?= ($currentPage == 'donate.php') ? 'active' : '' ?>">
-            <i class="bi bi-heart-fill"></i> <span><?php echo $t['donation']; ?></span>
+        <a href="../../gallery.php" class="sb-link">
+            <i class="bi bi-images"></i>
+            <span><?php echo $t['gallery'] ?? 'Gallery'; ?></span>
         </a>
 
-        <a href="contribute.php" class="nav-link-custom <?= ($currentPage == 'contribute.php') ? 'active' : '' ?>">
-            <i class="bi bi-box-seam"></i> <span><?php echo $t['contribution']; ?></span>
+        <a href="profile.php" class="sb-link <?= ($currentPage == 'profile.php') ? 'sb-active' : '' ?>">
+            <i class="bi bi-person-circle"></i>
+            <span><?php echo $t['my_profile'] ?? 'My Profile'; ?></span>
         </a>
 
-        <div class="ant-divider" style="margin: 16px 20px; opacity: 0.5;"></div>
-        <small class="text-uppercase text-muted fw-bold px-4" style="font-size: 10px; letter-spacing: 1px; opacity: 0.6;">
-            <?php echo $t['management'] ?? 'Management'; ?>
-        </small>
+        <div class="sb-divider"></div>
 
-        <a href="my_requests.php" class="nav-link-custom <?= ($currentPage == 'my_requests.php') ? 'active' : '' ?>">
-            <i class="bi bi-hourglass-split"></i> <span><?php echo $t['my_requests']; ?></span>
+        <a href="../../auth/logout.php" class="sb-link text-danger">
+            <i class="bi bi-power"></i>
+            <span><?php echo $t['logout'] ?? 'Logout'; ?></span>
         </a>
 
-        <a href="my_receipts.php" class="nav-link-custom <?= ($currentPage == 'my_receipts.php') ? 'active' : '' ?>">
-            <i class="bi bi-receipt-cutoff"></i> <span><?php echo $t['receipts']; ?></span>
-        </a>
-
-        <div class="ant-divider" style="margin: 16px 20px; opacity: 0.5;"></div>
-        <small class="text-uppercase text-muted fw-bold px-4" style="font-size: 10px; letter-spacing: 1px; opacity: 0.6;">
-            <?php echo $t['account'] ?? 'Account'; ?>
-        </small>
-
-        <a href="profile.php" class="nav-link-custom <?= ($currentPage == 'profile.php') ? 'active' : '' ?>">
-            <i class="bi bi-person-circle"></i> <span><?php echo $t['my_profile']; ?></span>
-        </a>
-
-        <div class="ant-divider" style="margin: 20px 0; opacity: 0.5;"></div>
-
-        <a href="../../index.php" class="nav-link-custom">
-            <i class="bi bi-house"></i> <span><?php echo $t['back_to_home']; ?></span>
-        </a>
-    </div>
-
-    <div class="mt-auto border-top p-2">
-        <a href="../../auth/logout.php" class="nav-link-custom text-danger">
-            <i class="bi bi-power"></i> <span><?php echo $t['logout']; ?></span>
-        </a>
     </div>
 </nav>
 
-<div class="offcanvas offcanvas-start" id="sidebarMenu" style="width: 280px; border-right: none;">
+
+<!-- Mobile Offcanvas -->
+<div class="offcanvas offcanvas-start sb-offcanvas" id="sidebarMenu" style="width: 280px;">
     <div class="offcanvas-header border-bottom">
-        <h5 class="offcanvas-title fw-bold"><?php echo $t['menu']; ?></h5>
-        <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas"></button>
+        <h5 class="offcanvas-title fw-bold"><?php echo $t['menu'] ?? 'Menu'; ?></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
-    <div class="offcanvas-body d-flex flex-column p-0 pt-3">
-        <div class="nav flex-column flex-grow-1">
-            <a href="dashboard.php" class="nav-link-custom <?= ($currentPage == 'dashboard.php') ? 'active' : '' ?>">
-                <i class="bi bi-grid-1x2"></i> <?php echo $t['dashboard']; ?>
-            </a>
-            <div class="ant-divider" style="margin: 16px 20px; opacity: 0.5;"></div>
-            <small class="text-uppercase text-muted fw-bold px-3" style="font-size: 10px; letter-spacing: 1px; opacity: 0.6;">
-                <?php echo $t['services'] ?? 'Services'; ?>
-            </small>
-            <a href="pooja_book.php" class="nav-link-custom <?= ($currentPage == 'pooja_book.php') ? 'active' : '' ?>">
-                <i class="bi bi-calendar-check"></i> <?php echo $t['bookings']; ?>
-            </a>
-            <a href="committee_info.php"
-                class="nav-link-custom <?= ($currentPage == 'committee_info.php') ? 'active' : '' ?>">
-                <i class="bi bi-people"></i> <?php echo $t['committee']; ?>
-            </a>
-            <a href="donate.php" class="nav-link-custom <?= ($currentPage == 'donate.php') ? 'active' : '' ?>">
-                <i class="bi bi-heart-fill"></i> <?php echo $t['donate']; ?>
-            </a>
-            <a href="contribute.php" class="nav-link-custom <?= ($currentPage == 'contribute.php') ? 'active' : '' ?>">
-                <i class="bi bi-box-seam"></i> <?php echo $t['contribute']; ?>
-            </a>
-            <div class="ant-divider" style="margin: 16px 20px; opacity: 0.5;"></div>
-            <small class="text-uppercase text-muted fw-bold px-3" style="font-size: 10px; letter-spacing: 1px; opacity: 0.6;">
-                <?php echo $t['management'] ?? 'Management'; ?>
-            </small>
-            <a href="my_requests.php"
-                class="nav-link-custom <?= ($currentPage == 'my_requests.php') ? 'active' : '' ?>">
-                <i class="bi bi-hourglass-split"></i> <?php echo $t['my_requests']; ?>
-            </a>
 
+    <div class="offcanvas-body p-0 pt-3">
+        <a href="../../index.php" class="sb-link"><i class="bi bi-house"></i>
+            <?php echo $t['home']; ?>
+        </a>
+        <a href="dashboard.php" class="sb-link <?= ($currentPage == 'dashboard.php') ? 'sb-active' : '' ?>">
+            <i class="bi bi-grid-1x2"></i> <?php echo $t['dashboard'] ?? 'Dashboard'; ?>
+        </a>
 
-            <a href="my_receipts.php"
-                class="nav-link-custom <?= ($currentPage == 'my_receipts.php') ? 'active' : '' ?>">
-                <i class="bi bi-receipt-cutoff"></i> <?php echo $t['receipts']; ?>
-            </a>
-            <div class="ant-divider" style="margin: 16px 20px; opacity: 0.5;"></div>
-            <small class="text-uppercase text-muted fw-bold px-3" style="font-size: 10px; letter-spacing: 1px; opacity: 0.6;">
-                <?php echo $t['account'] ?? 'Account'; ?>
-            </small>
-            <a href="profile.php" class="nav-link-custom <?= ($currentPage == 'profile.php') ? 'active' : '' ?>">
-                <i class="bi bi-person-circle"></i> <?php echo $t['my_profile']; ?>
-            </a>
-        </div>
+        <a href="pooja_requests.php" class="sb-link <?= ($currentPage == 'pooja_requests.php') ? 'sb-active' : '' ?>">
+            <i class="bi bi-calendar-check"></i> <?php echo $t['pooja_requests'] ?? 'Pooja Requests (View Only)'; ?>
+        </a>
 
-        <div class="mt-auto border-top p-3 bg-light">
-            <a href="../../auth/logout.php" class="nav-link-custom text-danger p-0">
-                <i class="bi bi-box-arrow-right"></i> <?php echo $t['logout']; ?>
-            </a>
-        </div>
+        <a href="events.php" class="sb-link <?= ($currentPage == 'events.php') ? 'sb-active' : '' ?>">
+            <i class="bi bi-calendar-event"></i> <?php echo $t['events'] ?? 'Events'; ?>
+        </a>
+
+        <a href="../../gallery.php" class="sb-link">
+            <i class="bi bi-images"></i> <?php echo $t['gallery'] ?? 'Gallery'; ?>
+        </a>
+
+        <a href="profile.php" class="sb-link <?= ($currentPage == 'profile.php') ? 'sb-active' : '' ?>">
+            <i class="bi bi-person-circle"></i> <?php echo $t['my_profile'] ?? 'My Profile'; ?>
+        </a>
+
+        <div class="sb-divider"></div>
+
+        <a href="../../auth/logout.php" class="sb-link text-danger">
+            <i class="bi bi-power"></i> <?php echo $t['logout'] ?? 'Logout'; ?>
+        </a>
+
     </div>
 </div>
+
 <script>
     document.addEventListener('contextmenu', function (e) {
         e.preventDefault();

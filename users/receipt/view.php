@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../includes/no_cache.php';
 session_start();
 
 require __DIR__ . '/../../config/db.php';
@@ -42,6 +43,20 @@ $receipt = $stmt->get_result()->fetch_assoc();
 
 if (!$receipt) {
     die($t['receipt_not_found']);
+}
+
+$paymentMeta = null;
+$paymentMethodLabel = '';
+$pStmt = $con->prepare("SELECT payment_method, status FROM payments WHERE receipt_id = ? LIMIT 1");
+if ($pStmt) {
+    $pStmt->bind_param("i", $receipt['id']);
+    $pStmt->execute();
+    $paymentMeta = $pStmt->get_result()->fetch_assoc();
+    $pStmt->close();
+}
+if (!empty($paymentMeta['payment_method'])) {
+    $method = strtolower($paymentMeta['payment_method']);
+    $paymentMethodLabel = $method === 'upi' ? 'GPay' : ucfirst($method);
 }
 
 /* ---------------------------
@@ -333,6 +348,13 @@ if (isset($q)) {
                             <div class="value-text"><?= date('d F Y, h:i A', strtotime($receipt['issued_on'])) ?></div>
                         </div>
 
+                        <?php if (!empty($paymentMethodLabel)): ?>
+                            <div class="field-full">
+                                <div class="label-text"><?php echo $t['payment_method']; ?></div>
+                                <div class="value-text"><?= htmlspecialchars($paymentMethodLabel) ?></div>
+                            </div>
+                        <?php endif; ?>
+
                         <?php if ($source === 'contributions'): ?>
                             <div class="field-full">
                                 <div class="label-text"><?php echo $t['quantity_received']; ?></div>
@@ -402,6 +424,11 @@ if (isset($q)) {
 
                     <div class="label-text"><?php echo $t['transaction_status']; ?></div>
                     <div class="data-text text-success"><?php echo $t['completed']; ?></div>
+
+                    <?php if (!empty($paymentMethodLabel)): ?>
+                        <div class="label-text"><?php echo $t['payment_method']; ?></div>
+                        <div class="data-text"><?= htmlspecialchars($paymentMethodLabel) ?></div>
+                    <?php endif; ?>
                 </div>
             </div>
 

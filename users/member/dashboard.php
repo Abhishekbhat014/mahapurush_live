@@ -1,6 +1,8 @@
 <?php
+require_once __DIR__ . '/../../includes/no_cache.php';
 session_start();
 require __DIR__ . '/../../includes/lang.php';
+require __DIR__ . '/../../includes/user_avatar.php';
 
 // Auth Check
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
@@ -8,33 +10,53 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     exit;
 }
 
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+header("Expires: 0");
+
+$availableRoles = $_SESSION['roles'] ?? [];
+$primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
+
 $dbPath = __DIR__ . '/../../config/db.php';
 require $dbPath;
 
 $uid = (int) $_SESSION['user_id'];
 
-// --- 1. Fetch User Photo ---
-$loggedInUserPhoto = '../../assets/images/default-user.png';
-$photoQuery = mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id = '$uid' LIMIT 1");
-if ($u = mysqli_fetch_assoc($photoQuery)) {
-    $loggedInUserPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']) : 'https://ui-avatars.com/api/?name=' . urlencode($u['first_name'] . ' ' . $u['last_name']) . '&background=random';
-}
+// --- 1. Fetch User Photo (session cached) ---
+$loggedInUserPhoto = get_user_avatar_url('../../');
 
 // --- 2. Fetch Temple Info ---
 $temple = mysqli_fetch_assoc(mysqli_query($con, "SELECT * FROM temple_info LIMIT 1"));
 
-// --- 3. Fetch Pooja Bookings ---
-$myPoojaBookings = [];
-$resBookings = mysqli_query($con, "SELECT p.*, pt.type AS pooja_name FROM pooja p INNER JOIN pooja_type pt ON pt.id = p.pooja_type_id WHERE p.user_id = '$uid' ORDER BY p.created_at DESC LIMIT 5");
-while ($row = mysqli_fetch_assoc($resBookings)) {
-    $myPoojaBookings[] = $row;
+// --- 3. Fetch Pending Pooja Requests Count ---
+$pendingCount = mysqli_fetch_assoc(mysqli_query($con, "
+    SELECT COUNT(*) as cnt FROM pooja WHERE status = 'pending'
+"))['cnt'] ?? 0;
+
+// --- 4. Today's Poojas ---
+$todaysPoojas = [];
+$resToday = mysqli_query($con, "
+    SELECT p.pooja_date, pt.type AS pooja_name, u.first_name AS devotee
+    FROM pooja p
+    INNER JOIN pooja_type pt ON pt.id = p.pooja_type_id
+    INNER JOIN users u ON u.id = p.user_id
+    WHERE DATE(p.pooja_date) = CURDATE()
+    ORDER BY p.pooja_date ASC
+");
+while ($row = mysqli_fetch_assoc($resToday)) {
+    $todaysPoojas[] = $row;
 }
 
-// --- 4. Fetch Donation History (Newly Added) ---
-$myDonations = [];
-$resDonations = mysqli_query($con, "SELECT py.*, r.receipt_no FROM payments py LEFT JOIN receipt r ON r.id = py.receipt_id WHERE py.user_id = '$uid' ORDER BY py.created_at DESC LIMIT 5");
-while ($drow = mysqli_fetch_assoc($resDonations)) {
-    $myDonations[] = $drow;
+// --- 5. Upcoming Events ---
+$events = [];
+$resEvents = mysqli_query($con, "
+    SELECT name, conduct_on FROM events
+    WHERE conduct_on >= CURDATE()
+    ORDER BY conduct_on ASC LIMIT 5
+");
+while ($erow = mysqli_fetch_assoc($resEvents)) {
+    $events[] = $erow;
 }
 ?>
 
@@ -63,9 +85,52 @@ while ($drow = mysqli_fetch_assoc($resDonations)) {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--ant-bg-layout);
             color: var(--ant-text);
+            /* Disable text selection */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
             user-select: none;
         }
 
+        /* Allow selection in inputs */
+        input,
+        textarea,
+        select,
+        button {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        /* --- HOVER DROPDOWN LOGIC --- */
+        @media (min-width: 992px) {
+            .dropdown:hover .dropdown-menu {
+                display: block;
+                margin-top: 0;
+            }
+
+            .dropdown .dropdown-menu {
+                display: none;
+            }
+
+            .dropdown:hover>.dropdown-menu {
+                display: block;
+                animation: fadeIn 0.2s ease-in-out;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- Header --- */
         .ant-header {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(12px);
@@ -78,6 +143,7 @@ while ($drow = mysqli_fetch_assoc($resDonations)) {
             z-index: 1000;
         }
 
+        /* --- Sidebar --- */
         .ant-sidebar {
             background: #fff;
             border-right: 1px solid var(--ant-border-color);
@@ -113,12 +179,14 @@ while ($drow = mysqli_fetch_assoc($resDonations)) {
             margin-bottom: 32px;
         }
 
+        /* --- Cards --- */
         .ant-card {
             background: #fff;
             border: 1px solid var(--ant-border-color);
             border-radius: var(--ant-radius);
             height: 100%;
             transition: transform 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
 
         .ant-card:hover {
@@ -127,19 +195,17 @@ while ($drow = mysqli_fetch_assoc($resDonations)) {
         }
 
         .ant-card-head {
-            padding: 16px 32px;
+            padding: 16px 24px;
             border-bottom: 1px solid var(--ant-border-color);
             font-weight: 700;
+            font-size: 16px;
         }
 
         .ant-card-body {
-            padding: 32px;
+            padding: 24px;
         }
 
-        .ant-table {
-            font-size: 13px;
-        }
-
+        /* --- Tables --- */
         .ant-table th {
             background: #fafafa;
             font-weight: 600;
@@ -147,41 +213,17 @@ while ($drow = mysqli_fetch_assoc($resDonations)) {
             border-bottom: 1px solid var(--ant-border-color);
             color: var(--ant-text-sec);
             text-transform: uppercase;
-            font-size: 11px;
+            font-size: 12px;
         }
 
         .ant-table td {
             padding: 12px 16px;
             border-bottom: 1px solid var(--ant-border-color);
             vertical-align: middle;
+            font-size: 14px;
         }
 
-        .badge-soft {
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-weight: 600;
-            font-size: 11px;
-        }
-
-        .status-completed,
-        .status-success {
-            background: #f6ffed;
-            color: #52c41a;
-            border: 1px solid #b7eb8f;
-        }
-
-        .status-paid {
-            background: #e6f4ff;
-            color: #1677ff;
-            border: 1px solid #91caff;
-        }
-
-        .status-pending {
-            background: #fffbe6;
-            color: #faad14;
-            border: 1px solid #ffe58f;
-        }
-
+        /* --- Header Elements --- */
         .user-pill {
             background: #fff;
             padding: 6px 16px;
@@ -192,6 +234,21 @@ while ($drow = mysqli_fetch_assoc($resDonations)) {
             gap: 10px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
         }
+
+        .lang-btn {
+            border: none;
+            background: #f5f5f5;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+
+        .lang-btn:hover {
+            background: #e6f4ff;
+            color: #1677ff;
+        }
     </style>
 </head>
 
@@ -200,16 +257,59 @@ while ($drow = mysqli_fetch_assoc($resDonations)) {
     <header class="ant-header shadow-sm">
         <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
-                <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i
-                        class="bi bi-list"></i></button>
-                <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
-                    <i class="bi bi-flower1 text-warning me-2"></i><?php echo $t['title']; ?>
-                </a>
+                <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+                    <i class="bi bi-list"></i>
+                </button>
             </div>
-            <div class="user-pill shadow-sm">
-                <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
-                    style="object-fit: cover;">
-                <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
+            <div class="d-flex align-items-center gap-3">
+                <div class="dropdown">
+                    <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-translate me-1"></i>
+                        <?= ($lang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                        <li>
+                            <a class="dropdown-item small fw-medium <?= ($lang == 'en') ? 'active' : '' ?>"
+                                href="?lang=en">
+                                <?php echo $t['lang_english']; ?>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item small fw-medium <?= ($lang == 'mr') ? 'active' : '' ?>"
+                                href="?lang=mr">
+                                <?php echo $t['lang_marathi_full']; ?>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <?php if (!empty($availableRoles) && count($availableRoles) > 1): ?>
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-badge me-1"></i>
+                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                            <?php foreach ($availableRoles as $role): ?>
+                                <li>
+                                    <form action="../../auth/switch_role.php" method="post" class="px-2 py-1">
+                                        <button type="submit" name="role" value="<?= htmlspecialchars($role) ?>"
+                                            class="dropdown-item small fw-medium <?= ($role === $primaryRole) ? 'active' : '' ?>">
+                                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $role))) ?>
+                                        </button>
+                                    </form>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
+
+                <div class="user-pill shadow-sm">
+                    <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
+                        style="object-fit: cover;">
+                    <span
+                        class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                </div>
             </div>
         </div>
     </header>
@@ -220,71 +320,92 @@ while ($drow = mysqli_fetch_assoc($resDonations)) {
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1"><?php echo $t['namaste']; ?>, <?= explode(' ', $_SESSION['user_name'])[0] ?>!</h2>
-                    <p class="text-secondary mb-0"><?php echo $t['member_dashboard_subtitle']; ?></p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['namaste']; ?>,
+                        <?= explode(' ', $_SESSION['user_name'])[0] ?>!
+                    </h2>
+                    <p class="text-secondary mb-0">
+                        <?php echo $t['member_dashboard_subtitle'] ?? 'Welcome to the temple committee dashboard.'; ?>
+                    </p>
                 </div>
 
                 <div class="px-4 pb-5">
                     <div class="row g-4">
+
                         <div class="col-lg-4">
-                            <div class="ant-card">
-                                <div class="ant-card-head"><?php echo $t['temple_info']; ?></div>
+                            <div
+                                class="ant-card text-center d-flex flex-column justify-content-center align-items-center">
                                 <div class="ant-card-body">
-                                    <div class="text-center mb-4">
-                                        <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
-                                            style="width:60px; height:60px;">
-                                            <i class="bi bi-bank fs-3 text-primary"></i>
-                                        </div>
-                                        <h6 class="fw-bold mb-1">
-                                            <?= htmlspecialchars($temple['temple_name'] ?? $t['temple']) ?>
-                                        </h6>
-                                        <p class="small text-muted mb-0">
-                                            <?= htmlspecialchars($temple['contact'] ?? '') ?>
-                                        </p>
+                                    <div class="rounded-circle bg-warning bg-opacity-10 p-3 d-inline-block mb-3">
+                                        <i class="bi bi-hourglass-split fs-1 text-warning"></i>
                                     </div>
-                                    <div class="p-3 rounded-3 bg-light small mb-2"><i
-                                            class="bi bi-geo-alt-fill text-primary me-2"></i><?= htmlspecialchars($temple['address'] ?? '') ?>
-                                    </div>
+                                    <h3 class="fw-bold mb-1 display-5"><?= $pendingCount ?></h3>
+                                    <p class="text-muted mb-0 fw-medium">Pending Pooja Requests</p>
                                 </div>
                             </div>
                         </div>
 
                         <div class="col-lg-8">
                             <div class="ant-card">
+                                <div class="ant-card-head">
+                                    <i class="bi bi-bank2 me-2 text-primary"></i>Temple Information
+                                </div>
+                                <div class="ant-card-body">
+                                    <h5 class="fw-bold text-dark mb-2"><?= htmlspecialchars($temple['temple_name']) ?>
+                                    </h5>
+                                    <div class="d-flex align-items-start gap-2 mb-2 text-secondary">
+                                        <i class="bi bi-geo-alt mt-1"></i>
+                                        <span><?= nl2br(htmlspecialchars($temple['address'])) ?></span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 text-secondary">
+                                        <i class="bi bi-telephone"></i>
+                                        <span><?= htmlspecialchars($temple['contact']) ?></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="ant-card">
                                 <div class="ant-card-head d-flex justify-content-between align-items-center">
-                                    <span><?php echo $t['recent_pooja_bookings']; ?></span>
-                                    <a href="pooja_book.php"
-                                        class="btn btn-link btn-sm text-primary text-decoration-none p-0"><?php echo $t['new']; ?>
-                                        <i class="bi bi-plus"></i></a>
+                                    <span><i class="bi bi-calendar-event me-2 text-primary"></i>Today's Poojas</span>
+                                    <span class="badge bg-light text-dark border"><?= date('d M Y') ?></span>
                                 </div>
                                 <div class="ant-card-body p-0">
                                     <div class="table-responsive">
                                         <table class="table ant-table mb-0">
                                             <thead>
                                                 <tr>
-                                                    <th><?php echo $t['pooja']; ?></th>
-                                                    <th><?php echo $t['date']; ?></th>
-                                                    <th><?php echo $t['fee']; ?></th>
-                                                    <th><?php echo $t['status']; ?></th>
+                                                    <th>Pooja</th>
+                                                    <th>Devotee</th>
+                                                    <th>Date</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <?php foreach ($myPoojaBookings as $b):
-                                                    $sClass = match ($b['status']) { 'completed' => 'status-completed', 'paid' => 'status-paid', default => 'status-pending'};
-                                                    ?>
+                                                <?php foreach ($todaysPoojas as $p): ?>
                                                     <tr>
-                                                        <td class="fw-bold"><?= htmlspecialchars($b['pooja_name']) ?></td>
-                                                        <td><?= date('d M Y', strtotime($b['pooja_date'])) ?></td>
-                                                        <td class="fw-bold text-dark">₹<?= number_format($b['fee'], 0) ?>
+                                                        <td class="fw-bold text-primary">
+                                                            <?= htmlspecialchars($p['pooja_name']) ?></td>
+                                                        <td>
+                                                            <div class="d-flex align-items-center gap-2">
+                                                                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center text-primary fw-bold"
+                                                                    style="width:28px; height:28px; font-size:11px;">
+                                                                    <?= strtoupper(substr($p['devotee'], 0, 1)) ?>
+                                                                </div>
+                                                                <?= htmlspecialchars($p['devotee']) ?>
+                                                            </div>
                                                         </td>
-                                                        <td><span class="badge-soft <?= $sClass ?>">
-                                                                <?= $b['status'] === 'completed' ? $t['completed'] : ($b['status'] === 'paid' ? $t['paid'] : $t['pending']) ?>
-                                                            </span>
+                                                        <td class="text-muted">
+                                                            <?= date('d M Y', strtotime($p['pooja_date'])) ?></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                                <?php if (empty($todaysPoojas)): ?>
+                                                    <tr>
+                                                        <td colspan="3" class="text-center text-muted py-5">
+                                                            <i class="bi bi-calendar-x fs-1 opacity-25 d-block mb-2"></i>
+                                                            No poojas scheduled for today.
                                                         </td>
                                                     </tr>
-                                                <?php endforeach;
-                                                if (empty($myPoojaBookings))
-                                                    echo "<tr><td colspan='4' class='text-center py-4 text-muted small'>{$t['no_bookings_found']}</td></tr>"; ?>
+                                                <?php endif; ?>
                                             </tbody>
                                         </table>
                                     </div>
@@ -294,56 +415,45 @@ while ($drow = mysqli_fetch_assoc($resDonations)) {
 
                         <div class="col-12">
                             <div class="ant-card">
-                                <div class="ant-card-head d-flex justify-content-between align-items-center">
-                                    <span><?php echo $t['generous_donations']; ?></span>
-                                    <a href="../donate.php"
-                                        class="btn btn-link btn-sm text-primary text-decoration-none p-0"><?php echo $t['donate_plus']; ?></a>
+                                <div class="ant-card-head">
+                                    <i class="bi bi-stars me-2 text-primary"></i>Upcoming Events
                                 </div>
                                 <div class="ant-card-body p-0">
                                     <div class="table-responsive">
                                         <table class="table ant-table mb-0">
                                             <thead>
                                                 <tr>
-                                                    <th><?php echo $t['receipt_no']; ?></th>
-                                                    <th><?php echo $t['amount']; ?></th>
-                                                    <th><?php echo $t['date']; ?></th>
-                                                    <th><?php echo $t['status']; ?></th>
-                                                    <th class="text-end"><?php echo $t['action']; ?></th>
+                                                    <th>Event Name</th>
+                                                    <th>Scheduled Date</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <?php foreach ($myDonations as $don):
-                                                    $dStatus = ($don['status'] == 'success') ? 'status-success' : 'status-pending';
-                                                    ?>
+                                                <?php foreach ($events as $e): ?>
                                                     <tr>
-                                                        <td class="fw-bold text-primary">
-                                                            #<?= htmlspecialchars($don['receipt_no'] ?? $t['not_available']) ?></td>
-                                                        <td class="fw-bold text-dark">
-                                                            ₹<?= number_format($don['amount'], 2) ?></td>
-                                                        <td class="text-secondary">
-                                                            <?= date('d M Y', strtotime($don['created_at'])) ?>
-                                                        </td>
-                                                        <td><span
-                                                                class="badge-soft <?= $dStatus ?>"><?= $don['status'] === 'success' ? $t['success'] : $t['pending']; ?></span>
-                                                        </td>
-                                                        <td class="text-end">
-                                                            <a href="receipt_download.php?id=13"
-                                                                class="btn btn-light btn-sm border rounded-pill px-3 fw-medium">
-                                                                <i class="bi bi-file-earmark-pdf me-1"></i> <?php echo $t['view']; ?>
-                                                            </a>
+                                                        <td class="fw-medium"><?= htmlspecialchars($e['name']) ?></td>
+                                                        <td class="text-muted">
+                                                            <?= date('d M Y', strtotime($e['conduct_on'])) ?></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                                <?php if (empty($events)): ?>
+                                                    <tr>
+                                                        <td colspan="2" class="text-center text-muted py-5">
+                                                            <i
+                                                                class="bi bi-calendar-range fs-1 opacity-25 d-block mb-2"></i>
+                                                            No upcoming events found.
                                                         </td>
                                                     </tr>
-                                                <?php endforeach;
-                                                if (empty($myDonations))
-                                                    echo "<tr><td colspan='5' class='text-center py-5 text-muted small'>{$t['no_donations_yet']}</td></tr>"; ?>
+                                                <?php endif; ?>
                                             </tbody>
                                         </table>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
                     </div>
                 </div>
+
             </main>
         </div>
     </div>

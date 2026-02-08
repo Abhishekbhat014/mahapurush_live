@@ -1,9 +1,11 @@
 <?php
+require_once __DIR__ . '/../../includes/no_cache.php';
 // =========================================================
 // 1. SESSION + AUTH
 // =========================================================
 require __DIR__ . '/../../includes/lang.php';
 require __DIR__ . '/../../includes/receipt_helper.php';
+require __DIR__ . '/../../includes/user_avatar.php';
 
 
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
@@ -53,8 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_contribution']
         // --- Step B: Insert Contribution linked to Receipt ---
         $stmt = $con->prepare("
             INSERT INTO contributions 
-            (receipt_id, added_by, contributor_name, contribution_type_id, title, quantity, unit, description, status, created_at) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
+            (receipt_id, added_by, contributor_name, contribution_type_id, title, quantity, unit, description, status, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())
         ");
 
         $stmt->bind_param("iiisidss", $receiptId, $uid, $contributorName, $typeId, $title, $qty, $unit, $desc);
@@ -72,8 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_contribution']
 // 4. DATA FETCHING
 // =========================================================
 $types = mysqli_query($con, "SELECT id, type FROM contribution_type ORDER BY type ASC");
-$uRow = mysqli_fetch_assoc(mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1"));
-$userPhotoUrl = !empty($uRow['photo']) ? '../../uploads/users/' . basename($uRow['photo']) : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=random';
+$userPhotoUrl = get_user_avatar_url('../../');
 
 $currentPage = 'contribute.php';
 ?>
@@ -239,9 +240,6 @@ $currentPage = 'contribute.php';
             <div class="d-flex align-items-center gap-3">
                 <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i
                         class="bi bi-list"></i></button>
-                <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
-                    <i class="bi bi-flower1 text-warning me-2"></i><?php echo $t['title']; ?>
-                </a>
             </div>
             <div class="user-pill shadow-sm">
                 <img src="<?= htmlspecialchars($userPhotoUrl) ?>" class="rounded-circle" width="28" height="28"
@@ -367,6 +365,11 @@ $currentPage = 'contribute.php';
                 }, false);
             });
         })();
+    </script>
+    <script>
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
     </script>
 </body>
 

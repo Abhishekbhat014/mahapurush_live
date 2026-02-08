@@ -22,7 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if ($email === '' || $password === '') {
         $error = $t['err_email_password_required'];
     } else {
-        $stmt = $con->prepare("SELECT id, first_name, last_name, password FROM users WHERE email = ? LIMIT 1");
+        $stmt = $con->prepare("SELECT id, first_name, last_name, password, photo FROM users WHERE email = ? LIMIT 1");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -49,7 +49,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 }
 
                 $_SESSION['user_id'] = $user['id'];
-                $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
+                $_SESSION['user_name'] = trim($user['first_name'] . ' ' . $user['last_name']);
+                $_SESSION['user_photo'] = $user['photo'] ?? null;
                 $_SESSION['roles'] = $roles;
                 $_SESSION['logged_in'] = true;
                 $_SESSION['primary_role'] = $roles[0] ?? "customer";
@@ -201,9 +202,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     <header class="ant-header">
         <div class="container d-flex align-items-center justify-content-between">
-            <a href="../index.php" class="fw-bold text-dark text-decoration-none fs-4 d-flex align-items-center">
-                <i class="bi bi-bank2 text-primary me-2"></i><?php echo $t['title']; ?>
-            </a>
             <a href="../index.php" class="text-secondary text-decoration-none small fw-medium">
                 <?php echo $t['home']; ?>
             </a>
@@ -239,7 +237,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             <input type="email" name="email" class="form-control"
                                 placeholder="<?php echo $t['email_placeholder']; ?>" required>
                             <div class="invalid-feedback">
-                                <?php echo $t['err_invalid_email'] ?? 'Please enter a valid email.'; ?></div>
+                                <?php echo $t['err_invalid_email'] ?? 'Please enter a valid email.'; ?>
+                            </div>
                         </div>
                     </div>
 
@@ -254,7 +253,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                                 <i class="bi bi-eye" id="toggleIcon"></i>
                             </button>
                             <div class="invalid-feedback">
-                                <?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
+                                <?php echo $t['field_required'] ?? 'This field is required.'; ?>
+                            </div>
                         </div>
                     </div>
 
@@ -320,6 +320,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         document.addEventListener('contextmenu', function (e) {
             e.preventDefault();
         });
+    </script>
+    <script>
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
     </script>
 </body>
 

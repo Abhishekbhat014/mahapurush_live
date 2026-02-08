@@ -1,7 +1,9 @@
 <?php
+require_once __DIR__ . '/../../includes/no_cache.php';
 session_start();
 require __DIR__ . '/../../config/db.php';
 require __DIR__ . '/../../includes/lang.php';
+require __DIR__ . '/../../includes/user_avatar.php';
 
 // Auth check (secretary)
 if (!isset($_SESSION['logged_in'])) {
@@ -12,36 +14,40 @@ if (!isset($_SESSION['logged_in'])) {
 $uid = (int) $_SESSION['user_id'];
 $currentPage = 'receipts.php';
 
-// --- Header Identity Logic ---
-$uQuery = mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1");
-$uRow = mysqli_fetch_assoc($uQuery);
-$loggedInUserPhoto = !empty($uRow['photo']) ? '../../uploads/users/' . basename($uRow['photo']) : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=random';
+// --- Header Identity Logic (session cached) ---
+$loggedInUserPhoto = get_user_avatar_url('../../');
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rid'])) {
+    $rid = (int) $_POST['rid'];
 
-$sql = "
-(
-    SELECT r.id, r.receipt_no, r.issued_on, 'Donation' AS purpose, p.donor_name AS title, p.amount
-    FROM receipt r
-    JOIN payments p ON p.receipt_id = r.id
-    WHERE p.status = 'success'
-)
-UNION ALL
-(
-    SELECT r.id, r.receipt_no, r.issued_on, 'Pooja' AS purpose, pt.type AS title, pj.fee AS amount
-    FROM receipt r
-    JOIN pooja pj ON pj.payment_id IS NOT NULL
-    JOIN payments p ON p.id = pj.payment_id
-    JOIN pooja_type pt ON pt.id = pj.pooja_type_id
-    WHERE p.status = 'success'
-)
-UNION ALL
-(
-    SELECT r.id, r.receipt_no, r.issued_on, 'Contribution' AS purpose, c.title AS title, 0.00 AS amount
-    FROM receipt r
-    JOIN contributions c ON c.receipt_id = r.id
-    WHERE c.status = 'approved'
-)
-ORDER BY issued_on DESC
-";
+    mysqli_query($con, "
+        UPDATE receipt 
+        SET verified_by_secretary = $uid,
+            verified_at = NOW()
+        WHERE id = $rid
+        AND verified_by_secretary IS NULL
+    ");
+
+    header("Location: receipts.php");
+    exit;
+}
+
+$sql = "SELECT r.id, r.receipt_no, r.issued_on,
+               CASE 
+                   WHEN p.id IS NOT NULL THEN 'Donation'
+                   WHEN pj.id IS NOT NULL THEN 'Pooja'
+                   WHEN c.id IS NOT NULL THEN 'Contribution'
+               END AS purpose,
+               COALESCE(p.donor_name, pt.type, c.title) AS title,
+               COALESCE(p.amount, pj.fee, 0) AS amount
+        FROM receipt r
+        LEFT JOIN payments p ON p.receipt_id = r.id
+        LEFT JOIN pooja pj ON pj.payment_id = p.id
+        LEFT JOIN pooja_type pt ON pt.id = pj.pooja_type_id
+        LEFT JOIN contributions c ON c.receipt_id = r.id
+        WHERE r.verified_by_secretary IS NULL
+        ORDER BY r.issued_on ASC";
+
+
 
 $result = mysqli_query($con, $sql);
 ?>
@@ -204,10 +210,6 @@ $result = mysqli_query($con, $sql);
             <div class="d-flex align-items-center gap-3">
                 <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i
                         class="bi bi-list"></i></button>
-                <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
-                    <i class="bi bi-flower1 text-warning me-2"></i>
-                    <?= $t['title'] ?>
-                </a>
             </div>
             <div class="user-pill">
                 <img src="<?= $loggedInUserPhoto ?>" class="rounded-circle" width="28" height="28"
@@ -272,11 +274,13 @@ $result = mysqli_query($con, $sql);
                                                     </div>
                                                 </td>
                                                 <td class="text-end">
-                                                    <a href="../receipt/view.php?no=<?= $row['receipt_no'] ?>"
-                                                        class="btn btn-light btn-sm border rounded-pill px-3 fw-bold"
-                                                        style="font-size: 12px;">
-                                                        <i class="bi bi-printer me-1"></i> <?php echo $t['print']; ?>
-                                                    </a>
+                                                    <form method="POST">
+                                                        <input type="hidden" name="rid" value="<?= $row['id'] ?>">
+                                                        <button class="btn btn-success btn-sm rounded-pill px-3">
+                                                            <i class="bi bi-check2-circle"></i> Verify
+                                                        </button>
+                                                    </form>
+
                                                 </td>
                                             </tr>
                                         <?php endwhile; ?>

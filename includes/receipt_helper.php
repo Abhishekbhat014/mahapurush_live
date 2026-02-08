@@ -30,8 +30,8 @@ function createReceipt(mysqli $con, int $userId, string $purpose, float $amount,
     $receiptNo = generateReceiptNumber(strtoupper(substr($purpose, 0, 3)));
 
     $stmt = $con->prepare(
-        "INSERT INTO receipt (receipt_no, user_id, purpose, amount, source_table, issued_on)
-         VALUES (?, ?, ?, ?, ?, NOW())"
+        "INSERT INTO receipt (receipt_no, user_id, purpose, amount, source_table, issued_on, updated_at)
+         VALUES (?, ?, ?, ?, ?, NOW(), NOW())"
     );
 
     if (!$stmt) {

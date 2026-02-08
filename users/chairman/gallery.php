@@ -1,7 +1,9 @@
 <?php
+require_once __DIR__ . '/../../includes/no_cache.php';
 session_start();
 require __DIR__ . '/../../config/db.php';
 require __DIR__ . '/../../includes/lang.php';
+require __DIR__ . '/../../includes/user_avatar.php';
 
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: ../../auth/login.php");
@@ -14,11 +16,7 @@ $currLang = $_SESSION['lang'] ?? 'en';
 $success = '';
 $error = '';
 
-$uQuery = mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1");
-$uRow = mysqli_fetch_assoc($uQuery);
-$loggedInUserPhoto = !empty($uRow['photo'])
-    ? '../../uploads/users/' . basename($uRow['photo'])
-    : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=random';
+$loggedInUserPhoto = get_user_avatar_url('../../');
 
 $galleryDir = __DIR__ . '/../../gallery';
 if (!is_dir($galleryDir)) {
@@ -40,9 +38,9 @@ function saveGalleryImage(string $field, string $galleryDir, ?string &$error): ?
     }
 
     $ext = strtolower(pathinfo($_FILES[$field]['name'], PATHINFO_EXTENSION));
-    $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+    $allowed = ['jpg', 'jpeg', 'png'];
     if (!in_array($ext, $allowed, true)) {
-        $error = 'Allowed image types: JPG, PNG, WEBP.';
+        $error = 'Allowed image types: JPG, PNG.';
         return null;
     }
 
@@ -63,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($type === '') {
             $error = $t['invalid_category'] ?? 'Please enter a category name.';
         } else {
-            $stmt = $con->prepare("INSERT INTO gallery_category (type, created_at) VALUES (?, NOW())");
+            $stmt = $con->prepare("INSERT INTO gallery_category (type, created_at, updated_at) VALUES (?, NOW(), NOW())");
             $stmt->bind_param("s", $type);
             if ($stmt->execute()) {
                 $success = $t['category_added'] ?? 'Category added successfully.';
@@ -113,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $fileName = saveGalleryImage('gallery_image', $galleryDir, $error);
             if ($fileName) {
-                $stmt = $con->prepare("INSERT INTO gallery (gallery_category_id, type, content, created_at) VALUES (?, ?, ?, NOW())");
+                $stmt = $con->prepare("INSERT INTO gallery (gallery_category_id, type, content, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())");
                 $stmt->bind_param("iss", $catId, $type, $fileName);
                 if ($stmt->execute()) {
                     $success = $t['gallery_added'] ?? 'Gallery image added successfully.';
@@ -347,10 +345,6 @@ while ($row = mysqli_fetch_assoc($imgRes)) {
                 <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
                     <i class="bi bi-list"></i>
                 </button>
-                <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
-                    <i class="bi bi-flower1 text-warning me-2"></i>
-                    <?= $t['title'] ?>
-                </a>
             </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="dropdown">
@@ -391,7 +385,7 @@ while ($row = mysqli_fetch_assoc($imgRes)) {
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
                     <h2 class="fw-bold mb-1"><?php echo $t['gallery_manager'] ?? 'Gallery Manager'; ?></h2>
-                    <p class="text-secondary mb-0"><?php echo $t['gallery_manager_subtitle'] ?? 'Add, update, and organize gallery images.'; ?></p>
+                    <p class="text-secondary mb-0">Upload and manage temple photos and event images displayed to devotees.</p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -559,6 +553,11 @@ while ($row = mysqli_fetch_assoc($imgRes)) {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
+    </script>
 </body>
 
 </html>

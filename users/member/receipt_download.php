@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../includes/no_cache.php';
 session_start();
 require '../../includes/lang.php';
 require '../../config/db.php';
@@ -35,6 +36,11 @@ $receipt = $stmt->get_result()->fetch_assoc();
 
 if (!$receipt) {
     die($t['receipt_not_found']);
+}
+$paymentMethodLabel = $t['manual'] ?? 'Manual';
+if (!empty($receipt['payment_method'])) {
+    $method = strtolower($receipt['payment_method']);
+    $paymentMethodLabel = $method === 'upi' ? 'GPay' : ucfirst($method);
 }
 ?>
 <!DOCTYPE html>
@@ -223,7 +229,7 @@ if (!$receipt) {
                     </div>
 
                     <div class="label-text"><?php echo $t['payment_method']; ?></div>
-                    <div class="data-text"><?= ucfirst(htmlspecialchars($receipt['payment_method'] ?? $t['manual'])) ?>
+                    <div class="data-text"><?= htmlspecialchars($paymentMethodLabel) ?>
                     </div>
                 </div>
             </div>

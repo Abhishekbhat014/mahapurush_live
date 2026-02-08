@@ -1,7 +1,9 @@
 <?php
+require_once __DIR__ . '/../../includes/no_cache.php';
 session_start();
 require __DIR__ . '/../../config/db.php';
 require __DIR__ . '/../../includes/lang.php';
+require __DIR__ . '/../../includes/user_avatar.php';
 
 // Auth Check
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
@@ -14,10 +16,8 @@ $currentPage = 'contributions_review.php';
 $success = '';
 $error = '';
 
-// --- Header Identity Logic ---
-$uQuery = mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1");
-$uRow = mysqli_fetch_assoc($uQuery);
-$loggedInUserPhoto = !empty($uRow['photo']) ? '../../uploads/users/' . basename($uRow['photo']) : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=random';
+// --- Header Identity Logic (session cached) ---
+$loggedInUserPhoto = get_user_avatar_url('../../');
 
 /* ============================
    HANDLE APPROVE / REJECT
@@ -333,6 +333,11 @@ $rows = mysqli_query($con, $sql);
                 }, false);
             });
         })();
+    </script>
+    <script>
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
     </script>
 </body>
 

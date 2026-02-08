@@ -1,10 +1,12 @@
 <?php
+require_once __DIR__ . '/../../includes/no_cache.php';
 // =========================================================
 // 1. SESSION + AUTH
 // =========================================================
 session_start();
 require __DIR__ . '/../../includes/lang.php';
 require __DIR__ . '/../../includes/receipt_helper.php';
+require __DIR__ . '/../../includes/user_avatar.php';
 
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: ../../auth/login.php");
@@ -53,8 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_contribution']
         // --- Step B: Insert Contribution linked to Receipt ---
         $stmt = $con->prepare("
             INSERT INTO contributions 
-            (receipt_id, added_by, contributor_name, contribution_type_id, title, quantity, unit, description, status, created_at) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
+            (receipt_id, added_by, contributor_name, contribution_type_id, title, quantity, unit, description, status, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())
         ");
 
         $stmt->bind_param("iiisidss", $receiptId, $uid, $contributorName, $typeId, $title, $qty, $unit, $desc);
@@ -73,10 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_contribution']
 // 4. DATA FETCHING
 // =========================================================
 $types = mysqli_query($con, "SELECT id, type FROM contribution_type ORDER BY type ASC");
-$uRow = mysqli_fetch_assoc(mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1"));
-$userPhotoUrl = !empty($uRow['photo'])
-    ? '../../uploads/users/' . basename($uRow['photo'])
-    : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=random';
+$userPhotoUrl = get_user_avatar_url('../../');
 ?>
 
 <!DOCTYPE html>
@@ -243,9 +242,6 @@ $userPhotoUrl = !empty($uRow['photo'])
             <div class="d-flex align-items-center gap-3">
                 <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i
                         class="bi bi-list"></i></button>
-                <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
-                    <i class="bi bi-flower1 text-warning me-2"></i><?php echo $t['title']; ?>
-                </a>
             </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="dropdown">
@@ -271,7 +267,8 @@ $userPhotoUrl = !empty($uRow['photo'])
                 <div class="user-pill shadow-sm">
                     <img src="<?= htmlspecialchars($userPhotoUrl) ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
-                    <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                    <span
+                        class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
                 </div>
             </div>
         </div>
@@ -311,17 +308,20 @@ $userPhotoUrl = !empty($uRow['photo'])
                                     <form method="POST" class="needs-validation" novalidate>
                                         <div class="row g-4">
                                             <div class="col-md-6">
-                                                <label class="form-label"><?php echo $t['contribution_category']; ?> <span
-                                                        class="text-danger">*</span></label>
+                                                <label class="form-label"><?php echo $t['contribution_category']; ?>
+                                                    <span class="text-danger">*</span></label>
                                                 <select name="contribution_type_id" class="form-select" required>
-                                                    <option value="" disabled selected><?php echo $t['select_category']; ?></option>
+                                                    <option value="" disabled selected>
+                                                        <?php echo $t['select_category']; ?></option>
                                                     <?php while ($row = mysqli_fetch_assoc($types)): ?>
                                                         <option value="<?= $row['id'] ?>">
                                                             <?= htmlspecialchars($row['type']) ?>
                                                         </option>
                                                     <?php endwhile; ?>
                                                 </select>
-                                                <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
+                                                <div class="invalid-feedback">
+                                                    <?php echo $t['field_required'] ?? 'This field is required.'; ?>
+                                                </div>
                                             </div>
 
                                             <div class="col-md-6">
@@ -329,7 +329,9 @@ $userPhotoUrl = !empty($uRow['photo'])
                                                         class="text-danger">*</span></label>
                                                 <input type="text" name="title" class="form-control"
                                                     placeholder="<?php echo $t['item_name_placeholder']; ?>" required>
-                                                <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
+                                                <div class="invalid-feedback">
+                                                    <?php echo $t['field_required'] ?? 'This field is required.'; ?>
+                                                </div>
                                             </div>
 
                                             <div class="col-md-6">
@@ -337,7 +339,9 @@ $userPhotoUrl = !empty($uRow['photo'])
                                                         class="text-danger">*</span></label>
                                                 <input type="number" step="0.01" name="quantity" class="form-control"
                                                     placeholder="<?php echo $t['amount_placeholder']; ?>" required>
-                                                <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
+                                                <div class="invalid-feedback">
+                                                    <?php echo $t['field_required'] ?? 'This field is required.'; ?>
+                                                </div>
                                             </div>
 
                                             <div class="col-md-6">
@@ -350,11 +354,14 @@ $userPhotoUrl = !empty($uRow['photo'])
                                                     <option value="bags"><?php echo $t['unit_bags']; ?></option>
                                                     <option value="quintal"><?php echo $t['unit_quintal']; ?></option>
                                                 </select>
-                                                <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
+                                                <div class="invalid-feedback">
+                                                    <?php echo $t['field_required'] ?? 'This field is required.'; ?>
+                                                </div>
                                             </div>
 
                                             <div class="col-12">
-                                                <label class="form-label"><?php echo $t['additional_description']; ?></label>
+                                                <label
+                                                    class="form-label"><?php echo $t['additional_description']; ?></label>
                                                 <textarea name="description" class="form-control" rows="3"
                                                     placeholder="<?php echo $t['additional_description_placeholder']; ?>"></textarea>
                                             </div>
@@ -393,6 +400,11 @@ $userPhotoUrl = !empty($uRow['photo'])
                 }, false);
             });
         })();
+    </script>
+    <script>
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
     </script>
 </body>
 

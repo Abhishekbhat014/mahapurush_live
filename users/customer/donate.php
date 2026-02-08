@@ -1,14 +1,19 @@
 <?php
+require_once __DIR__ . '/../../includes/no_cache.php';
 // =========================================================
 // 1. LANGUAGE + SESSION
 // =========================================================
 session_start();
 require __DIR__ . '/../../includes/lang.php';
+require __DIR__ . '/../../includes/user_avatar.php';
 
 if (empty($_SESSION['logged_in'])) {
     header("Location: ../../auth/login.php");
     exit;
 }
+$availableRoles = $_SESSION['roles'] ?? [];
+$primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
+
 
 $currLang = $_SESSION['lang'] ?? 'en';
 
@@ -24,13 +29,9 @@ $uid = $_SESSION['user_id'] ?? NULL;
 $userName = $_SESSION['user_name'] ?? $t['user'];
 $currentPage = 'donate.php';
 
-// --- Fetch Latest Profile Photo and Name for Header ---
-$uQuery = mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1");
-$uRow = mysqli_fetch_assoc($uQuery);
-$displayName = $isLoggedIn ? ($uRow['first_name'] . ' ' . $uRow['last_name']) : $t['guest'];
-$loggedInUserPhoto = !empty($uRow['photo'])
-    ? '../../uploads/users/' . basename($uRow['photo'])
-    : 'https://ui-avatars.com/api/?name=' . urlencode($displayName) . '&background=random';
+// --- Use session cached profile photo and name for header ---
+$displayName = $isLoggedIn ? $userName : $t['guest'];
+$loggedInUserPhoto = get_user_avatar_url('../../');
 
 // --- FORM HANDLING ---
 $error = '';
@@ -40,15 +41,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
     $donorName = trim($_POST['name'] ?? '');
     $amount = trim($_POST['amount'] ?? '');
     $note = trim($_POST['note'] ?? '');
+    $paymentMethod = strtolower(trim($_POST['payment_method'] ?? 'cash'));
+    $allowedMethods = ['cash', 'upi'];
 
     if ($donorName === '' || !is_numeric($amount) || $amount <= 0) {
         $error = $t['err_valid_name_amount'];
+    } elseif (!in_array($paymentMethod, $allowedMethods, true)) {
+        $error = $t['something_went_wrong'];
     } else {
         $con->begin_transaction();
         try {
             // 1. Insert payment
-            $stmt = $con->prepare("INSERT INTO payments (user_id, donor_name, amount, note, payment_method, status, created_at) VALUES (?, ?, ?, ?, 'cash', 'success', NOW())");
-            $stmt->bind_param("isds", $uid, $donorName, $amount, $note);
+            $status = 'success';
+            $stmt = $con->prepare("INSERT INTO payments (user_id, donor_name, amount, note, payment_method, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())");
+            $stmt->bind_param("isdsss", $uid, $donorName, $amount, $note, $paymentMethod, $status);
             $stmt->execute();
             $paymentId = $stmt->insert_id;
 
@@ -87,6 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
     <title><?php echo $t['donations']; ?> - <?php echo $t['title']; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="customer-responsive.css">
     <style>
         :root {
             --ant-primary: #1677ff;
@@ -141,6 +148,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
             transition: all 0.2s;
             text-decoration: none;
             font-size: 14px;
+        }
+
+        /* ADD THIS SECTION FOR HOVER DROPDOWNS */
+        @media (min-width: 992px) {
+            .dropdown:hover .dropdown-menu {
+                display: block;
+                margin-top: 0;
+                /* Removes gap so mouse can enter menu without it closing */
+            }
+
+            /* Optional: Add a slight animation */
+            .dropdown .dropdown-menu {
+                display: none;
+            }
+
+            .dropdown:hover>.dropdown-menu {
+                display: block;
+                animation: fadeIn 0.2s ease-in-out;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .nav-link-custom:hover,
@@ -232,6 +270,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
             background: #e6f4ff;
             color: #1677ff;
         }
+
+        @media (max-width: 767.98px) {
+            .action-row {
+                position: sticky;
+                bottom: 0;
+                background: #fff;
+                padding: 12px;
+                margin: 16px -12px 0;
+                border-top: 1px solid var(--ant-border-color);
+                z-index: 5;
+            }
+        }
     </style>
 </head>
 
@@ -242,9 +292,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
             <div class="d-flex align-items-center gap-3">
                 <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i
                         class="bi bi-list"></i></button>
-                <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
-                    <i class="bi bi-flower1 text-warning me-2"></i><?php echo $t['title']; ?>
-                </a>
             </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="dropdown">
@@ -267,10 +314,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
                         </li>
                     </ul>
                 </div>
+
+                <?php if (!empty($availableRoles) && count($availableRoles) > 1): ?>
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <i class="bi bi-person-badge me-1"></i>
+                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                            <?php foreach ($availableRoles as $role):
+                                $roleLabel = ucwords(str_replace('_', ' ', $role));
+                                ?>
+                                <li>
+                                    <form action="../../auth/switch_role.php" method="post" class="px-2 py-1">
+                                        <button type="submit" name="role" value="<?= htmlspecialchars($role) ?>"
+                                            class="dropdown-item small fw-medium <?= ($role === $primaryRole) ? 'active' : '' ?>">
+                                            <?= htmlspecialchars($roleLabel) ?>
+                                        </button>
+                                    </form>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
                 <div class="user-pill shadow-sm">
                     <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
-                    <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                    <span
+                        class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
                 </div>
             </div>
         </div>
@@ -284,6 +356,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
                     <div class="container">
+                        <div class="small text-muted mb-1">
+                            <?php echo $t['dashboard']; ?> / <?php echo $t['donations']; ?>
+                        </div>
                         <h2 class="fw-bold mb-1"><?php echo $t['donations']; ?></h2>
                         <p class="text-secondary mb-0">
                             <?php echo $t['donations_subtitle']; ?>
@@ -329,7 +404,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
                                     <input type="text" name="name" class="form-control"
                                         value="<?= $isLoggedIn ? htmlspecialchars($displayName) : '' ?>"
                                         placeholder="<?php echo $t['full_name_placeholder']; ?>" required>
-                                    <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
+                                    <div class="invalid-feedback">
+                                        <?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label"><?php echo $t['amount_inr']; ?></label>
@@ -337,7 +413,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
                                         <span class="input-group-text bg-light border-end-0">₹</span>
                                         <input type="number" name="amount" class="form-control" min="1"
                                             placeholder="<?php echo $t['amount_placeholder']; ?>" required>
-                                        <div class="invalid-feedback"><?php echo $t['amount_required'] ?? 'Please enter a valid amount.'; ?></div>
+                                        <div class="invalid-feedback">
+                                            <?php echo $t['amount_required'] ?? 'Please enter a valid amount.'; ?></div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label"><?php echo $t['payment_method']; ?></label>
+                                    <select class="form-select" name="payment_method" id="payment_method" required>
+                                        <option value="cash" <?= (isset($paymentMethod) && $paymentMethod === 'cash') ? 'selected' : '' ?>>
+                                            Cash
+                                        </option>
+                                        <option value="upi" <?= (isset($paymentMethod) && $paymentMethod === 'upi') ? 'selected' : '' ?>>
+                                            GPay (UPI)
+                                        </option>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        <?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
+                                </div>
+                                <div id="gpayGateway" class="mb-4" style="display:none;">
+                                    <div class="border rounded-3 p-3 bg-light text-center">
+                                        <div class="fw-bold mb-2">GPay QR</div>
+                                        <img src="../../assets/images/qr.png" alt="QR Code" style="max-width: 220px;"
+                                            class="img-fluid rounded">
+                                        <div class="small text-muted mt-2">
+                                            <?php echo $t['scan_qr_note'] ?? 'Use any UPI app to scan and pay.'; ?>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="mb-4">
@@ -345,8 +445,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
                                     <textarea name="note" class="form-control" rows="3"
                                         placeholder="<?php echo $t['donation_note_placeholder']; ?>"></textarea>
                                 </div>
-                                <button type="submit" class="ant-btn-primary"><i
-                                        class="bi bi-shield-check me-2"></i><?php echo $t['donate_btn']; ?></button>
+                                <div class="action-row">
+                                    <button type="submit" class="ant-btn-primary"><i
+                                            class="bi bi-shield-check me-2"></i><?php echo $t['donate_btn']; ?></button>
+                                </div>
                             </form>
                         </div>
                     </div>
@@ -370,6 +472,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
                 }, false);
             });
         })();
+    </script>
+    <script>
+        (function () {
+            const methodSelect = document.getElementById('payment_method');
+            const gateway = document.getElementById('gpayGateway');
+            if (!methodSelect || !gateway) return;
+
+            function toggleGateway() {
+                gateway.style.display = methodSelect.value === 'upi' ? 'block' : 'none';
+            }
+
+            methodSelect.addEventListener('change', toggleGateway);
+            toggleGateway();
+        })();
+    </script>
+    <script>
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
     </script>
 </body>
 

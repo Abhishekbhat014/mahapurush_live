@@ -1,6 +1,8 @@
 <?php
+require_once __DIR__ . '/../../includes/no_cache.php';
 session_start();
 require __DIR__ . '/../../includes/lang.php';
+require __DIR__ . '/../../includes/user_avatar.php';
 
 // Auth Check
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
@@ -11,10 +13,8 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 require __DIR__ . '/../../config/db.php';
 $uid = (int) $_SESSION['user_id'];
 
-// --- Header Profile Photo ---
-$uQuery = mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1");
-$uRow = mysqli_fetch_assoc($uQuery);
-$loggedInUserPhoto = !empty($uRow['photo']) ? '../../uploads/users/' . basename($uRow['photo']) : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=random';
+// --- Header Profile Photo (session cached) ---
+$loggedInUserPhoto = get_user_avatar_url('../../');
 
 // --- Search Logic ---
 $search = isset($_GET['search']) ? mysqli_real_escape_string($con, $_GET['search']) : '';
@@ -207,9 +207,6 @@ $currentPage = 'member_directory.php';
             <div class="d-flex align-items-center gap-3">
                 <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i
                         class="bi bi-list"></i></button>
-                <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
-                    <i class="bi bi-flower1 text-warning me-2"></i><?php echo $t['title']; ?>
-                </a>
             </div>
             <div class="user-pill shadow-sm">
                 <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"

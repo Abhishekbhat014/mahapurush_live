@@ -1,9 +1,11 @@
 <?php
+require_once __DIR__ . '/../../includes/no_cache.php';
 // =========================================================
 // 1. LANGUAGE + SESSION
 // =========================================================
 session_start();
 require __DIR__ . '/../../includes/lang.php';
+require __DIR__ . '/../../includes/user_avatar.php';
 
 // =========================================================
 // 2. DATABASE CONNECTION
@@ -17,13 +19,9 @@ $uid = $_SESSION['user_id'] ?? NULL;
 $userName = $_SESSION['user_name'] ?? $t['user'];
 $currentPage = 'donate.php';
 
-// --- Fetch Latest Profile Photo and Name for Header ---
-$uQuery = mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1");
-$uRow = mysqli_fetch_assoc($uQuery);
-$displayName = $isLoggedIn ? ($uRow['first_name'] . ' ' . $uRow['last_name']) : $t['guest'];
-$loggedInUserPhoto = !empty($uRow['photo'])
-    ? '../../uploads/users/' . basename($uRow['photo'])
-    : 'https://ui-avatars.com/api/?name=' . urlencode($displayName) . '&background=random';
+// --- Use session cached profile photo and name for header ---
+$displayName = $isLoggedIn ? $userName : $t['guest'];
+$loggedInUserPhoto = get_user_avatar_url('../../');
 
 // --- FORM HANDLING ---
 $error = '';
@@ -32,15 +30,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
     $donorName = trim($_POST['name'] ?? '');
     $amount = trim($_POST['amount'] ?? '');
     $note = trim($_POST['note'] ?? '');
+    $paymentMethod = strtolower(trim($_POST['payment_method'] ?? 'cash'));
+    $allowedMethods = ['cash', 'upi'];
 
     if ($donorName === '' || !is_numeric($amount) || $amount <= 0) {
         $error = $t['err_valid_name_amount'];
+    } elseif (!in_array($paymentMethod, $allowedMethods, true)) {
+        $error = $t['something_went_wrong'];
     } else {
         $con->begin_transaction();
         try {
             // 1. Insert payment
-            $stmt = $con->prepare("INSERT INTO payments (user_id, donor_name, amount, note, payment_method, status, created_at) VALUES (?, ?, ?, ?, 'cash', 'success', NOW())");
-            $stmt->bind_param("isds", $uid, $donorName, $amount, $note);
+            $status = 'success';
+            $stmt = $con->prepare("INSERT INTO payments (user_id, donor_name, amount, note, payment_method, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())");
+            $stmt->bind_param("isdsss", $uid, $donorName, $amount, $note, $paymentMethod, $status);
             $stmt->execute();
             $paymentId = $stmt->insert_id;
 
@@ -218,9 +221,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
             <div class="d-flex align-items-center gap-3">
                 <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i
                         class="bi bi-list"></i></button>
-                <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
-                    <i class="bi bi-flower1 text-warning me-2"></i><?php echo $t['title']; ?>
-                </a>
             </div>
             <div class="user-pill shadow-sm">
                 <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
@@ -288,6 +288,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
                                         <div class="invalid-feedback"><?php echo $t['amount_required'] ?? 'Please enter a valid amount.'; ?></div>
                                     </div>
                                 </div>
+                                <div class="mb-3">
+                                    <label class="form-label"><?php echo $t['payment_method']; ?></label>
+                                    <select class="form-select" name="payment_method" id="payment_method" required>
+                                        <option value="cash" <?= (isset($paymentMethod) && $paymentMethod === 'cash') ? 'selected' : '' ?>>
+                                            Cash
+                                        </option>
+                                        <option value="upi" <?= (isset($paymentMethod) && $paymentMethod === 'upi') ? 'selected' : '' ?>>
+                                            GPay (UPI)
+                                        </option>
+                                    </select>
+                                    <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
+                                </div>
+                                <div id="gpayGateway" class="mb-4" style="display:none;">
+                                    <div class="border rounded-3 p-3 bg-light text-center">
+                                        <div class="fw-bold mb-2">GPay QR</div>
+                                        <img src="../../assets/images/qr.png" alt="QR Code" style="max-width: 220px;"
+                                            class="img-fluid rounded">
+                                        <div class="small text-muted mt-2">
+                                            <?php echo $t['scan_qr_note'] ?? 'Use any UPI app to scan and pay.'; ?>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="mb-4">
                                     <label class="form-label"><?php echo $t['note_optional']; ?></label>
                                     <textarea name="note" class="form-control" rows="3"
@@ -318,6 +340,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
                 }, false);
             });
         })();
+    </script>
+    <script>
+        (function () {
+            const methodSelect = document.getElementById('payment_method');
+            const gateway = document.getElementById('gpayGateway');
+            if (!methodSelect || !gateway) return;
+
+            function toggleGateway() {
+                gateway.style.display = methodSelect.value === 'upi' ? 'block' : 'none';
+            }
+
+            methodSelect.addEventListener('change', toggleGateway);
+            toggleGateway();
+        })();
+    </script>
+    <script>
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
     </script>
 </body>
 

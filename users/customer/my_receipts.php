@@ -1,12 +1,20 @@
 <?php
+require_once __DIR__ . '/../../includes/no_cache.php';
 session_start();
 require __DIR__ . '/../../includes/lang.php';
+require __DIR__ . '/../../includes/user_avatar.php';
 require __DIR__ . '/../../config/db.php';
 
 if (empty($_SESSION['logged_in'])) {
     header("Location: ../../auth/login.php");
     exit;
+
+
+
 }
+$availableRoles = $_SESSION['roles'] ?? [];
+$primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
+
 
 $currLang = $_SESSION['lang'] ?? 'en';
 
@@ -33,12 +41,8 @@ if ($uid > 0) {
     $receipts = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 }
 
-// Fetch user photo for header
-$uRow = mysqli_fetch_assoc(mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1"));
-$displayName = trim(($uRow['first_name'] ?? '') . ' ' . ($uRow['last_name'] ?? ''));
-$userPhotoUrl = !empty($uRow['photo'])
-    ? '../../uploads/users/' . $uRow['photo']
-    : 'https://ui-avatars.com/api/?name=' . urlencode($displayName ?: $userName) . '&background=random';
+// Fetch user photo for header (session cached)
+$userPhotoUrl = get_user_avatar_url('../../');
 ?>
 
 <!DOCTYPE html>
@@ -50,6 +54,7 @@ $userPhotoUrl = !empty($uRow['photo'])
     <title><?php echo $t['receipt_history']; ?> - <?php echo $t['title']; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="customer-responsive.css">
     <style>
         :root {
             --ant-primary: #1677ff;
@@ -169,6 +174,66 @@ $userPhotoUrl = !empty($uRow['photo'])
             font-weight: 600;
         }
 
+        @media (max-width: 767.98px) {
+            .table-responsive-stack thead {
+                display: none;
+            }
+
+            .table-responsive-stack tr {
+                display: block;
+                border: 1px solid var(--ant-border-color);
+                border-radius: 12px;
+                margin-bottom: 12px;
+                padding: 6px 8px;
+            }
+
+            .table-responsive-stack td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border: none;
+                padding: 6px 8px;
+            }
+
+            .table-responsive-stack td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: var(--ant-text-sec);
+                padding-right: 12px;
+            }
+        }
+
+        /* ADD THIS SECTION FOR HOVER DROPDOWNS */
+        @media (min-width: 992px) {
+            .dropdown:hover .dropdown-menu {
+                display: block;
+                margin-top: 0;
+                /* Removes gap so mouse can enter menu without it closing */
+            }
+
+            /* Optional: Add a slight animation */
+            .dropdown .dropdown-menu {
+                display: none;
+            }
+
+            .dropdown:hover>.dropdown-menu {
+                display: block;
+                animation: fadeIn 0.2s ease-in-out;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .user-pill {
             background: #fff;
             padding: 6px 16px;
@@ -204,9 +269,6 @@ $userPhotoUrl = !empty($uRow['photo'])
             <div class="d-flex align-items-center gap-3">
                 <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i
                         class="bi bi-list"></i></button>
-                <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
-                    <i class="bi bi-flower1 text-warning me-2"></i><?php echo $t['title']; ?>
-                </a>
             </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="dropdown">
@@ -229,6 +291,30 @@ $userPhotoUrl = !empty($uRow['photo'])
                         </li>
                     </ul>
                 </div>
+
+                <?php if (!empty($availableRoles) && count($availableRoles) > 1): ?>
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <i class="bi bi-person-badge me-1"></i>
+                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                            <?php foreach ($availableRoles as $role):
+                                $roleLabel = ucwords(str_replace('_', ' ', $role));
+                                ?>
+                                <li>
+                                    <form action="../../auth/switch_role.php" method="post" class="px-2 py-1">
+                                        <button type="submit" name="role" value="<?= htmlspecialchars($role) ?>"
+                                            class="dropdown-item small fw-medium <?= ($role === $primaryRole) ? 'active' : '' ?>">
+                                            <?= htmlspecialchars($roleLabel) ?>
+                                        </button>
+                                    </form>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
                 <div class="user-pill shadow-sm">
                     <img src="<?= htmlspecialchars($userPhotoUrl) ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
@@ -244,6 +330,9 @@ $userPhotoUrl = !empty($uRow['photo'])
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
+                    <div class="small text-muted mb-1">
+                        <?php echo $t['dashboard']; ?> / <?php echo $t['receipt_history']; ?>
+                    </div>
                     <h2 class="fw-bold mb-1"><?php echo $t['receipt_history']; ?></h2>
                     <p class="text-secondary mb-0"><?php echo $t['receipt_history_subtitle']; ?></p>
                 </div>
@@ -252,7 +341,7 @@ $userPhotoUrl = !empty($uRow['photo'])
                     <div class="ant-card">
                         <div class="ant-card-body">
                             <div class="table-responsive">
-                                <table class="table ant-table mb-0">
+                                <table class="table ant-table mb-0 table-responsive-stack">
                                     <thead>
                                         <tr>
                                             <th><?php echo $t['receipt_no']; ?></th>
@@ -267,17 +356,20 @@ $userPhotoUrl = !empty($uRow['photo'])
                                             <?php foreach ($receipts as $r):
                                                 $badgeClass = 'badge-' . $r['purpose']; ?>
                                                 <tr>
-                                                    <td class="receipt-no">#<?= htmlspecialchars($r['receipt_no']) ?></td>
-                                                    <td>
+                                                    <td data-label="<?php echo $t['receipt_no']; ?>" class="receipt-no">
+                                                        #<?= htmlspecialchars($r['receipt_no']) ?></td>
+                                                    <td data-label="<?php echo $t['type']; ?>">
                                                         <span class="purpose-badge <?= $badgeClass ?>">
                                                             <?= $r['purpose'] === 'pooja' ? $t['pooja'] : $t['donation'] ?>
                                                         </span>
                                                     </td>
-                                                    <td class="fw-bold">₹<?= number_format($r['amount'], 2) ?></td>
-                                                    <td class="text-secondary small">
+                                                    <td data-label="<?php echo $t['amount']; ?>" class="fw-bold">
+                                                        ₹<?= number_format($r['amount'], 2) ?></td>
+                                                    <td data-label="<?php echo $t['issued_date']; ?>"
+                                                        class="text-secondary small">
                                                         <?= date("d M Y, h:i A", strtotime($r['issued_on'])) ?>
                                                     </td>
-                                                    <td class="text-end">
+                                                    <td data-label="<?php echo $t['action']; ?>" class="text-end">
                                                         <a href="../receipt/view.php?no=<?= urlencode($r['receipt_no']) ?>"
                                                             class="btn btn-light btn-sm border rounded-pill px-3 fw-medium">
                                                             <i class="bi bi-file-earmark-text me-1"></i>

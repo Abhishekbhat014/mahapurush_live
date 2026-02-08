@@ -1,7 +1,9 @@
 <?php
+require_once __DIR__ . '/../../includes/no_cache.php';
 session_start();
 require __DIR__ . '/../../config/db.php';
 require __DIR__ . '/../../includes/lang.php';
+require __DIR__ . '/../../includes/user_avatar.php';
 
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: ../../auth/login.php");
@@ -30,9 +32,8 @@ $q3->bind_param("i", $uid);
 $q3->execute();
 $payments = $q3->get_result()->fetch_all(MYSQLI_ASSOC);
 
-// --- User Photo Logic ---
-$u = mysqli_fetch_assoc(mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1"));
-$userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']) : 'https://ui-avatars.com/api/?name=' . urlencode($u['first_name'] . ' ' . $u['last_name']) . '&background=random';
+// --- User Photo Logic (session cached) ---
+$userPhoto = get_user_avatar_url('../../');
 ?>
 
 <!DOCTYPE html>
@@ -187,9 +188,6 @@ $userPhoto = !empty($u['photo']) ? '../../uploads/users/' . basename($u['photo']
             <div class="d-flex align-items-center gap-3">
                 <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i
                         class="bi bi-list"></i></button>
-                <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
-                    <i class="bi bi-flower1 text-warning me-2"></i><?php echo $t['title']; ?>
-                </a>
             </div>
             <div class="user-pill shadow-sm">
                 <img src="<?= htmlspecialchars($userPhoto) ?>" class="rounded-circle" width="28" height="28"

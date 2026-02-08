@@ -149,7 +149,8 @@ CREATE TABLE `event_participants` (
 
 CREATE TABLE `feedbacks` (
   `id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `email` varchar(150) NOT NULL,
   `message` text NOT NULL,
   `rating` int(11) DEFAULT NULL CHECK (`rating` between 1 and 5),
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()

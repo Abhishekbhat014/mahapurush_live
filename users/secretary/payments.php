@@ -1,7 +1,9 @@
 <?php
+require_once __DIR__ . '/../../includes/no_cache.php';
 session_start();
 require __DIR__ . '/../../config/db.php';
 require __DIR__ . '/../../includes/lang.php';
+require __DIR__ . '/../../includes/user_avatar.php';
 
 // Auth check (secretary)
 if (!isset($_SESSION['logged_in'])) {
@@ -12,10 +14,8 @@ if (!isset($_SESSION['logged_in'])) {
 $uid = (int) $_SESSION['user_id'];
 $currentPage = 'payments.php';
 
-// --- Header Identity Logic ---
-$uQuery = mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1");
-$uRow = mysqli_fetch_assoc($uQuery);
-$loggedInUserPhoto = !empty($uRow['photo']) ? '../../uploads/users/' . basename($uRow['photo']) : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=1677ff&color=fff';
+// --- Header Identity Logic (session cached) ---
+$loggedInUserPhoto = get_user_avatar_url('../../');
 
 // Fetch payments with Receipt Joining
 $sql = "SELECT p.id, r.receipt_no, p.donor_name, p.amount, p.payment_method, p.status, p.created_at
@@ -188,9 +188,6 @@ $totalCollection = mysqli_fetch_row($totalRes)[0] ?? 0;
             <div class="d-flex align-items-center gap-3">
                 <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i
                         class="bi bi-list"></i></button>
-                <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
-                    <i class="bi bi-flower1 text-warning me-2"></i><?= $t['title'] ?>
-                </a>
             </div>
             <div class="user-pill">
                 <img src="<?= $loggedInUserPhoto ?>" class="rounded-circle" width="28" height="28"

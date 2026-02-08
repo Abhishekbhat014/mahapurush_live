@@ -3,7 +3,7 @@
 $host = "localhost";
 $user = "root";
 $password = "";
-$database = "mahapurush_live";
+$database = "mahapurush_mandir";
 
 $con = mysqli_connect($host, $user, $password, $database);
 

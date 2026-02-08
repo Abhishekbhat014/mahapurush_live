@@ -1,0 +1,114 @@
+/* Shared responsive tweaks for customer portal pages */
+* {
+    box-sizing: border-box;
+}
+
+img,
+svg,
+video {
+    max-width: 100%;
+    height: auto;
+}
+
+body {
+    overflow-x: hidden;
+}
+
+.action-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.user-pill img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Show header dropdowns on hover (language menu) */
+.ant-header .dropdown:hover > .dropdown-menu {
+    display: block;
+}
+
+.ant-header .dropdown-menu {
+    margin-top: 0;
+}
+
+@media (max-width: 991.98px) {
+    .dashboard-hero {
+        padding: 24px 20px;
+        margin-bottom: 20px;
+    }
+
+    .ant-card-body {
+        padding: 20px;
+    }
+
+    .ant-card-head {
+        padding: 14px 20px;
+    }
+
+    .ant-table th,
+    .ant-table td {
+        padding: 12px;
+    }
+
+    .stat-card {
+        padding: 16px;
+    }
+
+    .nav-link-custom {
+        padding: 10px 16px;
+    }
+
+    .ant-header .container-fluid {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+
+    .user-pill {
+        padding: 4px 10px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .dashboard-hero {
+        padding: 20px 16px;
+    }
+
+    .ant-card-body {
+        padding: 16px;
+    }
+
+    .ant-card-head {
+        padding: 12px 16px;
+        font-size: 15px;
+    }
+
+    .lang-btn {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+
+    .ant-header {
+        height: auto;
+    }
+
+    .ant-header .container-fluid {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .action-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .action-row .btn,
+    .action-row .ant-btn-primary {
+        width: 100%;
+    }
+}

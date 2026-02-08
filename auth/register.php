@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($_FILES['photo']['name']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
             $fileTmp = $_FILES['photo']['tmp_name'];
             $fileExt = strtolower(pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION));
-            $allowed = ['jpg', 'png', 'jpeg', 'webp'];
+            $allowed = ['jpg', 'png', 'jpeg'];
             if (!in_array($fileExt, $allowed)) {
                 $error = $t['err_invalid_file_type'];
             } elseif ($_FILES['photo']['size'] > 2 * 1024 * 1024) {
@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $con->begin_transaction();
             try {
                 $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $con->prepare("INSERT INTO users (first_name, last_name, email, phone, password, photo, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+                $stmt = $con->prepare("INSERT INTO users (first_name, last_name, email, phone, password, photo, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())");
                 $stmt->bind_param("ssssss", $firstName, $lastName, $email, $phone, $hashedPassword, $photoName);
                 if (!$stmt->execute())
                     throw new Exception($t['err_generic']);
@@ -74,13 +74,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $memberRoleId = ($roleResult->num_rows === 1) ? (int) $roleResult->fetch_assoc()['id'] : 2;
                 $roleFetch->close();
 
-                $roleStmt = $con->prepare("INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)");
+                $roleStmt = $con->prepare("INSERT INTO user_roles (user_id, role_id, updated_at) VALUES (?, ?, NOW())");
                 $roleStmt->bind_param("ii", $newUserId, $memberRoleId);
                 $roleStmt->execute();
                 $roleStmt->close();
 
                 $con->commit();
+                $_SESSION['user_id'] = $newUserId;
+                $_SESSION['user_name'] = $firstName . ' ' . $lastName;
+                $_SESSION['roles'] = ['customer'];
+                $_SESSION['logged_in'] = true;
+                $_SESSION['primary_role'] = 'customer';
+
                 $success = $t['success_register'];
+                header('Location: redirect.php');
+                exit;
             } catch (Exception $e) {
                 $con->rollback();
                 $error = $e->getMessage();
@@ -209,9 +217,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <header class="ant-header">
         <div class="container d-flex align-items-center justify-content-between">
-            <a href="../index.php" class="fw-bold text-dark text-decoration-none fs-4 d-flex align-items-center">
-                <i class="bi bi-bank2 text-primary me-2"></i><?php echo $t['title']; ?>
-            </a>
             <a href="../index.php" class="text-secondary text-decoration-none small fw-medium">
                 <?php echo $t['home']; ?>
             </a>
@@ -385,6 +390,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         document.addEventListener('contextmenu', function (e) {
             e.preventDefault();
         });
+    </script>
+    <script>
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
     </script>
 </body>
 

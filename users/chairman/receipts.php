@@ -1,7 +1,9 @@
 <?php
+require_once __DIR__ . '/../../includes/no_cache.php';
 session_start();
 require __DIR__ . '/../../config/db.php';
 require __DIR__ . '/../../includes/lang.php';
+require __DIR__ . '/../../includes/user_avatar.php';
 
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: ../../auth/login.php");
@@ -12,11 +14,7 @@ $uid = (int) $_SESSION['user_id'];
 $currentPage = 'receipts.php';
 $currLang = $_SESSION['lang'] ?? 'en';
 
-$uQuery = mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1");
-$uRow = mysqli_fetch_assoc($uQuery);
-$loggedInUserPhoto = !empty($uRow['photo'])
-    ? '../../uploads/users/' . basename($uRow['photo'])
-    : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=random';
+$loggedInUserPhoto = get_user_avatar_url('../../');
 
 $sql = "SELECT r.receipt_no, r.purpose, r.amount, r.issued_on, u.first_name, u.last_name
         FROM receipt r
@@ -171,9 +169,6 @@ $result = mysqli_query($con, $sql);
                 <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
                     <i class="bi bi-list"></i>
                 </button>
-                <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
-                    <i class="bi bi-flower1 text-warning me-2"></i><?= $t['title'] ?>
-                </a>
             </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="dropdown">
@@ -215,7 +210,9 @@ $result = mysqli_query($con, $sql);
                 <div class="dashboard-hero">
                     <div>
                         <h2 class="fw-bold mb-1"><?php echo $t['receipts'] ?? 'Receipts'; ?></h2>
-                        <p class="text-secondary mb-0"><?php echo $t['receipts_subtitle'] ?? 'All issued receipts.'; ?></p>
+                        <p class="text-secondary mb-0">
+                            Verify generated payment receipts for pooja and donations and cross-check transaction details.
+                        </p>
                     </div>
                 </div>
 

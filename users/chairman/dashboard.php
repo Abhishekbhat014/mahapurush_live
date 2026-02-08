@@ -1,22 +1,28 @@
 <?php
+require_once __DIR__ . '/../../includes/no_cache.php';
 session_start();
 require __DIR__ . '/../../config/db.php';
 require __DIR__ . '/../../includes/lang.php';
+require __DIR__ . '/../../includes/user_avatar.php';
 
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: ../../auth/login.php");
     exit;
 }
 
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+header("Expires: 0");
+
+$availableRoles = $_SESSION['roles'] ?? [];
+$primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
+
 $uid = (int) $_SESSION['user_id'];
 $currentPage = 'dashboard.php';
 $currLang = $_SESSION['lang'] ?? 'en';
 
-$uQuery = mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1");
-$uRow = mysqli_fetch_assoc($uQuery);
-$loggedInUserPhoto = !empty($uRow['photo'])
-    ? '../../uploads/users/' . basename($uRow['photo'])
-    : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=random';
+$loggedInUserPhoto = get_user_avatar_url('../../');
 
 $pendingContributions = mysqli_fetch_row(mysqli_query($con, "SELECT COUNT(*) FROM contributions WHERE status='pending'"))[0] ?? 0;
 $pendingPoojas = mysqli_fetch_row(mysqli_query($con, "SELECT COUNT(*) FROM pooja WHERE status='pending'"))[0] ?? 0;
@@ -294,10 +300,7 @@ if ($methodRes) {
                 <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
                     <i class="bi bi-list"></i>
                 </button>
-                <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
-                    <i class="bi bi-flower1 text-warning me-2"></i>
-                    <?= $t['title'] ?>
-                </a>
+
             </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="dropdown">
@@ -320,6 +323,29 @@ if ($methodRes) {
                         </li>
                     </ul>
                 </div>
+                <?php if (!empty($availableRoles) && count($availableRoles) > 1): ?>
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <i class="bi bi-person-badge me-1"></i>
+                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                            <?php foreach ($availableRoles as $role):
+                                $roleLabel = ucwords(str_replace('_', ' ', $role));
+                                ?>
+                                <li>
+                                    <form action="../../auth/switch_role.php" method="post" class="px-2 py-1">
+                                        <button type="submit" name="role" value="<?= htmlspecialchars($role) ?>"
+                                            class="dropdown-item small fw-medium <?= ($role === $primaryRole) ? 'active' : '' ?>">
+                                            <?= htmlspecialchars($roleLabel) ?>
+                                        </button>
+                                    </form>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
                 <div class="user-pill">
                     <img src="<?= $loggedInUserPhoto ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
@@ -339,9 +365,9 @@ if ($methodRes) {
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1"><?php echo $t['chairman_overview'] ?? 'Chairman Overview'; ?></h2>
+                    <h2 class="fw-bold mb-1">Dashboard</h2>
                     <p class="text-secondary mb-0">
-                        <?php echo $t['chairman_overview_subtitle'] ?? 'Approve, assign, and monitor temple operations in one place.'; ?>
+                        Role-specific overview of today’s poojas, donations, receipts, events, and pending actions.
                     </p>
                 </div>
 

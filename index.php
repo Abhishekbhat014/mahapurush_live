@@ -153,7 +153,7 @@ if ($con && $con !== false) {
             <h1><?php echo $t['welcome_title']; ?></h1>
             <div class="d-flex justify-content-center gap-3 mt-4">
                 <a href="donate.php" class="ant-btn-primary-big shadow-sm"><?php echo $t['donate_btn']; ?></a>
-                <a href="auth/login.php" class="btn btn-outline-dark px-5 py-2 fw-bold"
+                <a href="auth/redirect.php" class="btn btn-outline-dark px-5 py-2 fw-bold"
                     style="border-radius: 8px; height: 50px; display: flex; align-items: center;"><?php echo $t['book_pooja_btn']; ?></a>
             </div>
         </div>
@@ -213,7 +213,7 @@ if ($con && $con !== false) {
         </div>
 
         <div style="height: 1px; background: var(--ant-border-color); margin: 60px 0;"></div>
-
+        <!-- TODO: Event  -->
         <div class="row g-5">
             <div class="col-lg-8">
                 <h4 class="fw-bold mb-4"><?php echo $t['upcoming_events']; ?></h4>

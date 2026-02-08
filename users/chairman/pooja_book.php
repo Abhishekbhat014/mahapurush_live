@@ -1,6 +1,8 @@
 <?php
+require_once __DIR__ . '/../../includes/no_cache.php';
 session_start();
 require __DIR__ . '/../../includes/lang.php';
+require __DIR__ . '/../../includes/user_avatar.php';
 
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: ../../auth/login.php");
@@ -15,6 +17,36 @@ $errorMsg = '';
 $currentPage = 'pooja_book.php';
 $currLang = $_SESSION['lang'] ?? 'en';
 
+// Slot availability map
+$slotMap = [];
+$fullDates = [];
+$slotQuery = $con->query("
+    SELECT pooja_date, time_slot, COUNT(*) AS cnt
+    FROM pooja
+    WHERE pooja_date >= CURDATE()
+      AND time_slot IS NOT NULL
+      AND time_slot <> ''
+      AND status <> 'cancelled'
+    GROUP BY pooja_date, time_slot
+");
+if ($slotQuery) {
+    while ($row = $slotQuery->fetch_assoc()) {
+        $dateKey = $row['pooja_date'];
+        $slot = $row['time_slot'];
+        if (!isset($slotMap[$dateKey])) {
+            $slotMap[$dateKey] = [];
+        }
+        if (!in_array($slot, $slotMap[$dateKey], true)) {
+            $slotMap[$dateKey][] = $slot;
+        }
+    }
+    foreach ($slotMap as $dateKey => $slots) {
+        if (count($slots) >= 3) {
+            $fullDates[$dateKey] = true;
+        }
+    }
+}
+
 // --- Handle Booking ---
 if (isset($_POST['book_pooja'])) {
     $poojaTypeId = (int) ($_POST['pooja_type_id'] ?? 0);
@@ -22,17 +54,47 @@ if (isset($_POST['book_pooja'])) {
     $timeSlot = mysqli_real_escape_string($con, $_POST['time_slot'] ?? '');
     $description = mysqli_real_escape_string($con, $_POST['notes'] ?? '');
 
-    if (empty($poojaTypeId) || empty($poojaDate)) {
+    if (empty($poojaTypeId) || empty($poojaDate) || $timeSlot === '') {
         $errorMsg = $t['err_select_pooja_date'];
     } else {
+        $validSlots = ['morning', 'afternoon', 'evening'];
+        if (!in_array($timeSlot, $validSlots, true)) {
+            $errorMsg = $t['slot_unavailable'] ?? 'Selected time slot is not available.';
+        } else {
+            $check = $con->prepare("SELECT COUNT(*) AS cnt FROM pooja WHERE pooja_date = ? AND time_slot = ? AND status <> 'cancelled'");
+            $check->bind_param("ss", $poojaDate, $timeSlot);
+            $check->execute();
+            $cnt = $check->get_result()->fetch_assoc()['cnt'] ?? 0;
+            if ((int) $cnt > 0) {
+                $errorMsg = $t['slot_unavailable'] ?? 'Selected time slot is not available.';
+            }
+
+            $fullCheck = $con->prepare("
+                SELECT COUNT(DISTINCT time_slot) AS slots
+                FROM pooja
+                WHERE pooja_date = ?
+                  AND time_slot IS NOT NULL
+                  AND time_slot <> ''
+                  AND status <> 'cancelled'
+            ");
+            $fullCheck->bind_param("s", $poojaDate);
+            $fullCheck->execute();
+            $slots = $fullCheck->get_result()->fetch_assoc()['slots'] ?? 0;
+            if ((int) $slots >= 3) {
+                $errorMsg = $t['no_slots_available'] ?? 'All time slots are booked for this date.';
+            }
+        }
+    }
+
+    if (empty($errorMsg)) {
         $fee = 0;
         $feeQuery = mysqli_query($con, "SELECT fee FROM pooja_type WHERE id = '$poojaTypeId' LIMIT 1");
         if ($feeQuery && $f = mysqli_fetch_assoc($feeQuery)) {
             $fee = $f['fee'] ?? 0;
         }
 
-        $sql = "INSERT INTO pooja (user_id, pooja_type_id, pooja_date, time_slot, description, fee, status)
-                VALUES ('$uid', '$poojaTypeId', '$poojaDate', '$timeSlot', '$description', '$fee', 'pending')";
+        $sql = "INSERT INTO pooja (user_id, pooja_type_id, pooja_date, time_slot, description, fee, status, updated_at)
+                VALUES ('$uid', '$poojaTypeId', '$poojaDate', '$timeSlot', '$description', '$fee', 'pending', NOW())";
 
         if (mysqli_query($con, $sql)) {
             $successMsg = $t['pooja_request_submitted'];
@@ -49,13 +111,8 @@ while ($row = mysqli_fetch_assoc($q)) {
     $poojaList[] = $row;
 }
 
-// --- Header Profile Photo ---
-$uQuery = mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1");
-if ($uRow = mysqli_fetch_assoc($uQuery)) {
-    $loggedInUserPhoto = !empty($uRow['photo'])
-        ? '../../uploads/users/' . basename($uRow['photo'])
-        : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=random';
-}
+// --- Header Profile Photo (session cached) ---
+$loggedInUserPhoto = get_user_avatar_url('../../');
 ?>
 
 <!DOCTYPE html>
@@ -218,9 +275,6 @@ if ($uRow = mysqli_fetch_assoc($uQuery)) {
                 <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
                     <i class="bi bi-list"></i>
                 </button>
-                <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5">
-                    <i class="bi bi-flower1 text-warning me-2"></i><?php echo $t['title']; ?>
-                </a>
             </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="dropdown">
@@ -307,14 +361,20 @@ if ($uRow = mysqli_fetch_assoc($uQuery)) {
                                                 <input type="date" name="pooja_date" class="form-control"
                                                     min="<?= date('Y-m-d') ?>" required>
                                                 <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
+                                                <div id="slotNotice" class="small text-danger mt-2 d-none">
+                                                    <?php echo $t['no_slots_available'] ?? 'All time slots are booked for this date.'; ?>
+                                                </div>
                                             </div>
                                             <div class="col-md-6 mb-4">
-                                                <label class="form-label"><?php echo $t['time_slot']; ?></label>
-                                                <select name="time_slot" class="form-select">
+                                                <label class="form-label"><?php echo $t['time_slot']; ?> <span
+                                                        class="text-danger">*</span></label>
+                                                <select name="time_slot" class="form-select" required>
+                                                    <option value="" disabled selected><?php echo $t['select_time_slot'] ?? 'Select time slot'; ?></option>
                                                     <option value="morning"><?php echo $t['morning']; ?></option>
                                                     <option value="afternoon"><?php echo $t['afternoon']; ?></option>
                                                     <option value="evening"><?php echo $t['evening']; ?></option>
                                                 </select>
+                                                <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
                                             </div>
                                         </div>
 
@@ -354,6 +414,57 @@ if ($uRow = mysqli_fetch_assoc($uQuery)) {
                 }, false);
             });
         })();
+    </script>
+    <script>
+        (function () {
+            const slotMap = <?php echo json_encode($slotMap, JSON_UNESCAPED_SLASHES); ?>;
+            const fullDates = <?php echo json_encode(array_keys($fullDates), JSON_UNESCAPED_SLASHES); ?>;
+            const dateInput = document.querySelector('input[name="pooja_date"]');
+            const slotSelect = document.querySelector('select[name="time_slot"]');
+            const notice = document.getElementById('slotNotice');
+
+            if (!dateInput || !slotSelect) return;
+
+            function resetSlots() {
+                Array.from(slotSelect.options).forEach(opt => {
+                    if (opt.value) {
+                        opt.disabled = false;
+                        opt.hidden = false;
+                    }
+                });
+            }
+
+            function applyAvailability(dateVal) {
+                resetSlots();
+                if (!dateVal) return;
+
+                if (fullDates.includes(dateVal)) {
+                    if (notice) notice.classList.remove('d-none');
+                    dateInput.value = '';
+                    slotSelect.value = '';
+                    return;
+                }
+
+                if (notice) notice.classList.add('d-none');
+                const booked = slotMap[dateVal] || [];
+                Array.from(slotSelect.options).forEach(opt => {
+                    if (opt.value && booked.includes(opt.value)) {
+                        opt.disabled = true;
+                        opt.hidden = true;
+                        if (slotSelect.value === opt.value) slotSelect.value = '';
+                    }
+                });
+            }
+
+            dateInput.addEventListener('change', function () {
+                applyAvailability(this.value);
+            });
+        })();
+    </script>
+    <script>
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
     </script>
 </body>
 

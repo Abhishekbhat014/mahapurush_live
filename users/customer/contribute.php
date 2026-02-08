@@ -1,14 +1,22 @@
 <?php
+require_once __DIR__ . '/../../includes/no_cache.php';
 // =========================================================
 // 1. SESSION + AUTH
 // =========================================================
 require __DIR__ . '/../../includes/lang.php';
 require __DIR__ . '/../../includes/receipt_helper.php';
+require __DIR__ . '/../../includes/user_avatar.php';
 
 if (empty($_SESSION['logged_in'])) {
     header("Location: ../../auth/login.php");
     exit;
+
+
+
 }
+$availableRoles = $_SESSION['roles'] ?? [];
+$primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
+
 
 $currLang = $_SESSION['lang'] ?? 'en';
 
@@ -45,8 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_contribution']
         // Step B: Insert contribution linked to receipt
         $stmt = $con->prepare("
             INSERT INTO contributions 
-            (receipt_id, added_by, contributor_name, contribution_type_id, title, quantity, unit, description, status, created_at) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
+            (receipt_id, added_by, contributor_name, contribution_type_id, title, quantity, unit, description, status, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())
         ");
         $stmt->bind_param("iiisidss", $receiptId, $uid, $contributorName, $typeId, $title, $qty, $unit, $desc);
         $stmt->execute();
@@ -63,8 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_contribution']
 // 4. DATA FETCHING
 // =========================================================
 $types = mysqli_query($con, "SELECT id, type FROM contribution_type ORDER BY type ASC");
-$uRow = mysqli_fetch_assoc(mysqli_query($con, "SELECT photo, first_name, last_name FROM users WHERE id='$uid' LIMIT 1"));
-$userPhotoUrl = !empty($uRow['photo']) ? '../../uploads/users/' . basename($uRow['photo']) : 'https://ui-avatars.com/api/?name=' . urlencode($uRow['first_name'] . ' ' . $uRow['last_name']) . '&background=random';
+$userPhotoUrl = get_user_avatar_url('../../');
 
 $currentPage = 'contribute.php';
 ?>
@@ -78,6 +85,7 @@ $currentPage = 'contribute.php';
     <title><?php echo $t['make_contribution']; ?> - <?php echo $t['title']; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="customer-responsive.css">
 
     <style>
         :root {
@@ -233,6 +241,18 @@ $currentPage = 'contribute.php';
             background: #e6f4ff;
             color: #1677ff;
         }
+
+        @media (max-width: 767.98px) {
+            .action-row {
+                position: sticky;
+                bottom: 0;
+                background: #fff;
+                padding: 12px;
+                margin: 16px -12px 0;
+                border-top: 1px solid var(--ant-border-color);
+                z-index: 5;
+            }
+        }
     </style>
 </head>
 
@@ -243,9 +263,6 @@ $currentPage = 'contribute.php';
             <div class="d-flex align-items-center gap-3">
                 <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i
                         class="bi bi-list"></i></button>
-                <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
-                    <i class="bi bi-flower1 text-warning me-2"></i><?php echo $t['title']; ?>
-                </a>
             </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="dropdown">
@@ -268,7 +285,31 @@ $currentPage = 'contribute.php';
                         </li>
                     </ul>
                 </div>
-                <div class="user-pill shadow-sm">
+                
+                <?php if (!empty($availableRoles) && count($availableRoles) > 1): ?>
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <i class="bi bi-person-badge me-1"></i>
+                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                            <?php foreach ($availableRoles as $role):
+                                $roleLabel = ucwords(str_replace('_', ' ', $role));
+                                ?>
+                                <li>
+                                    <form action="../../auth/switch_role.php" method="post" class="px-2 py-1">
+                                        <button type="submit" name="role" value="<?= htmlspecialchars($role) ?>"
+                                            class="dropdown-item small fw-medium <?= ($role === $primaryRole) ? 'active' : '' ?>">
+                                            <?= htmlspecialchars($roleLabel) ?>
+                                        </button>
+                                    </form>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
+            <div class="user-pill shadow-sm">
                     <img src="<?= htmlspecialchars($userPhotoUrl) ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
                     <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
@@ -283,6 +324,9 @@ $currentPage = 'contribute.php';
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
+                    <div class="small text-muted mb-1">
+                        <?php echo $t['dashboard']; ?> / <?php echo $t['contribution']; ?>
+                    </div>
                     <h2 class="fw-bold mb-1"><?php echo $t['make_contribution']; ?></h2>
                     <p class="text-secondary mb-0"><?php echo $t['contribution_subtitle']; ?></p>
                 </div>
@@ -359,7 +403,7 @@ $currentPage = 'contribute.php';
                                                     placeholder="<?php echo $t['additional_description_placeholder']; ?>"></textarea>
                                             </div>
 
-                                            <div class="col-12 text-end pt-2">
+                                            <div class="col-12 action-row pt-2">
                                                 <a href="dashboard.php" class="btn btn-light px-4 border me-2"
                                                     style="border-radius: 8px;"><?php echo $t['cancel']; ?></a>
                                                 <button type="submit" name="submit_contribution"
@@ -393,6 +437,11 @@ $currentPage = 'contribute.php';
                 }, false);
             });
         })();
+    </script>
+    <script>
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
     </script>
 </body>
 
