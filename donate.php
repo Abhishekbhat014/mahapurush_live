@@ -2,26 +2,13 @@
 // Include language file
 require __DIR__ . '/includes/lang.php';
 
-// include db file
-if (file_exists("config/db.php")) {
-    require __DIR__ . "/config/db.php";
-} else {
-    $con = false;
-}
+// --- CONFIGURATION: EDIT THIS ---
+$upiID = "abhishekbhat014@okaxis"; // REPLACE THIS with your GPay/UPI ID
+$payeeName = "Temple Trust"; // REPLACE THIS with the Name on the Bank Account
+// ------------------------------
 
-$isLoggedIn = $_SESSION['logged_in'] ?? false;
-$primaryRole = $_SESSION['primary_role'] ?? null;
-
-if ($isLoggedIn && $primaryRole) {
-    if ($primaryRole === 'customer') {
-        header("Location: users/customer/donate.php");
-        exit;
-    }
-    if ($primaryRole === 'member') {
-        header("Location: users/member/donate.php");
-        exit;
-    }
-}
+// Construct the UPI URL (Standard format for GPay, PhonePe, Paytm)
+$upiData = "upi://pay?pa=" . $upiID . "&pn=" . urlencode($payeeName) . "&cu=INR";
 ?>
 
 <!DOCTYPE html>
@@ -33,6 +20,8 @@ if ($isLoggedIn && $primaryRole) {
     <title><?php echo $t['donate_btn'] ?? 'Donate'; ?> - <?php echo $t['official_portal']; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
         :root {
@@ -84,12 +73,16 @@ if ($isLoggedIn && $primaryRole) {
             align-items: center;
             justify-content: center;
             margin: 0 auto;
+            padding: 20px;
+            /* Added padding for the generated QR */
         }
 
-        .qr-img {
-            width: 220px;
-            height: 220px;
-            object-fit: contain;
+        /* Style for the generated canvas/img */
+        #qrcode img,
+        #qrcode canvas {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
         }
 
         .ant-btn-primary-big {
@@ -127,13 +120,21 @@ if ($isLoggedIn && $primaryRole) {
             <div class="col-lg-6">
                 <div class="ant-card">
                     <div class="ant-card-body text-center">
+
                         <div class="qr-box mb-4">
-                            <img src="assets/images/qr.png" alt="QR Code" class="qr-img">
+                            <div id="qrcode"></div>
                         </div>
+
                         <div class="text-muted small mb-3">
-                            <?php echo $t['scan_qr_note'] ?? 'Use any UPI app to scan and pay.'; ?>
+                            <i class="bi bi-upc-scan me-1"></i>
+                            Paying to: <strong><?php echo htmlspecialchars($upiID); ?></strong>
                         </div>
-                        <a href="index.php" class="ant-btn-primary-big"><?php echo $t['back_home'] ?? 'Back to Home'; ?></a>
+
+                        <div class="text-muted small mb-3">
+                            <?php echo $t['scan_qr_note'] ?? 'Use GPay, PhonePe, or Paytm to scan.'; ?>
+                        </div>
+                        <a href="index.php"
+                            class="ant-btn-primary-big"><?php echo $t['back_home'] ?? 'Back to Home'; ?></a>
                     </div>
                 </div>
                 <div class="text-center small text-muted mt-3">
@@ -146,6 +147,19 @@ if ($isLoggedIn && $primaryRole) {
     <?php include 'includes/footer.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script type="text/javascript">
+        var upiLink = "<?php echo $upiData; ?>";
+
+        new QRCode(document.getElementById("qrcode"), {
+            text: upiLink,
+            width: 200,
+            height: 200,
+            colorDark: "#000000",
+            colorLight: "#fafafa", // Matches the .qr-box background
+            correctLevel: QRCode.CorrectLevel.H // High error correction
+        });
+    </script>
 </body>
 
 </html>

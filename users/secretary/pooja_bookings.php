@@ -34,10 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pooja_id'], $_POST['n
         $stmt->bind_param("sii", $newStatus, $uid, $poojaId);
 
         if ($stmt->execute()) {
-            $statusText = ($newStatus === 'approved') ? $t['approved'] : $t['rejected'];
-            $success = sprintf($t['pooja_status_updated'] ?? 'Pooja request %s successfully.', $statusText);
+            $statusText = ($newStatus === 'approved') ? ($t['approved'] ?? 'Approved') : ($t['rejected'] ?? 'Rejected');
+            $success = sprintf($t['status_update_success'] ?? 'Pooja request %s successfully.', $statusText);
         } else {
-            $error = $t['status_update_failed'] ?? 'Failed to update status.';
+            $error = $t['status_update_error'] ?? 'Failed to update status.';
         }
         $stmt->close();
     }
@@ -62,7 +62,7 @@ $result = mysqli_query($con, $sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $t['pooja_management'] ?? 'Pooja Management'; ?> - <?= $t['title'] ?></title>
+    <title><?php echo $t['pooja_management_title']; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -333,7 +333,7 @@ $result = mysqli_query($con, $sql);
                     </div>
                 <?php endif; ?>
 
-                <div class="user-pill">
+                <div class="user-pill shadow-sm">
                     <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
                     <span
@@ -349,8 +349,8 @@ $result = mysqli_query($con, $sql);
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1"><?php echo $t['pooja_management'] ?? 'Pooja Requests'; ?></h2>
-                    <p class="text-secondary mb-0">Approve or reject booking requests from devotees.</p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['pooja_management_title']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['pooja_management_desc']; ?></p>
                 </div>
 
                 <div class="p-4 pb-5">
@@ -422,20 +422,20 @@ $result = mysqli_query($con, $sql);
                                                                 <input type="hidden" name="pooja_id" value="<?= $r['id'] ?>">
                                                                 <input type="hidden" name="new_status" value="approved">
                                                                 <button type="submit" class="btn-ant-success">
-                                                                    <i class="bi bi-check2"></i> Approve
+                                                                    <i class="bi bi-check2"></i> <?php echo $t['approve_btn']; ?>
                                                                 </button>
                                                             </form>
                                                             <form method="POST">
                                                                 <input type="hidden" name="pooja_id" value="<?= $r['id'] ?>">
                                                                 <input type="hidden" name="new_status" value="rejected">
                                                                 <button type="submit" class="btn-ant-danger">
-                                                                    <i class="bi bi-x-lg"></i> Reject
+                                                                    <i class="bi bi-x-lg"></i> <?php echo $t['reject_btn']; ?>
                                                                 </button>
                                                             </form>
                                                         </div>
                                                     <?php else: ?>
                                                         <span class="text-muted small fst-italic">
-                                                            Processed
+                                                            <?php echo $t['processed_status']; ?>
                                                         </span>
                                                     <?php endif; ?>
                                                 </td>

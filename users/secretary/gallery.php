@@ -41,15 +41,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['photo'])) {
                 $stmt = $con->prepare("INSERT INTO gallery (gallery_category_id, type, content, created_at) VALUES (?, 'image', ?, NOW())");
                 $stmt->bind_param("is", $catId, $name);
                 $stmt->execute();
-                $successMsg = "Photo uploaded successfully.";
+                $successMsg = $t['photo_uploaded_success'] ?? 'Photo uploaded successfully.';
             } else {
-                $errorMsg = "Failed to move uploaded file.";
+                $errorMsg = $t['photo_upload_failed'] ?? 'Failed to move uploaded file.';
             }
         } else {
-            $errorMsg = "Invalid file type. Only JPG, PNG, WEBP allowed.";
+            $errorMsg = $t['invalid_file_type'] ?? 'Invalid file type. Only JPG, PNG, WEBP allowed.';
         }
     } else {
-        $errorMsg = "Please select a category and a valid file.";
+        $errorMsg = $t['select_category_file_error'] ?? 'Please select a category and a valid file.';
     }
 }
 
@@ -65,7 +65,7 @@ if (isset($_GET['delete'])) {
             unlink($filePath);
         }
         mysqli_query($con, "DELETE FROM gallery WHERE id=$id");
-        $successMsg = "Photo deleted successfully.";
+        $successMsg = $t['photo_deleted_success'] ?? 'Photo deleted successfully.';
     }
 }
 
@@ -85,7 +85,7 @@ $images = mysqli_query($con, "
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gallery - <?= $t['title'] ?></title>
+    <title><?php echo $t['gallery_management_title']; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -172,6 +172,14 @@ $images = mysqli_query($con, "
                 display: block;
                 animation: fadeIn 0.2s ease-in-out;
             }
+        }
+
+        /* Active Dropdown Item */
+        .dropdown-item.active,
+        .dropdown-item:active {
+            background-color: var(--ant-primary) !important;
+            color: #fff !important;
+            font-weight: 600;
         }
 
         @keyframes fadeIn {
@@ -261,6 +269,7 @@ $images = mysqli_query($con, "
                 </button>
             </div>
             <div class="d-flex align-items-center gap-3">
+
                 <div class="dropdown">
                     <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
                         <i class="bi bi-translate me-1"></i>
@@ -276,7 +285,8 @@ $images = mysqli_query($con, "
 
                 <?php if (!empty($availableRoles) && count($availableRoles) > 1): ?>
                     <div class="dropdown">
-                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
                             <i class="bi bi-person-badge me-1"></i>
                             <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
                         </button>
@@ -311,8 +321,8 @@ $images = mysqli_query($con, "
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Gallery</h2>
-                    <p class="text-secondary mb-0">Upload and manage images for the website gallery.</p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['gallery_management_title']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['gallery_management_desc']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -331,32 +341,35 @@ $images = mysqli_query($con, "
                     <?php endif; ?>
 
                     <div class="ant-card p-4 mb-4">
+                        <div class="fw-bold mb-3 border-bottom pb-2"><?php echo $t['upload_photo']; ?></div>
                         <form method="POST" enctype="multipart/form-data" class="row g-3 align-items-end">
                             <div class="col-md-4">
-                                <label class="form-label">Category</label>
+                                <label class="form-label"><?php echo $t['select_category']; ?></label>
                                 <select name="category_id" class="form-select" required>
-                                    <option value="">Select...</option>
+                                    <option value=""><?php echo $t['select_category']; ?>...</option>
                                     <?php
-                                    mysqli_data_seek($cats, 0); // Reset pointer
-                                    while ($c = mysqli_fetch_assoc($cats)): ?>
-                                        <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['type']) ?></option>
-                                    <?php endwhile; ?>
+                                    if ($cats) {
+                                        mysqli_data_seek($cats, 0); // Reset pointer
+                                        while ($c = mysqli_fetch_assoc($cats)): ?>
+                                            <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['type']) ?></option>
+                                        <?php endwhile;
+                                    } ?>
                                 </select>
                             </div>
                             <div class="col-md-5">
-                                <label class="form-label">Select Photo</label>
+                                <label class="form-label"><?php echo $t['select_photo_label']; ?></label>
                                 <input type="file" name="photo" class="form-control" required accept="image/*">
                             </div>
                             <div class="col-md-3">
                                 <button class="btn btn-primary w-100 fw-bold">
-                                    <i class="bi bi-cloud-upload me-2"></i> Upload
+                                    <i class="bi bi-cloud-upload me-2"></i> <?php echo $t['upload_btn']; ?>
                                 </button>
                             </div>
                         </form>
                     </div>
 
                     <div class="row g-4">
-                        <?php if (mysqli_num_rows($images) > 0): ?>
+                        <?php if ($images && mysqli_num_rows($images) > 0): ?>
                             <?php while ($img = mysqli_fetch_assoc($images)): ?>
                                 <div class="col-md-6 col-lg-3">
                                     <div class="ant-card gallery-card p-2 h-100">
@@ -368,8 +381,8 @@ $images = mysqli_query($con, "
                                                 <?= htmlspecialchars($img['category']) ?>
                                             </span>
                                             <a href="?delete=<?= $img['id'] ?>" class="text-danger small"
-                                                onclick="return confirm('Are you sure you want to delete this image?');"
-                                                title="Delete Image">
+                                                onclick="return confirm('<?php echo $t['confirm_delete_image']; ?>');"
+                                                title="<?php echo $t['delete']; ?>">
                                                 <i class="bi bi-trash"></i>
                                             </a>
                                         </div>
@@ -378,7 +391,7 @@ $images = mysqli_query($con, "
                             <?php endwhile; ?>
                         <?php else: ?>
                             <div class="col-12 text-center py-5">
-                                <p class="text-muted mb-0">No images found in the gallery.</p>
+                                <p class="text-muted mb-0"><?php echo $t['no_images_found']; ?></p>
                             </div>
                         <?php endif; ?>
                     </div>

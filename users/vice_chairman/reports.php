@@ -1,19 +1,27 @@
 <?php
 require_once __DIR__ . '/../../includes/no_cache.php';
 session_start();
+require __DIR__ . '/../../config/db.php';
 require __DIR__ . '/../../includes/lang.php';
 require __DIR__ . '/../../includes/user_avatar.php';
-require __DIR__ . '/../../config/db.php';
 
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: ../../auth/login.php");
     exit;
 }
 
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+header("Expires: 0");
+
 $availableRoles = $_SESSION['roles'] ?? [];
 $primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
-$currLang = $_SESSION['lang'] ?? 'en';
+
+$uid = (int) $_SESSION['user_id'];
 $currentPage = 'reports.php';
+$currLang = $_SESSION['lang'] ?? 'en';
+
 $loggedInUserPhoto = get_user_avatar_url('../../');
 
 // --- REPORT LOGIC ---
@@ -64,12 +72,12 @@ if ($con) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reports - <?= $t['title'] ?? 'Temple' ?></title>
+    <title><?php echo $t['temple_activity_reports']; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
     <style>
-        /* --- GLOBAL THEME VARIABLES --- */
+        /* GLOBAL THEME */
         :root {
             --ant-primary: #1677ff;
             --ant-primary-hover: #4096ff;
@@ -79,10 +87,6 @@ if ($con) {
             --ant-text-sec: rgba(0, 0, 0, 0.45);
             --ant-radius: 12px;
             --ant-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08);
-
-            /* Treasurer Sidebar Overrides (Green) */
-            --tr-active-text: #52c41a;
-            --tr-active-bg: #f6ffed;
         }
 
         body {
@@ -101,7 +105,7 @@ if ($con) {
             user-select: text;
         }
 
-        /* --- HEADER STYLES --- */
+        /* HEADER STYLES */
         .ant-header {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(12px);
@@ -114,6 +118,7 @@ if ($con) {
             z-index: 1000;
         }
 
+        /* HEADER DROPDOWN & BUTTONS */
         .user-pill {
             background: #fff;
             padding: 6px 16px;
@@ -140,24 +145,17 @@ if ($con) {
             color: #1677ff;
         }
 
-        /* --- HOVER DROPDOWN LOGIC --- */
         @media (min-width: 992px) {
             .dropdown:hover .dropdown-menu {
                 display: block;
                 margin-top: 0;
             }
 
-            .dropdown .dropdown-menu {
-                display: none;
-            }
-
             .dropdown:hover>.dropdown-menu {
-                display: block;
                 animation: fadeIn 0.2s ease-in-out;
             }
         }
 
-        /* --- ACTIVE DROPDOWN ITEM (Dark Blue) --- */
         .dropdown-item.active,
         .dropdown-item:active {
             background-color: var(--ant-primary) !important;
@@ -177,11 +175,9 @@ if ($con) {
             }
         }
 
-        /* --- PAGE CONTENT --- */
+        /* DASHBOARD CONTENT */
         .dashboard-hero {
             background: radial-gradient(circle at top right, #e6f4ff 0%, #ffffff 80%);
-
-            /* Treasurer Green Tint */
             padding: 40px 32px;
             border-bottom: 1px solid var(--ant-border-color);
             margin-bottom: 32px;
@@ -191,22 +187,20 @@ if ($con) {
             background: #fff;
             border: 1px solid var(--ant-border-color);
             border-radius: var(--ant-radius);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            box-shadow: var(--ant-shadow);
+            transition: all 0.3s;
+            height: 100%;
         }
 
-        .btn-primary {
-            background: var(--ant-primary);
-            border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
-            transition: 0.2s;
+        .ant-card:hover {
+            transform: translateY(-4px);
         }
 
-        .btn-primary:hover {
-            background: var(--ant-primary-hover);
-            transform: translateY(-1px);
+        .ant-card-body {
+            padding: 24px;
         }
 
+        /* SUMMARY BOX */
         .summary-box {
             border: 1px solid var(--ant-border-color);
             border-radius: 12px;
@@ -227,10 +221,28 @@ if ($con) {
             letter-spacing: 0.5px;
             margin-bottom: 12px;
         }
+
+        /* BUTTONS */
+        .btn-primary {
+            background: var(--ant-primary);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: var(--ant-primary-hover);
+        }
+
+        .form-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ant-text-sec);
+            margin-bottom: 6px;
+        }
     </style>
 </head>
 
 <body>
+
     <header class="ant-header shadow-sm">
         <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
@@ -275,7 +287,7 @@ if ($con) {
                     </div>
                 <?php endif; ?>
 
-                <div class="user-pill">
+                <div class="user-pill shadow-sm">
                     <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
                     <span
@@ -291,11 +303,9 @@ if ($con) {
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Temple Activity Reports</h2>
-
+                    <h2 class="fw-bold mb-1"><?php echo $t['temple_activity_reports']; ?></h2>
                     <p class="text-secondary mb-0">
-                        Monitor temple collections, pooja activity and transactions for a selected period.
-
+                        <?php echo $t['temple_activity_reports_desc']; ?>
                     </p>
                 </div>
 
@@ -304,18 +314,20 @@ if ($con) {
 
                         <form method="GET" class="row g-3 mb-5 align-items-end">
                             <div class="col-md-4">
-                                <label class="form-label small text-muted text-uppercase fw-bold">From Date</label>
+                                <label
+                                    class="form-label small text-muted text-uppercase fw-bold"><?php echo $t['from_date']; ?></label>
                                 <input type="date" name="from_date" class="form-control"
                                     value="<?= htmlspecialchars($fromDate) ?>">
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label small text-muted text-uppercase fw-bold">To Date</label>
+                                <label
+                                    class="form-label small text-muted text-uppercase fw-bold"><?php echo $t['to_date']; ?></label>
                                 <input type="date" name="to_date" class="form-control"
                                     value="<?= htmlspecialchars($toDate) ?>">
                             </div>
                             <div class="col-md-4">
                                 <button class="btn btn-primary w-100">
-                                    <i class="bi bi-bar-chart-line me-2"></i> Generate Report
+                                    <i class="bi bi-bar-chart-line me-2"></i> <?php echo $t['generate_report']; ?>
                                 </button>
                             </div>
                         </form>
@@ -323,42 +335,40 @@ if ($con) {
                         <div class="row g-4 mb-4">
                             <div class="col-md-4">
                                 <div class="summary-box">
-                                    <h6 class="text-primary">Total Temple Collection
-                                    </h6>
+                                    <h6 class="text-primary"><?php echo $t['total_temple_collection']; ?></h6>
                                     <h3 class="fw-bold text-dark">₹<?= number_format($totalAmount, 2) ?></h3>
-                                    <small class="text-muted">For selected period</small>
+                                    <small class="text-muted"><?php echo $t['selected_period']; ?></small>
                                 </div>
                             </div>
 
                             <div class="col-md-4">
                                 <div class="summary-box">
-                                    <h6 class="text-success">Total Transactions
-                                    </h6>
+                                    <h6 class="text-success"><?php echo $t['total_transactions']; ?></h6>
                                     <h3 class="fw-bold text-dark"><?= number_format($totalCount) ?></h3>
-                                    <small class="text-muted">Pooja & Donation Receipts</small>
+                                    <small class="text-muted"><?php echo $t['pooja_donation_receipts']; ?></small>
                                 </div>
                             </div>
 
                             <div class="col-md-4">
                                 <div class="summary-box">
-                                    <h6 class="text-info">Average Donation</h6>
+                                    <h6 class="text-info"><?php echo $t['average_donation']; ?></h6>
                                     <h3 class="fw-bold text-dark">
                                         ₹<?= $totalCount > 0 ? number_format($totalAmount / $totalCount, 2) : '0.00' ?>
                                     </h3>
-                                    <small class="text-muted">Per transaction</small>
+                                    <small class="text-muted"><?php echo $t['per_transaction']; ?></small>
                                 </div>
                             </div>
                         </div>
 
                         <?php if (!empty($modeBreakdown)): ?>
-                            <h5 class="fw-bold mb-3">Breakdown by Payment Mode</h5>
+                            <h5 class="fw-bold mb-3"><?php echo $t['breakdown_by_payment_mode']; ?></h5>
                             <div class="table-responsive">
                                 <table class="table table-bordered align-middle">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>Payment Mode</th>
-                                            <th class="text-center">Transactions</th>
-                                            <th class="text-end">Total Amount</th>
+                                            <th><?php echo $t['payment_mode']; ?></th>
+                                            <th class="text-center"><?php echo $t['transactions']; ?></th>
+                                            <th class="text-end"><?php echo $t['total_amount']; ?></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -372,7 +382,7 @@ if ($con) {
                                             </tr>
                                         <?php endforeach; ?>
                                         <tr class="table-secondary fw-bold">
-                                            <td>Total</td>
+                                            <td><?php echo $t['total'] ?? 'Total'; ?></td>
                                             <td class="text-center"><?= $totalCount ?></td>
                                             <td class="text-end">₹<?= number_format($totalAmount, 2) ?></td>
                                         </tr>
@@ -384,11 +394,16 @@ if ($con) {
                     </div>
                 </div>
             </main>
-
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Disable Right Click
+        document.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+        });
+    </script>
 </body>
 
 </html>

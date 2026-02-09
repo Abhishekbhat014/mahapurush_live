@@ -38,9 +38,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param("sisii", $name, $duration, $date, $max, $uid);
 
             if ($stmt->execute()) {
-                $successMsg = $t['event_created'] ?? 'Event created successfully.';
+                $successMsg = $t['event_create_success'] ?? 'Event created successfully.';
             } else {
-                $errorMsg = $t['err_generic'] ?? 'Failed to create event.';
+                $errorMsg = $t['event_create_error'] ?? 'Failed to create event.';
             }
             $stmt->close();
         } else {
@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $con->prepare("UPDATE events SET status = 'cancelled' WHERE id = ?");
         $stmt->bind_param("i", $id);
         if ($stmt->execute()) {
-            $successMsg = $t['event_deleted'] ?? 'Event cancelled successfully.';
+            $successMsg = $t['cancel_event_success'] ?? 'Event cancelled successfully.';
         }
         $stmt->close();
     }
@@ -79,7 +79,7 @@ $events = mysqli_query($con, "
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Events - <?= $t['title'] ?></title>
+    <title><?php echo $t['events_management_title']; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -166,6 +166,14 @@ $events = mysqli_query($con, "
                 display: block;
                 animation: fadeIn 0.2s ease-in-out;
             }
+        }
+
+        /* Active Dropdown Item */
+        .dropdown-item.active,
+        .dropdown-item:active {
+            background-color: var(--ant-primary) !important;
+            color: #fff !important;
+            font-weight: 600;
         }
 
         @keyframes fadeIn {
@@ -267,7 +275,8 @@ $events = mysqli_query($con, "
 
                 <?php if (!empty($availableRoles) && count($availableRoles) > 1): ?>
                     <div class="dropdown">
-                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
                             <i class="bi bi-person-badge me-1"></i>
                             <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
                         </button>
@@ -302,8 +311,8 @@ $events = mysqli_query($con, "
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1"><?php echo $t['events_management'] ?? 'Events Management'; ?></h2>
-                    <p class="text-secondary mb-0">Create and manage temple events and schedules.</p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['events_management_title']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['events_management_desc']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -322,7 +331,7 @@ $events = mysqli_query($con, "
                     <?php endif; ?>
 
                     <div class="ant-card mb-4">
-                        <div class="ant-card-head"><?php echo $t['create_new_event'] ?? 'Create New Event'; ?></div>
+                        <div class="ant-card-head"><?php echo $t['create_new_event']; ?></div>
                         <div class="p-4">
                             <form method="POST">
                                 <div class="row g-3 align-items-end">
@@ -364,12 +373,12 @@ $events = mysqli_query($con, "
                             <table class="table ant-table mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Event Name</th>
-                                        <th>Date</th>
-                                        <th>Duration</th>
-                                        <th>Capacity</th>
-                                        <th>Registered</th>
-                                        <th class="text-end">Action</th>
+                                        <th><?php echo $t['event_name'] ?? 'Event Name'; ?></th>
+                                        <th><?php echo $t['date'] ?? 'Date'; ?></th>
+                                        <th><?php echo $t['duration_hrs'] ?? 'Duration'; ?></th>
+                                        <th><?php echo $t['capacity'] ?? 'Capacity'; ?></th>
+                                        <th><?php echo $t['registered'] ?? 'Registered'; ?></th>
+                                        <th class="text-end"><?php echo $t['action'] ?? 'Action'; ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -387,7 +396,7 @@ $events = mysqli_query($con, "
                                                 </td>
                                                 <td><?= $e['duration'] ?> Hrs</td>
                                                 <td>
-                                                    <?= $e['max_participants'] == 0 ? '<span class="text-muted">Unlimited</span>' : $e['max_participants'] ?>
+                                                    <?= $e['max_participants'] == 0 ? '<span class="text-muted">' . ($t['infinite'] ?? 'Unlimited') . '</span>' : $e['max_participants'] ?>
                                                 </td>
                                                 <td>
                                                     <span class="badge bg-light text-dark border">
@@ -397,7 +406,7 @@ $events = mysqli_query($con, "
                                                 </td>
                                                 <td class="text-end">
                                                     <form method="POST" style="display:inline;"
-                                                        onsubmit="return confirm('<?php echo $t['confirm_delete_event'] ?? 'Are you sure you want to cancel this event?'; ?>');">
+                                                        onsubmit="return confirm('<?php echo $t['confirm_delete_event']; ?>');">
                                                         <input type="hidden" name="event_id" value="<?= $e['id'] ?>">
                                                         <button name="delete_event"
                                                             class="btn btn-sm btn-outline-danger rounded-pill px-3">

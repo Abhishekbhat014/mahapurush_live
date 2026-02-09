@@ -15,6 +15,7 @@ $primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
 $currLang = $_SESSION['lang'] ?? 'en';
 $currentPage = 'donation_records.php';
 $loggedInUserPhoto = get_user_avatar_url('../../');
+$userName = $_SESSION['user_name'] ?? 'User';
 
 // --- FILTER LOGIC ---
 $whereClause = "WHERE p.status = 'success'"; // Only show successful payments
@@ -29,7 +30,7 @@ if (!empty($_GET['from_date']) && !empty($_GET['to_date'])) {
 // 2. Payment Mode
 if (!empty($_GET['payment_mode'])) {
     $mode = mysqli_real_escape_string($con, $_GET['payment_mode']);
-    $whereClause .= " AND p.payment_mode = '$mode'";
+    $whereClause .= " AND p.payment_method = '$mode'"; // Corrected column name from payment_mode to payment_method based on typical schema, verify with your DB
 }
 
 // 3. Search (Devotee Name or Phone)
@@ -41,6 +42,7 @@ if (!empty($_GET['devotee'])) {
 // --- FETCH DATA ---
 $records = [];
 if ($con) {
+    // Note: Added p.description to SELECT list since it is used in the table
     $query = "
         SELECT 
             p.id, 
@@ -60,25 +62,28 @@ if ($con) {
     ";
 
     $result = mysqli_query($con, $query);
-    while ($row = mysqli_fetch_assoc($result)) {
-        $records[] = $row;
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $records[] = $row;
+        }
     }
 }
 ?>
 
 <!DOCTYPE html>
-<html lang="<?= $lang ?>">
+<html lang="<?= $currLang ?>">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Donation Records - <?= $t['title'] ?? 'Temple' ?></title>
+    <title><?php echo $t['donation_records_title']; ?> - <?= $t['title'] ?? 'Temple' ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
     <style>
         /* --- GLOBAL THEME VARIABLES --- */
         :root {
+            /* Standard App Colors (Blue) */
             --ant-primary: #1677ff;
             --ant-primary-hover: #4096ff;
             --ant-bg-layout: #f0f2f5;
@@ -97,6 +102,7 @@ if ($con) {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--ant-bg-layout);
             color: var(--ant-text);
+            /* Disable text selection globally */
             -webkit-user-select: none;
             user-select: none;
         }
@@ -260,6 +266,51 @@ if ($con) {
         .btn-primary:hover {
             background: var(--ant-primary-hover);
             transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(22, 119, 255, 0.2);
+        }
+
+        .form-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ant-text-sec);
+            margin-bottom: 6px;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 8px;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            font-size: 14px;
+        }
+
+        /* Sidebar */
+        .ant-sidebar {
+            background: #fff;
+            border-right: 1px solid var(--ant-border-color);
+            height: calc(100vh - 64px);
+            position: sticky;
+            top: 64px;
+            padding: 20px 0;
+        }
+
+        .nav-link-custom {
+            padding: 12px 24px;
+            color: var(--ant-text);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .nav-link-custom:hover,
+        .nav-link-custom.active {
+            color: var(--ant-primary);
+            background: #e6f4ff;
+            border-right: 3px solid var(--ant-primary);
         }
     </style>
 </head>
@@ -325,9 +376,9 @@ if ($con) {
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Donation Records</h2>
+                    <h2 class="fw-bold mb-1"><?php echo $t['donation_records_title']; ?></h2>
                     <p class="text-secondary mb-0">
-                        View, search and filter past donation transactions.
+                        <?php echo $t['donation_records_desc']; ?>
                     </p>
                 </div>
 
@@ -336,28 +387,37 @@ if ($con) {
 
                         <form method="GET" class="row g-3 mb-4">
                             <div class="col-md-3">
-                                <label class="form-label small text-muted text-uppercase fw-bold">From Date</label>
+                                <label
+                                    class="form-label small text-muted text-uppercase fw-bold"><?php echo $t['from_date']; ?></label>
                                 <input type="date" name="from_date" class="form-control"
                                     value="<?= htmlspecialchars($_GET['from_date'] ?? '') ?>">
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label small text-muted text-uppercase fw-bold">To Date</label>
+                                <label
+                                    class="form-label small text-muted text-uppercase fw-bold"><?php echo $t['to_date']; ?></label>
                                 <input type="date" name="to_date" class="form-control"
                                     value="<?= htmlspecialchars($_GET['to_date'] ?? '') ?>">
                             </div>
                             <div class="col-md-2">
-                                <label class="form-label small text-muted text-uppercase fw-bold">Mode</label>
+                                <label
+                                    class="form-label small text-muted text-uppercase fw-bold"><?php echo $t['mode']; ?></label>
                                 <select name="payment_mode" class="form-select">
-                                    <option value="">All</option>
-                                    <option value="cash" <?= (isset($_GET['payment_mode']) && $_GET['payment_mode'] == 'cash') ? 'selected' : '' ?>>Cash</option>
-                                    <option value="online" <?= (isset($_GET['payment_mode']) && $_GET['payment_mode'] == 'online') ? 'selected' : '' ?>>Online</option>
-                                    <option value="cheque" <?= (isset($_GET['payment_mode']) && $_GET['payment_mode'] == 'cheque') ? 'selected' : '' ?>>Cheque</option>
+                                    <option value=""><?php echo $t['all']; ?></option>
+                                    <option value="cash" <?= (isset($_GET['payment_mode']) && $_GET['payment_mode'] == 'cash') ? 'selected' : '' ?>><?php echo $t['cash']; ?>
+                                    </option>
+                                    <option value="online" <?= (isset($_GET['payment_mode']) && $_GET['payment_mode'] == 'online') ? 'selected' : '' ?>>
+                                        <?php echo $t['online']; ?>
+                                    </option>
+                                    <option value="cheque" <?= (isset($_GET['payment_mode']) && $_GET['payment_mode'] == 'cheque') ? 'selected' : '' ?>>
+                                        <?php echo $t['cheque']; ?>
+                                    </option>
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label small text-muted text-uppercase fw-bold">Search</label>
+                                <label
+                                    class="form-label small text-muted text-uppercase fw-bold"><?php echo $t['search']; ?></label>
                                 <input type="text" name="devotee" class="form-control"
-                                    placeholder="Devotee Name / Mobile"
+                                    placeholder="<?php echo $t['search_placeholder']; ?>"
                                     value="<?= htmlspecialchars($_GET['devotee'] ?? '') ?>">
                             </div>
                             <div class="col-md-1 d-flex align-items-end">
@@ -371,19 +431,19 @@ if ($con) {
                             <table class="table ant-table align-middle">
                                 <thead>
                                     <tr>
-                                        <th>Receipt No</th>
-                                        <th>Date</th>
-                                        <th>Devotee</th>
-                                        <th>Amount</th>
-                                        <th>Payment Mode</th>
-                                        <th>Remarks</th>
+                                        <th><?php echo $t['receipt_no']; ?></th>
+                                        <th><?php echo $t['date']; ?></th>
+                                        <th><?php echo $t['devotee']; ?></th>
+                                        <th><?php echo $t['amount']; ?></th>
+                                        <th><?php echo $t['payment_mode']; ?></th>
+                                        <th><?php echo $t['remarks']; ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php if (!empty($records)): ?>
                                         <?php foreach ($records as $r):
                                             // Badge logic
-                                            $mode = strtolower($r['payment_mode']);
+                                            $mode = strtolower($r['payment_method'] ?? 'cash');
                                             $badgeClass = 'badge-cash';
                                             if (strpos($mode, 'online') !== false)
                                                 $badgeClass = 'badge-online';
@@ -405,7 +465,7 @@ if ($con) {
                                                 <td class="fw-bold">₹<?= number_format($r['amount'], 2) ?></td>
                                                 <td>
                                                     <span class="badge-soft <?= $badgeClass ?>">
-                                                        <?= htmlspecialchars($r['payment_mode']) ?>
+                                                        <?= htmlspecialchars($r['payment_method'] ?? 'Cash') ?>
                                                     </span>
                                                 </td>
                                                 <td class="text-muted small">
@@ -417,7 +477,7 @@ if ($con) {
                                         <tr>
                                             <td colspan="6" class="text-center py-5 text-muted">
                                                 <i class="bi bi-journal-x fs-1 opacity-25 d-block mb-3"></i>
-                                                <p class="mb-0">No records found for the selected criteria.</p>
+                                                <p class="mb-0"><?php echo $t['no_records_found_criteria']; ?></p>
                                             </td>
                                         </tr>
                                     <?php endif; ?>

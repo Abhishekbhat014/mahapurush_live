@@ -47,7 +47,7 @@ $totalReceipts = $con->query("
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Treasurer Dashboard - <?= $t['title'] ?? 'Temple' ?></title>
+    <title><?php echo $t['treasurer_dashboard']; ?> - <?= $t['title'] ?? 'Temple' ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -68,7 +68,6 @@ $totalReceipts = $con->query("
             background-color: #f0f2f5;
             color: var(--ant-text);
             -webkit-user-select: none;
-            /* CSS Select Disable */
             user-select: none;
         }
 
@@ -264,8 +263,8 @@ $totalReceipts = $con->query("
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Treasurer Dashboard</h2>
-                    <p class="text-secondary mb-0">Today’s financial summary and quick access to finance operations.</p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['treasurer_dashboard']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['treasurer_dashboard_subtitle']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -275,7 +274,8 @@ $totalReceipts = $con->query("
                         <div class="col-md-4">
                             <div class="ant-card p-4 text-center">
                                 <i class="bi bi-cash-stack fs-1 text-success mb-3 d-block"></i>
-                                <h6 class="text-muted text-uppercase small fw-bold">Today's Collections</h6>
+                                <h6 class="text-muted text-uppercase small fw-bold">
+                                    <?php echo $t['todays_collections']; ?></h6>
                                 <h3 class="fw-bold mb-0">₹ <?= number_format($totalCollections, 2) ?></h3>
                             </div>
                         </div>
@@ -283,7 +283,8 @@ $totalReceipts = $con->query("
                         <div class="col-md-4">
                             <div class="ant-card p-4 text-center">
                                 <i class="bi bi-heart-fill fs-1 text-danger mb-3 d-block"></i>
-                                <h6 class="text-muted text-uppercase small fw-bold">Donations Received</h6>
+                                <h6 class="text-muted text-uppercase small fw-bold">
+                                    <?php echo $t['donations_received']; ?></h6>
                                 <h3 class="fw-bold mb-0"><?= $totalDonations ?></h3>
                             </div>
                         </div>
@@ -291,7 +292,8 @@ $totalReceipts = $con->query("
                         <div class="col-md-4">
                             <div class="ant-card p-4 text-center">
                                 <i class="bi bi-receipt-cutoff fs-1 text-primary mb-3 d-block"></i>
-                                <h6 class="text-muted text-uppercase small fw-bold">Receipts Generated</h6>
+                                <h6 class="text-muted text-uppercase small fw-bold">
+                                    <?php echo $t['receipts_generated']; ?></h6>
                                 <h3 class="fw-bold mb-0"><?= $totalReceipts ?></h3>
                             </div>
                         </div>
@@ -299,19 +301,19 @@ $totalReceipts = $con->query("
                     </div>
 
                     <div class="ant-card p-4 mt-4">
-                        <h5 class="fw-bold mb-3">Quick Actions</h5>
+                        <h5 class="fw-bold mb-3"><?php echo $t['quick_actions']; ?></h5>
                         <div class="d-flex gap-3 flex-wrap">
                             <a href="donations.php" class="btn btn-outline-success px-4 py-2 rounded-pill">
-                                <i class="bi bi-heart-fill me-2"></i> Record Donation
+                                <i class="bi bi-heart-fill me-2"></i> <?php echo $t['record_donation']; ?>
                             </a>
                             <a href="receipts.php" class="btn btn-outline-primary px-4 py-2 rounded-pill">
-                                <i class="bi bi-receipt-cutoff me-2"></i> Generate Receipt
+                                <i class="bi bi-receipt-cutoff me-2"></i> <?php echo $t['generate_receipt']; ?>
                             </a>
                             <a href="donation_records.php" class="btn btn-outline-secondary px-4 py-2 rounded-pill">
-                                <i class="bi bi-journal-text me-2"></i> View Records
+                                <i class="bi bi-journal-text me-2"></i> <?php echo $t['view_records']; ?>
                             </a>
                             <a href="reports.php" class="btn btn-outline-dark px-4 py-2 rounded-pill">
-                                <i class="bi bi-bar-chart me-2"></i> Reports
+                                <i class="bi bi-bar-chart me-2"></i> <?php echo $t['reports']; ?>
                             </a>
                         </div>
                     </div>
@@ -323,12 +325,6 @@ $totalReceipts = $con->query("
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Disable Right Click
-        document.addEventListener('contextmenu', function (e) {
-            e.preventDefault();
-        });
-    </script>
 </body>
 
 </html>

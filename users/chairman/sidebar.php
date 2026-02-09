@@ -33,14 +33,9 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <i class="bi bi-speedometer2"></i> <span><?php echo $t['dashboard'] ?? 'Dashboard'; ?></span>
         </a>
 
-
-
-  
-
         <a href="event_approvals.php" class="sb-link <?= ($currentPage == 'event_approvals.php') ? 'sb-active' : '' ?>">
-            <i class="bi bi-calendar2-check"></i> <span>Event Approvals</span>
+            <i class="bi bi-calendar2-check"></i> <span><?php echo $t['event_approvals'] ?? 'Event Approvals'; ?></span>
         </a>
-
 
         <a href="reports.php" class="sb-link <?= ($currentPage == 'reports.php') ? 'sb-active' : '' ?>">
             <i class="bi bi-bar-chart-line"></i> <span><?php echo $t['reports'] ?? 'Reports'; ?></span>
@@ -53,7 +48,6 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         <a href="gallery.php" class="sb-link <?= ($currentPage == 'gallery.php') ? 'sb-active' : '' ?>">
             <i class="bi bi-images"></i> <span><?php echo $t['gallery'] ?? 'Gallery'; ?></span>
         </a>
-
 
         <a href="settings.php" class="sb-link <?= ($currentPage == 'settings.php') ? 'sb-active' : '' ?>">
             <i class="bi bi-gear"></i> <span><?php echo $t['settings'] ?? 'Settings'; ?></span>
@@ -74,7 +68,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
 <div class="offcanvas offcanvas-start sb-offcanvas" id="sidebarMenu" style="width: 280px;">
     <div class="offcanvas-header border-bottom">
-        <h5 class="offcanvas-title fw-bold">Chairman Menu</h5>
+        <h5 class="offcanvas-title fw-bold"><?php echo $t['chairman_menu'] ?? 'Chairman Menu'; ?></h5>
         <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas"></button>
     </div>
 
@@ -88,15 +82,10 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <i class="bi bi-speedometer2"></i> <span><?php echo $t['dashboard'] ?? 'Dashboard'; ?></span>
             </a>
 
-
-
-           
-
             <a href="event_approvals.php"
                 class="sb-link <?= ($currentPage == 'event_approvals.php') ? 'sb-active' : '' ?>">
-                <i class="bi bi-calendar2-check"></i> <span>Event Approvals</span>
+                <i class="bi bi-calendar2-check"></i> <span><?php echo $t['event_approvals'] ?? 'Event Approvals'; ?></span>
             </a>
-
 
             <a href="reports.php" class="sb-link <?= ($currentPage == 'reports.php') ? 'sb-active' : '' ?>">
                 <i class="bi bi-bar-chart-line"></i> <span><?php echo $t['reports'] ?? 'Reports'; ?></span>
@@ -109,7 +98,6 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <a href="gallery.php" class="sb-link <?= ($currentPage == 'gallery.php') ? 'sb-active' : '' ?>">
                 <i class="bi bi-images"></i> <span><?php echo $t['gallery'] ?? 'Gallery'; ?></span>
             </a>
-
 
             <a href="settings.php" class="sb-link <?= ($currentPage == 'settings.php') ? 'sb-active' : '' ?>">
                 <i class="bi bi-gear"></i> <span><?php echo $t['settings'] ?? 'Settings'; ?></span>
@@ -129,7 +117,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 </div>
 
 <script>
-    document.addEventListener('contextmenu', function (e) {
+    document.addEventListener('contextmenu', function(e) {
         if (e.target.closest('.sb-sidebar') || e.target.closest('.sb-offcanvas')) {
             e.preventDefault();
         }

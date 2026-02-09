@@ -15,19 +15,22 @@ $primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
 $currLang = $_SESSION['lang'] ?? 'en';
 $currentPage = 'receipts.php';
 $loggedInUserPhoto = get_user_avatar_url('../../');
+$userName = $_SESSION['user_name'] ?? 'User';
 
 // --- SEARCH & FETCH LOGIC ---
 $search = $_GET['search'] ?? '';
 $receipts = [];
 
 if ($con) {
+    // Note: Added 'p.category' to SELECT list since it's used in the table
     $query = "
         SELECT 
             r.id, 
             r.receipt_no, 
             r.created_at,
             p.amount, 
-            p.payment_method, 
+            p.payment_method AS payment_mode, 
+            
             COALESCE(u.first_name, 'Guest') AS devotee_name,
             u.phone
         FROM receipt r
@@ -44,25 +47,28 @@ if ($con) {
     $query .= " ORDER BY r.created_at DESC LIMIT 50";
 
     $result = mysqli_query($con, $query);
-    while ($row = mysqli_fetch_assoc($result)) {
-        $receipts[] = $row;
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $receipts[] = $row;
+        }
     }
 }
 ?>
 
 <!DOCTYPE html>
-<html lang="<?= $lang ?>">
+<html lang="<?= $currLang ?>">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipts - <?= $t['title'] ?? 'Temple' ?></title>
+    <title><?php echo $t['receipts_title']; ?> - <?= $t['title'] ?? 'Temple' ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
     <style>
         /* --- GLOBAL THEME VARIABLES --- */
         :root {
+            /* Standard App Colors (Blue) */
             --ant-primary: #1677ff;
             --ant-primary-hover: #4096ff;
             --ant-bg-layout: #f0f2f5;
@@ -81,6 +87,7 @@ if ($con) {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--ant-bg-layout);
             color: var(--ant-text);
+            /* Disable text selection globally */
             -webkit-user-select: none;
             user-select: none;
         }
@@ -244,6 +251,36 @@ if ($con) {
         .btn-primary:hover {
             background: var(--ant-primary-hover);
             transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(22, 119, 255, 0.2);
+        }
+
+        /* Sidebar */
+        .ant-sidebar {
+            background: #fff;
+            border-right: 1px solid var(--ant-border-color);
+            height: calc(100vh - 64px);
+            position: sticky;
+            top: 64px;
+            padding: 20px 0;
+        }
+
+        .nav-link-custom {
+            padding: 12px 24px;
+            color: var(--ant-text);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .nav-link-custom:hover,
+        .nav-link-custom.active {
+            color: var(--ant-primary);
+            background: #e6f4ff;
+            border-right: 3px solid var(--ant-primary);
         }
     </style>
 </head>
@@ -296,8 +333,7 @@ if ($con) {
                 <div class="user-pill">
                     <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
-                    <span
-                        class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                    <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($userName) ?></span>
                 </div>
             </div>
         </div>
@@ -309,9 +345,9 @@ if ($con) {
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Receipts</h2>
+                    <h2 class="fw-bold mb-1"><?php echo $t['receipts_title']; ?></h2>
                     <p class="text-secondary mb-0">
-                        Search donation or pooja payments and print official receipts.
+                        <?php echo $t['receipts_desc']; ?>
                     </p>
                 </div>
 
@@ -324,18 +360,19 @@ if ($con) {
                                     <span class="input-group-text bg-white border-end-0"><i
                                             class="bi bi-search text-muted"></i></span>
                                     <input type="text" name="search" class="form-control border-start-0 ps-0"
-                                        placeholder="Search by Mobile, Name, or Receipt No..."
+                                        placeholder="<?php echo $t['search_receipts_placeholder']; ?>"
                                         value="<?= htmlspecialchars($search) ?>">
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <button class="btn btn-primary w-100">
-                                    Search
+                                    <?php echo $t['search_btn']; ?>
                                 </button>
                             </div>
                             <?php if (!empty($search)): ?>
                                 <div class="col-md-2">
-                                    <a href="receipts.php" class="btn btn-light border w-100">Clear</a>
+                                    <a href="receipts.php"
+                                        class="btn btn-light border w-100"><?php echo $t['clear_btn']; ?></a>
                                 </div>
                             <?php endif; ?>
                         </form>
@@ -344,20 +381,20 @@ if ($con) {
                             <table class="table ant-table mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Receipt No</th>
-                                        <th>Devotee</th>
-                                        <th>Amount</th>
-                                        <th>Mode</th>
-                                        <th>Type</th>
-                                        <th>Date</th>
-                                        <th class="text-end">Action</th>
+                                        <th><?php echo $t['receipt_no']; ?></th>
+                                        <th><?php echo $t['devotee']; ?></th>
+                                        <th><?php echo $t['amount']; ?></th>
+                                        <th><?php echo $t['method']; ?></th>
+                                        <th><?php echo $t['type']; ?></th>
+                                        <th><?php echo $t['date']; ?></th>
+                                        <th class="text-end"><?php echo $t['action']; ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php if (!empty($receipts)): ?>
                                         <?php foreach ($receipts as $r):
                                             // Determine badge color
-                                            $mode = strtolower($r['payment_mode']);
+                                            $mode = strtolower($r['payment_mode'] ?? 'cash');
                                             $badge = 'badge-cash'; // default
                                             if (strpos($mode, 'online') !== false)
                                                 $badge = 'badge-online';
@@ -377,17 +414,17 @@ if ($con) {
                                                 <td class="fw-bold">₹<?= number_format($r['amount'], 2) ?></td>
                                                 <td>
                                                     <span class="badge-soft <?= $badge ?>">
-                                                        <?= htmlspecialchars($r['payment_mode']) ?>
+                                                        <?= htmlspecialchars($r['payment_mode'] ?? 'Cash') ?>
                                                     </span>
                                                 </td>
-                                                <td><?= ucfirst(htmlspecialchars($r['category'])) ?></td>
+                                                <td><?= ucfirst(htmlspecialchars($r['category'] ?? 'General')) ?></td>
                                                 <td class="text-muted small">
                                                     <?= date('d M Y, h:i A', strtotime($r['created_at'])) ?>
                                                 </td>
                                                 <td class="text-end">
                                                     <a href="print_receipt.php?id=<?= $r['id'] ?>" target="_blank"
                                                         class="btn btn-sm btn-outline-dark rounded-pill px-3">
-                                                        <i class="bi bi-printer me-1"></i> Print
+                                                        <i class="bi bi-printer me-1"></i> <?php echo $t['print_btn']; ?>
                                                     </a>
                                                 </td>
                                             </tr>
@@ -396,7 +433,7 @@ if ($con) {
                                         <tr>
                                             <td colspan="7" class="text-center py-5 text-muted">
                                                 <i class="bi bi-receipt fs-1 opacity-25 d-block mb-3"></i>
-                                                <p class="mb-0">No receipts found matching your criteria.</p>
+                                                <p class="mb-0"><?php echo $t['no_receipts_found_criteria']; ?></p>
                                             </td>
                                         </tr>
                                     <?php endif; ?>

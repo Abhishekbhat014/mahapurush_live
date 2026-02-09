@@ -51,7 +51,7 @@ $userPhotoUrl = get_user_avatar_url('../../');
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pooja Requests - <?= $t['title'] ?? 'Temple' ?></title>
+    <title><?php echo $t['pooja_requests_title']; ?> - <?= $t['title'] ?? 'Temple' ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -73,12 +73,10 @@ $userPhotoUrl = get_user_avatar_url('../../');
             color: var(--ant-text);
             /* Disable text selection */
             -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
             user-select: none;
         }
 
-        /* Allow selection in tables if needed, or inputs */
+        /* Allow selection in inputs */
         input,
         textarea,
         select,
@@ -127,6 +125,32 @@ $userPhotoUrl = get_user_avatar_url('../../');
             position: sticky;
             top: 0;
             z-index: 1000;
+        }
+
+        .user-pill {
+            background: #fff;
+            padding: 6px 16px;
+            border-radius: 50px;
+            border: 1px solid var(--ant-border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        .lang-btn {
+            border: none;
+            background: #f5f5f5;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+
+        .lang-btn:hover {
+            background: #e6f4ff;
+            color: #1677ff;
         }
 
         /* --- Sidebar --- */
@@ -217,32 +241,6 @@ $userPhotoUrl = get_user_avatar_url('../../');
             border: 1px solid #ffa39e;
         }
 
-        .user-pill {
-            background: #fff;
-            padding: 6px 16px;
-            border-radius: 50px;
-            border: 1px solid var(--ant-border-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-        }
-
-        .lang-btn {
-            border: none;
-            background: #f5f5f5;
-            font-size: 13px;
-            font-weight: 600;
-            padding: 6px 12px;
-            border-radius: 6px;
-            transition: 0.2s;
-        }
-
-        .lang-btn:hover {
-            background: #e6f4ff;
-            color: #1677ff;
-        }
-
         .ant-btn-primary {
             background: var(--ant-primary);
             color: #fff;
@@ -264,7 +262,6 @@ $userPhotoUrl = get_user_avatar_url('../../');
                     <i class="bi bi-list"></i>
                 </button>
             </div>
-
             <div class="d-flex align-items-center gap-3">
                 <div class="dropdown">
                     <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
@@ -272,8 +269,10 @@ $userPhotoUrl = get_user_avatar_url('../../');
                         <?= ($currLang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
-                        <li><a class="dropdown-item small fw-medium" href="?lang=en">English</a></li>
-                        <li><a class="dropdown-item small fw-medium" href="?lang=mr">Marathi</a></li>
+                        <li><a class="dropdown-item small fw-medium <?= ($currLang == 'en') ? 'active' : '' ?>"
+                                href="?lang=en"><?php echo $t['lang_english']; ?></a></li>
+                        <li><a class="dropdown-item small fw-medium <?= ($currLang == 'mr') ? 'active' : '' ?>"
+                                href="?lang=mr"><?php echo $t['lang_marathi_full']; ?></a></li>
                     </ul>
                 </div>
 
@@ -313,10 +312,11 @@ $userPhotoUrl = get_user_avatar_url('../../');
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <div class="small text-muted mb-1"><?php echo $t['dashboard'] ?? 'Dashboard'; ?> /
-                        <?php echo $t['pooja_requests'] ?? 'Requests'; ?></div>
-                    <h2 class="fw-bold mb-1"><?php echo $t['pooja_requests'] ?? 'Pooja Requests'; ?></h2>
-                    <p class="text-secondary mb-0">Manage and approve devotee pooja bookings.</p>
+                    <div class="small text-muted mb-1"><?php echo $t['dashboard']; ?> /
+                        <?php echo $t['pooja_requests']; ?>
+                    </div>
+                    <h2 class="fw-bold mb-1"><?php echo $t['pooja_requests_title']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['pooja_requests_desc']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -325,12 +325,12 @@ $userPhotoUrl = get_user_avatar_url('../../');
                             <table class="table ant-table mb-0">
                                 <thead>
                                     <tr>
-                                        <th><?php echo $t['pooja'] ?? 'Pooja'; ?></th>
-                                        <th><?php echo $t['devotee'] ?? 'Devotee'; ?></th>
-                                        <th><?php echo $t['date'] ?? 'Date'; ?></th>
-                                        <th><?php echo $t['time_slot'] ?? 'Time Slot'; ?></th>
-                                        <th><?php echo $t['status'] ?? 'Status'; ?></th>
-                                        <th class="text-end"><?php echo $t['action'] ?? 'Action'; ?></th>
+                                        <th><?php echo $t['pooja']; ?></th>
+                                        <th><?php echo $t['devotee']; ?></th>
+                                        <th><?php echo $t['date']; ?></th>
+                                        <th><?php echo $t['time_slot']; ?></th>
+                                        <th><?php echo $t['status']; ?></th>
+                                        <th class="text-end"><?php echo $t['action']; ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -350,15 +350,11 @@ $userPhotoUrl = get_user_avatar_url('../../');
                                                 </td>
                                                 <td>
                                                     <div class="d-flex align-items-center gap-2">
-                                                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center text-primary fw-bold"
-                                                            style="width:32px; height:32px; font-size:12px;">
-                                                            <?= strtoupper(substr($p['devotee_name'], 0, 1)) ?>
-                                                        </div>
+
                                                         <div class="d-flex flex-column" style="line-height: 1.2;">
                                                             <span
                                                                 class="fw-medium text-dark"><?= htmlspecialchars($p['devotee_name'] . ' ' . ($p['devotee_last'] ?? '')) ?></span>
-                                                            <span class="text-muted" style="font-size: 11px;">ID:
-                                                                #<?= $p['id'] ?></span>
+
                                                         </div>
                                                     </div>
                                                 </td>
@@ -373,7 +369,7 @@ $userPhotoUrl = get_user_avatar_url('../../');
                                                 </td>
                                                 <td class="text-end">
                                                     <a href="pooja_details.php?id=<?= $p['id'] ?>" class="ant-btn-primary">
-                                                        View
+                                                        <?php echo $t['view_details']; ?>
                                                     </a>
                                                 </td>
                                             </tr>
@@ -382,7 +378,7 @@ $userPhotoUrl = get_user_avatar_url('../../');
                                         <tr>
                                             <td colspan="6" class="text-center py-5 text-muted">
                                                 <i class="bi bi-calendar-x fs-1 opacity-25 d-block mb-2"></i>
-                                                No pooja requests found.
+                                                <?php echo $t['no_pooja_requests_found']; ?>
                                             </td>
                                         </tr>
                                     <?php endif; ?>

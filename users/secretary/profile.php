@@ -6,7 +6,7 @@ require __DIR__ . '/../../includes/lang.php';
 require __DIR__ . '/../../includes/user_avatar.php';
 
 // Auth Check
-if (empty($_SESSION['logged_in'])) {
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: ../../auth/login.php");
     exit;
 }
@@ -29,8 +29,9 @@ if (isset($_POST['delete_photo'])) {
     if (mysqli_query($con, "UPDATE users SET photo=NULL WHERE id='$uid'")) {
         if ($oldPhoto) {
             $oldPath = __DIR__ . '/../../uploads/users/' . basename($oldPhoto);
-            if (is_file($oldPath))
+            if (is_file($oldPath)) {
                 unlink($oldPath);
+            }
         }
         $_SESSION['user_photo'] = null;
         $successMsg = $t['profile_photo_deleted'] ?? 'Profile photo removed.';
@@ -144,7 +145,7 @@ if (isset($_POST['change_password'])) {
 $user = mysqli_fetch_assoc(mysqli_query($con, "SELECT * FROM users WHERE id='$uid' LIMIT 1"));
 $userPhotoUrl = !empty($user['photo'])
     ? '../../uploads/users/' . basename($user['photo'])
-    : 'https://ui-avatars.com/api/?name=' . urlencode($user['first_name'] . ' ' . $user['last_name']) . '&background=ffffff&color=1677ff';
+    : 'https://ui-avatars.com/api/?name=' . urlencode($user['first_name'] . ' ' . $user['last_name']) . '&background=random';
 
 // Force refresh image
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($errorMsg)) {
@@ -158,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($errorMsg)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile - <?= $t['title'] ?></title>
+    <title><?php echo $t['my_profile_title']; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -184,7 +185,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($errorMsg)) {
         }
 
         /* Allow selection in inputs */
-        input, textarea, select {
+        input,
+        textarea,
+        select {
             -webkit-user-select: text;
             user-select: text;
         }
@@ -222,7 +225,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($errorMsg)) {
             border-radius: 6px;
             transition: 0.2s;
         }
-        .lang-btn:hover { background: #e6f4ff; color: #1677ff; }
+
+        .lang-btn:hover {
+            background: #e6f4ff;
+            color: #1677ff;
+        }
 
         /* --- HOVER DROPDOWN LOGIC --- */
         @media (min-width: 992px) {
@@ -230,25 +237,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($errorMsg)) {
                 display: block;
                 margin-top: 0;
             }
+
             .dropdown .dropdown-menu {
                 display: none;
             }
-            .dropdown:hover > .dropdown-menu {
+
+            .dropdown:hover>.dropdown-menu {
                 display: block;
                 animation: fadeIn 0.2s ease-in-out;
             }
         }
 
         /* Active Dropdown Item */
-        .dropdown-item.active, .dropdown-item:active {
+        .dropdown-item.active,
+        .dropdown-item:active {
             background-color: var(--ant-primary) !important;
             color: #fff !important;
             font-weight: 600;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* --- PAGE CONTENT --- */
@@ -287,22 +304,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($errorMsg)) {
             border-radius: 50%;
             border: 4px solid #fff;
             background-color: #fff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
-        .profile-wrap { position: relative; display: inline-block; }
-        
+
+        .profile-wrap {
+            position: relative;
+            display: inline-block;
+        }
+
         .delete-photo-btn {
-            position: absolute; right: 0; bottom: 0;
-            width: 32px; height: 32px;
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
-            background: #fff; border: 1px solid #ffccc7;
+            background: #fff;
+            border: 1px solid #ffccc7;
             color: #ff4d4f;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             transition: 0.2s;
             cursor: pointer;
         }
-        .delete-photo-btn:hover { background: #fff1f0; transform: scale(1.1); }
+
+        .delete-photo-btn:hover {
+            background: #fff1f0;
+            transform: scale(1.1);
+        }
 
         .btn-primary {
             background: var(--ant-primary);
@@ -312,11 +343,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($errorMsg)) {
             font-weight: 600;
             transition: 0.3s;
         }
+
         .btn-primary:hover {
             background: var(--ant-primary-hover);
             transform: translateY(-1px);
         }
-        
+
         .form-label {
             font-size: 13px;
             font-weight: 600;
@@ -336,42 +368,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($errorMsg)) {
                 </button>
             </div>
             <div class="d-flex align-items-center gap-3">
-                
+
                 <div class="dropdown">
                     <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
                         <i class="bi bi-translate me-1"></i>
                         <?= ($currLang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
-                        <li><a class="dropdown-item small fw-medium <?= ($currLang == 'en') ? 'active' : '' ?>" href="?lang=en">English</a></li>
-                        <li><a class="dropdown-item small fw-medium <?= ($currLang == 'mr') ? 'active' : '' ?>" href="?lang=mr">Marathi</a></li>
+                        <li><a class="dropdown-item small fw-medium <?= ($currLang == 'en') ? 'active' : '' ?>"
+                                href="?lang=en">English</a></li>
+                        <li><a class="dropdown-item small fw-medium <?= ($currLang == 'mr') ? 'active' : '' ?>"
+                                href="?lang=mr">Marathi</a></li>
                     </ul>
                 </div>
 
                 <?php if (!empty($availableRoles) && count($availableRoles) > 1): ?>
-                        <div class="dropdown">
-                            <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-person-badge me-1"></i>
-                                <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
-                                <?php foreach ($availableRoles as $role): ?>
-                                        <li>
-                                            <form action="../../auth/switch_role.php" method="post" class="px-2 py-1">
-                                                <button type="submit" name="role" value="<?= htmlspecialchars($role) ?>"
-                                                    class="dropdown-item small fw-medium <?= ($role === $primaryRole) ? 'active' : '' ?>">
-                                                    <?= htmlspecialchars(ucwords(str_replace('_', ' ', $role))) ?>
-                                                </button>
-                                            </form>
-                                        </li>
-                                <?php endforeach; ?>
-                            </ul>
-                        </div>
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <i class="bi bi-person-badge me-1"></i>
+                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                            <?php foreach ($availableRoles as $role): ?>
+                                <li>
+                                    <form action="../../auth/switch_role.php" method="post" class="px-2 py-1">
+                                        <button type="submit" name="role" value="<?= htmlspecialchars($role) ?>"
+                                            class="dropdown-item small fw-medium <?= ($role === $primaryRole) ? 'active' : '' ?>">
+                                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $role))) ?>
+                                        </button>
+                                    </form>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
                 <?php endif; ?>
 
                 <div class="user-pill">
-                    <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28" style="object-fit: cover;">
-                    <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                    <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
+                        style="object-fit: cover;">
+                    <span
+                        class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
                 </div>
             </div>
         </div>
@@ -383,61 +420,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($errorMsg)) {
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">My Profile</h2>
-                    <p class="text-secondary mb-0">Manage your personal information and security settings.</p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['my_profile_title']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['my_profile_desc']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
-                    
+
                     <?php if ($successMsg): ?>
-                            <div class="alert alert-success border-0 shadow-sm d-flex align-items-center mb-4" role="alert">
-                                <i class="bi bi-check-circle-fill me-2"></i>
-                                <div><?= htmlspecialchars($successMsg) ?></div>
-                            </div>
+                        <div class="alert alert-success border-0 shadow-sm d-flex align-items-center mb-4" role="alert">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            <div><?= htmlspecialchars($successMsg) ?></div>
+                        </div>
                     <?php endif; ?>
                     <?php if ($errorMsg): ?>
-                            <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4" role="alert">
-                                <i class="bi bi-exclamation-circle-fill me-2"></i>
-                                <div><?= htmlspecialchars($errorMsg) ?></div>
-                            </div>
+                        <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4" role="alert">
+                            <i class="bi bi-exclamation-circle-fill me-2"></i>
+                            <div><?= htmlspecialchars($errorMsg) ?></div>
+                        </div>
                     <?php endif; ?>
 
                     <div class="row g-4">
-                        
+
                         <div class="col-lg-4">
                             <div class="ant-card text-center">
                                 <div class="ant-card-body">
                                     <div class="profile-wrap mb-3">
-                                        <img src="<?= htmlspecialchars($userPhotoUrl) ?>" class="profile-avatar" alt="Profile">
+                                        <img src="<?= htmlspecialchars($userPhotoUrl) ?>" class="profile-avatar"
+                                            alt="Profile">
                                         <?php if (!empty($user['photo'])): ?>
-                                                <button type="button" class="delete-photo-btn" data-bs-toggle="modal" data-bs-target="#deletePhotoModal" title="Delete Photo">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
+                                            <button type="button" class="delete-photo-btn" data-bs-toggle="modal"
+                                                data-bs-target="#deletePhotoModal"
+                                                title="<?php echo $t['delete_photo_title']; ?>">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
                                         <?php endif; ?>
                                     </div>
-                                    <h5 class="fw-bold mb-1"><?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?></h5>
-                                    <p class="text-muted small mb-0"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?></p>
+                                    <h5 class="fw-bold mb-1">
+                                        <?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?>
+                                    </h5>
+                                    <p class="text-muted small mb-0">
+                                        <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
+                                    </p>
+                                    <p class="text-muted small">
+                                        <?php echo $t['member_since']; ?>
+                                        <?= date("M Y", strtotime($user['created_at'])) ?>
+                                    </p>
                                 </div>
                             </div>
 
                             <div class="ant-card">
-                                <div class="ant-card-head">Change Password</div>
+                                <div class="ant-card-head"><?php echo $t['change_password']; ?></div>
                                 <div class="ant-card-body">
                                     <form method="POST" class="needs-validation" novalidate>
                                         <div class="mb-3">
-                                            <label class="form-label">Current Password</label>
-                                            <input type="password" name="current_password" class="form-control" required>
+                                            <label class="form-label"><?php echo $t['current_password']; ?></label>
+                                            <input type="password" name="current_password" class="form-control"
+                                                required>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">New Password</label>
-                                            <input type="password" name="new_password" class="form-control" required minlength="6">
+                                            <label class="form-label"><?php echo $t['new_password']; ?></label>
+                                            <input type="password" name="new_password" class="form-control" required
+                                                minlength="6">
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Confirm Password</label>
-                                            <input type="password" name="confirm_password" class="form-control" required>
+                                            <label class="form-label"><?php echo $t['confirm_password']; ?></label>
+                                            <input type="password" name="confirm_password" class="form-control"
+                                                required>
                                         </div>
                                         <button type="submit" name="change_password" class="btn btn-primary w-100">
-                                            Update Password
+                                            <?php echo $t['update_password']; ?>
                                         </button>
                                     </form>
                                 </div>
@@ -446,38 +497,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($errorMsg)) {
 
                         <div class="col-lg-8">
                             <div class="ant-card">
-                                <div class="ant-card-head">Personal Information</div>
+                                <div class="ant-card-head"><?php echo $t['personal_information']; ?></div>
                                 <div class="ant-card-body">
-                                    <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                                    <form method="POST" enctype="multipart/form-data" class="needs-validation"
+                                        novalidate>
                                         <div class="row g-3">
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">First Name</label>
-                                                <input type="text" name="first_name" class="form-control" value="<?= htmlspecialchars($user['first_name']) ?>" required>
+                                                <label class="form-label"><?php echo $t['first_name']; ?></label>
+                                                <input type="text" name="first_name" class="form-control"
+                                                    value="<?= htmlspecialchars($user['first_name']) ?>" required>
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">Last Name</label>
-                                                <input type="text" name="last_name" class="form-control" value="<?= htmlspecialchars($user['last_name']) ?>" required>
+                                                <label class="form-label"><?php echo $t['last_name']; ?></label>
+                                                <input type="text" name="last_name" class="form-control"
+                                                    value="<?= htmlspecialchars($user['last_name']) ?>" required>
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">Phone Number</label>
-                                                <input type="tel" name="phone" class="form-control" pattern="[0-9]{10}" value="<?= htmlspecialchars($user['phone']) ?>" required>
-                                                <div class="invalid-feedback">Valid 10-digit number required.</div>
+                                                <label class="form-label"><?php echo $t['phone_number']; ?></label>
+                                                <input type="tel" name="phone" class="form-control" pattern="[0-9]{10}"
+                                                    value="<?= htmlspecialchars($user['phone']) ?>" required>
+                                                <div class="invalid-feedback"><?php echo $t['err_invalid_phone']; ?>
+                                                </div>
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">Email Address</label>
-                                                <input type="email" class="form-control bg-light" value="<?= htmlspecialchars($user['email']) ?>" readonly>
-                                                <div class="form-text small text-muted">Email cannot be changed.</div>
+                                                <label class="form-label"><?php echo $t['email_address']; ?></label>
+                                                <input type="email" class="form-control bg-light"
+                                                    value="<?= htmlspecialchars($user['email']) ?>" readonly>
+                                                <div class="form-text small text-muted">
+                                                    <?php echo $t['email_cannot_change']; ?>
+                                                </div>
                                             </div>
-                                            
+
                                             <div class="col-12 mb-3">
-                                                <label class="form-label">Update Profile Photo</label>
+                                                <label
+                                                    class="form-label"><?php echo $t['update_profile_photo']; ?></label>
                                                 <input type="file" name="photo" class="form-control" accept="image/*">
-                                                <div class="form-text small text-muted">Supported formats: JPG, JPEG, PNG. Max size: 2MB.</div>
+                                                <div class="form-text small text-muted">
+                                                    <?php echo $t['photo_upload_help']; ?>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="d-flex justify-content-end mt-4">
                                             <button type="submit" name="update_details" class="btn btn-primary px-5">
-                                                Save Changes
+                                                <?php echo $t['save_changes']; ?>
                                             </button>
                                         </div>
                                     </form>
@@ -496,16 +558,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($errorMsg)) {
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content border-0 shadow">
                     <div class="modal-header border-0 pb-0">
-                        <h5 class="modal-title fw-bold">Delete Photo</h5>
+                        <h5 class="modal-title fw-bold"><?php echo $t['delete_photo_title']; ?></h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body pt-3 pb-4">
-                        <p class="text-muted mb-0">Are you sure you want to remove your profile photo?</p>
+                        <p class="text-muted mb-0"><?php echo $t['delete_photo_msg']; ?></p>
                     </div>
                     <div class="modal-footer border-0 pt-0">
-                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-light rounded-pill px-4"
+                            data-bs-dismiss="modal"><?php echo $t['cancel']; ?></button>
                         <form method="POST" class="m-0">
-                            <button type="submit" name="delete_photo" class="btn btn-danger rounded-pill px-4">Delete</button>
+                            <button type="submit" name="delete_photo"
+                                class="btn btn-danger rounded-pill px-4"><?php echo $t['delete']; ?></button>
                         </form>
                     </div>
                 </div>
@@ -515,7 +579,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($errorMsg)) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Form Validation
+        // Form Validation & Prevent Resubmission
         (function () {
             'use strict';
             var forms = document.querySelectorAll('.needs-validation');
@@ -530,11 +594,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($errorMsg)) {
             });
         })();
 
-        // Prevent resubmission
         if (window.history.replaceState) {
             window.history.replaceState(null, null, window.location.href);
         }
-        
+
         // Disable Right Click
         document.addEventListener('contextmenu', function (e) {
             e.preventDefault();

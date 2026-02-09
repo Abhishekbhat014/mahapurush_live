@@ -10,18 +10,18 @@ $isLoggedIn = $_SESSION['logged_in'] ?? false;
 $uid = $_SESSION['user_id'] ?? null;
 $currentLang = $lang ?? ($_SESSION['lang'] ?? ($_COOKIE['lang'] ?? 'en'));
 
-// Fetch committee for dropdown
+// Fetch committee for dropdown (Modified to fetch role_name)
 $headerMembers = [];
 if ($con) {
     $cmRes = mysqli_query(
         $con,
-        "SELECT u.first_name, u.last_name, u.photo 
+        "SELECT u.first_name, u.last_name, u.photo, r.name as role_name 
          FROM users u 
          JOIN user_roles ur ON u.id = ur.user_id 
          JOIN roles r ON ur.role_id = r.id 
          WHERE r.name != 'customer' 
          ORDER BY r.name, u.first_name 
-         LIMIT 3"
+         LIMIT 5" // Increased limit slightly to show more variety
     );
     if ($cmRes) {
         while ($row = mysqli_fetch_assoc($cmRes)) {
@@ -116,7 +116,6 @@ if ($isLoggedIn) {
         .ant-header .dropdown:hover>.dropdown-menu {
             display: block;
             margin-top: 0;
-            /* Important: Removes gap so mouse doesn't fall through */
             animation: fadeIn 0.2s ease-in-out;
         }
     }
@@ -152,24 +151,32 @@ if ($isLoggedIn) {
                         <?php echo $t['committee']; ?>
                     </a>
                     <ul class="dropdown-menu border-0 shadow-lg p-3 mt-0"
-                        style="border-radius: 12px; min-width: 200px;">
-                        <?php if (!empty($headerMembers)): ?>
+                        style="border-radius: 12px; min-width: 240px;"> <?php if (!empty($headerMembers)): ?>
                             <?php foreach ($headerMembers as $member): ?>
                                 <?php
                                 $memberName = trim(($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? ''));
+                                $memberRole = ucfirst($member['role_name'] ?? 'Member'); // Get role
+                        
                                 if (!empty($member['photo'])) {
                                     $memberPhoto = 'uploads/users/' . basename($member['photo']);
                                 } else {
                                     $memberPhoto = 'https://ui-avatars.com/api/?name=' . urlencode($memberName) . '&background=random';
                                 }
                                 ?>
-                                <li class="mb-2">
-                                    <div class="d-flex align-items-center gap-2 px-2 py-1">
+                                <li class="mb-3">
+                                    <div class="d-flex align-items-center gap-3 px-2">
                                         <img src="<?= $memberPhoto ?>" class="rounded-circle border shadow-sm"
-                                            style="width:28px;height:28px;object-fit:cover;">
-                                        <span class="small fw-medium text-dark">
-                                            <?= htmlspecialchars($memberName ?: ($t['member'] ?? 'Member')) ?>
-                                        </span>
+                                            style="width:36px; height:36px; object-fit:cover;">
+
+                                        <div class="d-flex flex-column" style="line-height: 1.2;">
+                                            <span class="small fw-bold text-dark">
+                                                <?= htmlspecialchars($memberName ?: ($t['member'] ?? 'Member')) ?>
+                                            </span>
+                                            <small class="text-muted text-uppercase"
+                                                style="font-size: 10px; letter-spacing: 0.5px;">
+                                                <?= htmlspecialchars($memberRole) ?>
+                                            </small>
+                                        </div>
                                     </div>
                                 </li>
                             <?php endforeach; ?>

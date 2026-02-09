@@ -26,54 +26,49 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
     <div class="nav flex-column flex-grow-1" style="overflow-y: auto;">
         <a href="../../index.php" class="sb-link">
-            <i class="bi bi-house"></i> <span>Home</span>
+            <i class="bi bi-house"></i> <span><?php echo $t['home']; ?></span>
         </a>
 
         <a href="dashboard.php" class="sb-link <?= ($currentPage == 'dashboard.php') ? 'sb-active' : '' ?>">
-            <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
+            <i class="bi bi-speedometer2"></i> <span><?php echo $t['dashboard']; ?></span>
         </a>
 
-
-
         <a href="pooja_bookings.php" class="sb-link <?= ($currentPage == 'pooja_bookings.php') ? 'sb-active' : '' ?>">
-            <i class="bi bi-calendar-check"></i> <span>Pooja Requests</span>
+            <i class="bi bi-calendar-check"></i> <span><?php echo $t['pooja_requests']; ?></span>
         </a>
 
         <a href="donations.php" class="sb-link <?= ($currentPage == 'donations.php') ? 'sb-active' : '' ?>">
-            <i class="bi bi-heart-fill"></i> <span>Donations</span>
+            <i class="bi bi-heart-fill"></i> <span><?php echo $t['donations']; ?></span>
         </a>
 
         <a href="receipts.php" class="sb-link <?= ($currentPage == 'receipts.php') ? 'sb-active' : '' ?>">
-            <i class="bi bi-receipt-cutoff"></i> <span>Receipts</span>
+            <i class="bi bi-receipt-cutoff"></i> <span><?php echo $t['receipts']; ?></span>
         </a>
 
         <a href="events.php" class="sb-link <?= ($currentPage == 'events.php') ? 'sb-active' : '' ?>">
-            <i class="bi bi-calendar-event"></i> <span>Events</span>
+            <i class="bi bi-calendar-event"></i> <span><?php echo $t['events']; ?></span>
         </a>
-
 
         <a href="gallery.php" class="sb-link <?= ($currentPage == 'gallery.php') ? 'sb-active' : '' ?>">
-            <i class="bi bi-images"></i> <span>Gallery</span>
+            <i class="bi bi-images"></i> <span><?php echo $t['gallery']; ?></span>
         </a>
 
-
-
         <a href="profile.php" class="sb-link <?= ($currentPage == 'profile.php') ? 'sb-active' : '' ?>">
-            <i class="bi bi-person-circle"></i> <span>My Profile</span>
+            <i class="bi bi-person-circle"></i> <span><?php echo $t['my_profile']; ?></span>
         </a>
 
     </div>
 
     <div class="mt-auto p-2 border-top">
         <a href="../../auth/logout.php" class="sb-link text-danger">
-            <i class="bi bi-power"></i> <span>Logout</span>
+            <i class="bi bi-power"></i> <span><?php echo $t['logout']; ?></span>
         </a>
     </div>
 </nav>
 
 <div class="offcanvas offcanvas-start sb-offcanvas" id="sidebarMenu" style="width: 280px;">
     <div class="offcanvas-header border-bottom">
-        <h5 class="offcanvas-title fw-bold">Secretary Menu</h5>
+        <h5 class="offcanvas-title fw-bold"><?php echo $t['secretary_menu']; ?></h5>
         <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas"></button>
     </div>
 
@@ -81,43 +76,38 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         <div class="nav flex-column flex-grow-1" style="overflow-y: auto;">
 
             <a href="../../index.php" class="sb-link">
-                <i class="bi bi-house"></i> Home
+                <i class="bi bi-house"></i> <?php echo $t['home']; ?>
             </a>
             <a href="dashboard.php" class="sb-link <?= ($currentPage == 'dashboard.php') ? 'sb-active' : '' ?>">
-                <i class="bi bi-speedometer2"></i> Dashboard
+                <i class="bi bi-speedometer2"></i> <?php echo $t['dashboard']; ?>
             </a>
-
-
 
             <a href="pooja_bookings.php"
                 class="sb-link <?= ($currentPage == 'pooja_bookings.php') ? 'sb-active' : '' ?>">
-                <i class="bi bi-calendar-check"></i> Pooja Requests
+                <i class="bi bi-calendar-check"></i> <?php echo $t['pooja_requests']; ?>
             </a>
             <a href="donations.php" class="sb-link <?= ($currentPage == 'donations.php') ? 'sb-active' : '' ?>">
-                <i class="bi bi-heart-fill"></i> Donations
+                <i class="bi bi-heart-fill"></i> <?php echo $t['donations']; ?>
             </a>
             <a href="receipts.php" class="sb-link <?= ($currentPage == 'receipts.php') ? 'sb-active' : '' ?>">
-                <i class="bi bi-receipt-cutoff"></i> Receipts
+                <i class="bi bi-receipt-cutoff"></i> <?php echo $t['receipts']; ?>
             </a>
             <a href="events.php" class="sb-link <?= ($currentPage == 'events.php') ? 'sb-active' : '' ?>">
-                <i class="bi bi-calendar-event"></i> Events
+                <i class="bi bi-calendar-event"></i> <?php echo $t['events']; ?>
             </a>
-
 
             <a href="gallery.php" class="sb-link <?= ($currentPage == 'gallery.php') ? 'sb-active' : '' ?>">
-                <i class="bi bi-images"></i> Gallery
+                <i class="bi bi-images"></i> <?php echo $t['gallery']; ?>
             </a>
 
-
-
             <a href="profile.php" class="sb-link <?= ($currentPage == 'profile.php') ? 'sb-active' : '' ?>">
-                <i class="bi bi-person-circle"></i> Profile
+                <i class="bi bi-person-circle"></i> <?php echo $t['my_profile']; ?>
             </a>
         </div>
 
         <div class="border-top p-2 bg-light">
             <a href="../../auth/logout.php" class="sb-link text-danger">
-                <i class="bi bi-power"></i> <span>Logout</span>
+                <i class="bi bi-power"></i> <span><?php echo $t['logout']; ?></span>
             </a>
         </div>
     </div>

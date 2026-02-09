@@ -56,7 +56,7 @@ $result = mysqli_query($con, $sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $t['payment_ledger'] ?? 'Payment Ledger'; ?> - <?= $t['title'] ?></title>
+    <title><?php echo $t['payment_ledger_title']; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -79,6 +79,14 @@ $result = mysqli_query($con, $sql);
             color: var(--ant-text);
             -webkit-user-select: none;
             user-select: none;
+        }
+
+        /* Allow inputs to be selectable */
+        input,
+        textarea,
+        select {
+            -webkit-user-select: text;
+            user-select: text;
         }
 
         /* --- HEADER STYLES --- */
@@ -201,6 +209,7 @@ $result = mysqli_query($con, $sql);
                 </button>
             </div>
             <div class="d-flex align-items-center gap-3">
+
                 <div class="dropdown">
                     <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
                         <i class="bi bi-translate me-1"></i>
@@ -216,7 +225,8 @@ $result = mysqli_query($con, $sql);
 
                 <?php if (!empty($availableRoles) && count($availableRoles) > 1): ?>
                     <div class="dropdown">
-                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
                             <i class="bi bi-person-badge me-1"></i>
                             <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
                         </button>
@@ -253,12 +263,12 @@ $result = mysqli_query($con, $sql);
                 <div class="dashboard-hero">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h2 class="fw-bold mb-1"><?php echo $t['payment_ledger'] ?? 'Payment Ledger'; ?></h2>
-                            <p class="text-secondary mb-0">Verify and approve incoming donations.</p>
+                            <h2 class="fw-bold mb-1"><?php echo $t['payment_ledger_title']; ?></h2>
+                            <p class="text-secondary mb-0"><?php echo $t['payment_ledger_desc']; ?></p>
                         </div>
                         <div class="text-end">
-                            <small class="text-uppercase text-muted fw-bold" style="font-size: 10px;">Total
-                                Collection</small>
+                            <small class="text-uppercase text-muted fw-bold"
+                                style="font-size: 10px;"><?php echo $t['total_collection']; ?></small>
                             <h3 class="fw-bold text-primary mb-0">₹<?= number_format($totalCollection, 2) ?></h3>
                         </div>
                     </div>
@@ -269,23 +279,21 @@ $result = mysqli_query($con, $sql);
                     <?php if (isset($_GET['msg']) && $_GET['msg'] == 'updated'): ?>
                         <div class="alert alert-success border-0 shadow-sm d-flex align-items-center mb-4" role="alert">
                             <i class="bi bi-check-circle-fill me-2"></i>
-                            <div>Transaction updated successfully.</div>
+                            <div><?php echo $t['transaction_updated_success']; ?></div>
                         </div>
                     <?php endif; ?>
-
-
 
                     <div class="ant-card">
                         <div class="table-responsive">
                             <table class="table ant-table mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Donor Name</th>
-                                        <th>Txn ID</th>
-                                        <th>Amount</th>
-                                        <th>Method</th>
-                                        <th>Date</th>
-                                        <th class="text-end">Actions</th>
+                                        <th><?php echo $t['donor_name']; ?></th>
+                                        <th><?php echo $t['txn_id']; ?></th>
+                                        <th><?php echo $t['amount']; ?></th>
+                                        <th><?php echo $t['method']; ?></th>
+                                        <th><?php echo $t['date']; ?></th>
+                                        <th class="text-end"><?php echo $t['actions']; ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -314,14 +322,14 @@ $result = mysqli_query($con, $sql);
 
                                                         <button type="submit" name="action" value="approve"
                                                             class="btn btn-sm btn-success rounded-pill px-3 fw-bold"
-                                                            title="Approve & Generate Receipt">
-                                                            <i class="bi bi-check-lg"></i> Approve
+                                                            title="<?php echo $t['approve_action']; ?>">
+                                                            <i class="bi bi-check-lg"></i> <?php echo $t['approve_action']; ?>
                                                         </button>
 
                                                         <button type="submit" name="action" value="reject"
                                                             class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold"
-                                                            title="Reject Transaction"
-                                                            onclick="return confirm('Are you sure you want to reject this payment?');">
+                                                            title="<?php echo $t['reject_action']; ?>"
+                                                            onclick="return confirm('<?php echo $t['confirm_reject_payment']; ?>');">
                                                             <i class="bi bi-x-lg"></i>
                                                         </button>
                                                     </form>
@@ -332,7 +340,7 @@ $result = mysqli_query($con, $sql);
                                         <tr>
                                             <td colspan="6" class="text-center py-5 text-muted">
                                                 <i class="bi bi-wallet2 fs-1 opacity-25 d-block mb-3"></i>
-                                                No pending payments found.
+                                                <?php echo $t['no_pending_payments']; ?>
                                             </td>
                                         </tr>
                                     <?php endif; ?>

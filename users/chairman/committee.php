@@ -17,6 +17,9 @@ $currLang = $_SESSION['lang'] ?? 'en';
 $currentPage = 'committee.php';
 $loggedInUserPhoto = get_user_avatar_url('../../');
 
+$success = '';
+$error = '';
+
 // --- FETCH ROLES FOR FILTER ---
 $roles = [];
 $roleRes = mysqli_query($con, "SELECT id, name FROM roles ORDER BY name");
@@ -27,7 +30,7 @@ if ($roleRes) {
 }
 
 // --- FETCH COMMITTEE MEMBERS ---
-$sql = "SELECT u.id, u.first_name, u.last_name, u.email, u.phone, r.name AS role_name
+$sql = "SELECT u.id, u.first_name, u.last_name, u.email, u.phone, r.name AS role_name, r.id AS role_id
         FROM users u
         JOIN user_roles ur ON ur.user_id = u.id
         JOIN roles r ON r.id = ur.role_id
@@ -41,7 +44,7 @@ $result = mysqli_query($con, $sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Committee - <?= $t['title'] ?></title>
+    <title><?php echo $t['committee_title']; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -280,18 +283,18 @@ $result = mysqli_query($con, $sql);
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Committee</h2>
-                    <p class="text-secondary mb-0">Manage committee members and their roles.</p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['committee_title']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['committee_desc']; ?></p>
                 </div>
 
                 <div class="p-4 pb-5">
                     <div class="ant-card">
 
                         <div class="filter-bar">
-                            <div class="filter-label">Filter by Role</div>
+                            <div class="filter-label"><?php echo $t['filter_by_role']; ?></div>
                             <div class="d-flex align-items-center gap-2">
                                 <select id="roleFilter" class="form-select form-select-sm" style="min-width: 200px;">
-                                    <option value="all">All Roles</option>
+                                    <option value="all"><?php echo $t['all_roles']; ?></option>
                                     <?php foreach ($roles as $role): ?>
                                         <option value="<?= htmlspecialchars($role['name']) ?>">
                                             <?= htmlspecialchars(ucfirst($role['name'])) ?>
@@ -305,11 +308,11 @@ $result = mysqli_query($con, $sql);
                             <table class="table ant-table mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Name</th>
-                                        <th>Role</th>
-                                        <th>Email</th>
-                                        <th>Phone</th>
-                                        <th class="text-end">Actions</th>
+                                        <th><?php echo $t['full_name']; ?></th>
+                                        <th><?php echo $t['role_name']; ?></th>
+                                        <th><?php echo $t['email_label']; ?></th>
+                                        <th><?php echo $t['phone_label']; ?></th>
+                                        <th class="text-end"><?php echo $t['actions']; ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -342,7 +345,7 @@ $result = mysqli_query($con, $sql);
                                         <tr>
                                             <td colspan="5" class="text-center py-5 text-muted">
                                                 <i class="bi bi-people fs-1 opacity-25 d-block mb-3"></i>
-                                                No committee members found.
+                                                <?php echo $t['no_committee_members']; ?>
                                             </td>
                                         </tr>
                                     <?php endif; ?>

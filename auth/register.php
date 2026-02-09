@@ -8,6 +8,16 @@ if (file_exists($dbPath)) {
     die($t['db_connection_missing']);
 }
 
+// FIX: Check if user is already logged in
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
+    header("Location: redirect.php");
+    exit;
+}
+
 $error = '';
 $success = '';
 
@@ -80,6 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $roleStmt->close();
 
                 $con->commit();
+                session_start();
                 $_SESSION['user_id'] = $newUserId;
                 $_SESSION['user_name'] = $firstName . ' ' . $lastName;
                 $_SESSION['roles'] = ['customer'];
@@ -186,6 +197,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background: #fafafa;
             border-color: #d9d9d9;
             color: var(--ant-text-sec);
+        }
+
+        /* --- REMOVE BOOTSTRAP VALIDATION SUCCESS ICONS --- */
+        .was-validated .form-control:valid {
+            background-image: none !important;
+            border-color: #d9d9d9 !important;
+            padding-right: 12px !important;
+        }
+
+        .was-validated .form-control:valid:focus {
+            border-color: var(--ant-primary) !important;
+            box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1) !important;
         }
 
         .ant-btn-primary {
@@ -352,8 +375,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
             <div class="small text-muted"><?php echo sprintf($t['copyright_footer_title'], date("Y"), $t['title']); ?>
             </div>
-            <div class="d-flex gap-3 small fw-bold">
-                <span class="text-primary">Developed By: Yojana Gawade</span>
+            <div class="d-flex align-items-center gap-3">
+                <div class="d-flex gap-3 small fw-bold">
+                    <span class="text-primary">Developed By: Yojana Gawade</span>
+                </div>
             </div>
         </div>
     </footer>

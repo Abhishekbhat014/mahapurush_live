@@ -25,18 +25,25 @@ $loggedInUserPhoto = get_user_avatar_url('../../');
 
 /* --- KPI QUERIES --- */
 // Using fetch_row for simple count queries is efficient
-$pendingContributions = mysqli_fetch_row(mysqli_query($con, "SELECT COUNT(*) FROM contributions WHERE status='pending'"))[0] ?? 0;
-$pendingPoojas = mysqli_fetch_row(mysqli_query($con, "SELECT COUNT(*) FROM pooja WHERE status='pending'"))[0] ?? 0;
+$pendingContributions = 0;
+$pendingPoojas = 0;
+$todayPoojaRequests = 0;
+$todayDonationRequests = 0;
 
-$todayPoojaRequests = mysqli_fetch_row(mysqli_query(
-    $con,
-    "SELECT COUNT(*) FROM pooja WHERE DATE(created_at)=CURDATE()"
-))[0] ?? 0;
+if ($con) {
+    $pendingContributions = mysqli_fetch_row(mysqli_query($con, "SELECT COUNT(*) FROM contributions WHERE status='pending'"))[0] ?? 0;
+    $pendingPoojas = mysqli_fetch_row(mysqli_query($con, "SELECT COUNT(*) FROM pooja WHERE status='pending'"))[0] ?? 0;
 
-$todayDonationRequests = mysqli_fetch_row(mysqli_query(
-    $con,
-    "SELECT COUNT(*) FROM contributions WHERE DATE(created_at)=CURDATE()"
-))[0] ?? 0;
+    $todayPoojaRequests = mysqli_fetch_row(mysqli_query(
+        $con,
+        "SELECT COUNT(*) FROM pooja WHERE DATE(created_at)=CURDATE()"
+    ))[0] ?? 0;
+
+    $todayDonationRequests = mysqli_fetch_row(mysqli_query(
+        $con,
+        "SELECT COUNT(*) FROM contributions WHERE DATE(created_at)=CURDATE()"
+    ))[0] ?? 0;
+}
 ?>
 
 <!DOCTYPE html>
@@ -45,7 +52,7 @@ $todayDonationRequests = mysqli_fetch_row(mysqli_query(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secretary Dashboard - <?= $t['title'] ?></title>
+    <title><?php echo $t['secretary_dashboard']; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -306,9 +313,9 @@ $todayDonationRequests = mysqli_fetch_row(mysqli_query(
                 <div class="dashboard-hero">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
-                            <h2 class="fw-bold mb-1"><?php echo $t['secretary_dashboard'] ?? 'Secretary Dashboard'; ?>
+                            <h2 class="fw-bold mb-1"><?php echo $t['secretary_dashboard']; ?>
                             </h2>
-                            <p class="text-secondary mb-0">Overview of pending requests and daily activities.</p>
+                            <p class="text-secondary mb-0"><?php echo $t['secretary_dashboard_subtitle']; ?></p>
                         </div>
                     </div>
                 </div>
@@ -320,10 +327,11 @@ $todayDonationRequests = mysqli_fetch_row(mysqli_query(
                             <div class="ant-card">
                                 <div class="ant-card-body">
                                     <div class="kpi-icon bg-orange-soft shadow-sm"><i class="bi bi-box-seam"></i></div>
-                                    <span class="kpi-label"><?php echo $t['pending_items'] ?? 'Pending Items'; ?></span>
+                                    <span class="kpi-label"><?php echo $t['pending_items']; ?></span>
                                     <h3 class="kpi-value"><?= $pendingContributions ?></h3>
                                     <p class="small text-muted mb-0 mt-2">
-                                        <?php echo $t['material_contributions'] ?? 'Material Requests'; ?></p>
+                                        <?php echo $t['material_contributions']; ?>
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -333,11 +341,11 @@ $todayDonationRequests = mysqli_fetch_row(mysqli_query(
                                 <div class="ant-card-body">
                                     <div class="kpi-icon bg-blue-soft shadow-sm"><i class="bi bi-calendar-check"></i>
                                     </div>
-                                    <span
-                                        class="kpi-label"><?php echo $t['pending_poojas'] ?? 'Pending Poojas'; ?></span>
+                                    <span class="kpi-label"><?php echo $t['pending_poojas']; ?></span>
                                     <h3 class="kpi-value"><?= $pendingPoojas ?></h3>
                                     <p class="small text-muted mb-0 mt-2">
-                                        <?php echo $t['bookings_awaiting_review'] ?? 'Awaiting Review'; ?></p>
+                                        <?php echo $t['bookings_awaiting_review']; ?>
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -347,9 +355,9 @@ $todayDonationRequests = mysqli_fetch_row(mysqli_query(
                                 <div class="ant-card-body">
                                     <div class="kpi-icon bg-green-soft shadow-sm"><i class="bi bi-calendar-plus"></i>
                                     </div>
-                                    <span class="kpi-label">Today's Pooja Requests</span>
+                                    <span class="kpi-label"><?php echo $t['todays_pooja_requests']; ?></span>
                                     <h3 class="kpi-value"><?= $todayPoojaRequests ?></h3>
-                                    <p class="small text-muted mb-0 mt-2">New Bookings Today</p>
+                                    <p class="small text-muted mb-0 mt-2"><?php echo $t['new_bookings_today']; ?></p>
                                 </div>
                             </div>
                         </div>
@@ -358,9 +366,10 @@ $todayDonationRequests = mysqli_fetch_row(mysqli_query(
                             <div class="ant-card">
                                 <div class="ant-card-body">
                                     <div class="kpi-icon bg-purple-soft shadow-sm"><i class="bi bi-gift"></i></div>
-                                    <span class="kpi-label">Today's Donation Requests</span>
+                                    <span class="kpi-label"><?php echo $t['todays_donation_requests']; ?></span>
                                     <h3 class="kpi-value"><?= $todayDonationRequests ?></h3>
-                                    <p class="small text-muted mb-0 mt-2">New Contributions Today</p>
+                                    <p class="small text-muted mb-0 mt-2"><?php echo $t['new_contributions_today']; ?>
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -373,19 +382,20 @@ $todayDonationRequests = mysqli_fetch_row(mysqli_query(
                                     class="ant-card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
                                     <div>
                                         <h6 class="fw-bold mb-1">
-                                            <?php echo $t['administrative_actions'] ?? 'Administrative Actions'; ?></h6>
+                                            <?php echo $t['administrative_actions']; ?>
+                                        </h6>
                                         <p class="text-muted small mb-0">
-                                            <?php echo $t['jump_to_pending_queues'] ?? 'Quickly access pending items.'; ?>
+                                            <?php echo $t['jump_to_pending_queues']; ?>
                                         </p>
                                     </div>
                                     <div class="d-flex gap-2">
                                         <a href="contributions_review.php"
                                             class="btn btn-primary btn-sm rounded-pill px-4 fw-bold">
-                                            <?php echo $t['review_items'] ?? 'Review Contributions'; ?>
+                                            <?php echo $t['review_items']; ?>
                                         </a>
                                         <a href="pooja_bookings.php"
                                             class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-bold">
-                                            <?php echo $t['approve_poojas'] ?? 'Review Poojas'; ?>
+                                            <?php echo $t['approve_poojas']; ?>
                                         </a>
                                     </div>
                                 </div>

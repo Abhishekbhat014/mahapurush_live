@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 06, 2026 at 07:17 AM
+-- Generation Time: Feb 09, 2026 at 09:08 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `mahapurush_live`
+-- Database: `mahapurush_mandir`
 --
 
 -- --------------------------------------------------------
@@ -38,16 +38,9 @@ CREATE TABLE `contributions` (
   `unit` varchar(50) DEFAULT NULL,
   `description` text DEFAULT NULL,
   `status` enum('pending','approved','rejected') DEFAULT 'pending',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `contributions`
---
-
-INSERT INTO `contributions` (`id`, `receipt_id`, `added_by`, `contributor_name`, `contribution_type_id`, `title`, `quantity`, `unit`, `description`, `status`, `created_at`) VALUES
-(7, 31, 8, '0', 2, '0', 0.20, 'bags', 'For Pooja.', 'pending', '2026-02-06 04:12:45'),
-(8, 34, 8, '0', 7, '0', 3.00, 'kg', 'gfh', 'pending', '2026-02-06 04:39:31');
 
 -- --------------------------------------------------------
 
@@ -59,22 +52,23 @@ CREATE TABLE `contribution_type` (
   `id` int(11) NOT NULL,
   `type` varchar(50) NOT NULL,
   `description` text DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `contribution_type`
 --
 
-INSERT INTO `contribution_type` (`id`, `type`, `description`, `created_at`) VALUES
-(1, 'Food', NULL, '2026-02-01 13:34:15'),
-(2, 'Pooja Material', NULL, '2026-02-01 13:34:15'),
-(3, 'Maintenance & Repair', NULL, '2026-02-01 13:34:40'),
-(4, 'Furniture & Assets', NULL, '2026-02-01 13:34:40'),
-(5, 'Daily Essentials', NULL, '2026-02-01 13:34:58'),
-(6, 'Festival Supplies', NULL, '2026-02-01 13:34:58'),
-(7, 'Books & Scriptures', NULL, '2026-02-01 13:35:11'),
-(8, 'Volunteer Service', NULL, '2026-02-01 13:35:11');
+INSERT INTO `contribution_type` (`id`, `type`, `description`, `created_at`, `updated_at`) VALUES
+(1, 'Food', NULL, '2026-02-01 13:34:15', '2026-02-06 10:30:13'),
+(2, 'Pooja Material', NULL, '2026-02-01 13:34:15', '2026-02-06 10:30:13'),
+(3, 'Maintenance & Repair', NULL, '2026-02-01 13:34:40', '2026-02-06 10:30:13'),
+(4, 'Furniture & Assets', NULL, '2026-02-01 13:34:40', '2026-02-06 10:30:13'),
+(5, 'Daily Essentials', NULL, '2026-02-01 13:34:58', '2026-02-06 10:30:13'),
+(6, 'Festival Supplies', NULL, '2026-02-01 13:34:58', '2026-02-06 10:30:13'),
+(7, 'Books & Scriptures', NULL, '2026-02-01 13:35:11', '2026-02-06 10:30:13'),
+(8, 'Volunteer Service', NULL, '2026-02-01 13:35:11', '2026-02-06 10:30:13');
 
 -- --------------------------------------------------------
 
@@ -90,7 +84,8 @@ CREATE TABLE `donations` (
   `donation_type_id` int(11) NOT NULL,
   `amount` decimal(10,2) NOT NULL,
   `payment_id` int(11) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -102,7 +97,8 @@ CREATE TABLE `donations` (
 CREATE TABLE `donation_type` (
   `id` int(11) NOT NULL,
   `type` varchar(100) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -117,15 +113,18 @@ CREATE TABLE `events` (
   `duration` varchar(50) DEFAULT NULL,
   `conduct_on` date DEFAULT NULL,
   `max_participants` int(11) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `status` varchar(255) NOT NULL,
+  `created_by` int(11) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `events`
 --
 
-INSERT INTO `events` (`id`, `name`, `duration`, `conduct_on`, `max_participants`, `created_at`) VALUES
-(1, 'Vardhapan', '2', '2026-02-08', 0, '2026-02-01 15:48:10');
+INSERT INTO `events` (`id`, `name`, `duration`, `conduct_on`, `max_participants`, `status`, `created_by`, `created_at`, `updated_at`) VALUES
+(1, 'Vardhapan', '2', '2026-02-08', 0, '', 0, '2026-02-01 15:48:10', '2026-02-06 10:30:13');
 
 -- --------------------------------------------------------
 
@@ -138,8 +137,16 @@ CREATE TABLE `event_participants` (
   `user_id` int(11) NOT NULL,
   `event_id` int(11) NOT NULL,
   `payment_id` int(11) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `event_participants`
+--
+
+INSERT INTO `event_participants` (`id`, `user_id`, `event_id`, `payment_id`, `created_at`, `updated_at`) VALUES
+(1, 15, 1, NULL, '2026-02-08 08:28:01', '2026-02-08 08:28:01');
 
 -- --------------------------------------------------------
 
@@ -149,10 +156,9 @@ CREATE TABLE `event_participants` (
 
 CREATE TABLE `feedbacks` (
   `id` int(11) NOT NULL,
-  `user_id` int(11) DEFAULT NULL,
-  `email` varchar(150) NOT NULL,
-  `message` text NOT NULL,
-  `rating` int(11) DEFAULT NULL CHECK (`rating` between 1 and 5),
+  `email` varchar(255) NOT NULL,
+  `rating` enum('5','4','3','2','1') NOT NULL,
+  `message` varchar(255) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -167,7 +173,8 @@ CREATE TABLE `gallery` (
   `gallery_category_id` int(11) DEFAULT NULL,
   `type` varchar(50) DEFAULT NULL,
   `content` text NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -179,18 +186,19 @@ CREATE TABLE `gallery` (
 CREATE TABLE `gallery_category` (
   `id` int(11) NOT NULL,
   `type` varchar(100) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `gallery_category`
 --
 
-INSERT INTO `gallery_category` (`id`, `type`, `created_at`) VALUES
-(1, 'Temple', '2026-01-31 10:37:16'),
-(2, 'Events', '2026-01-31 10:37:16'),
-(3, 'Festivals', '2026-01-31 10:37:30'),
-(4, 'Rituals', '2026-01-31 10:37:30');
+INSERT INTO `gallery_category` (`id`, `type`, `created_at`, `updated_at`) VALUES
+(1, 'Temple', '2026-01-31 10:37:16', '2026-02-06 10:30:14'),
+(2, 'Events', '2026-01-31 10:37:16', '2026-02-06 10:30:14'),
+(3, 'Festivals', '2026-01-31 10:37:30', '2026-02-06 10:30:14'),
+(4, 'Rituals', '2026-01-31 10:37:30', '2026-02-06 10:30:14');
 
 -- --------------------------------------------------------
 
@@ -208,25 +216,9 @@ CREATE TABLE `payments` (
   `payment_method` enum('upi','cash','card','netbanking') NOT NULL,
   `transaction_ref` varchar(100) DEFAULT NULL,
   `status` enum('pending','success','failed') DEFAULT 'pending',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `payments`
---
-
-INSERT INTO `payments` (`id`, `receipt_id`, `user_id`, `donor_name`, `amount`, `note`, `payment_method`, `transaction_ref`, `status`, `created_at`) VALUES
-(14, 23, 6, 'Yojana Gawade', 121.00, '', 'cash', NULL, 'success', '2026-02-05 15:27:07'),
-(15, 24, 6, 'Yojana Gawade', 1.00, '', 'cash', NULL, 'success', '2026-02-05 15:30:03'),
-(16, 25, 6, 'Yojana Gawade', 1.00, '', 'cash', NULL, 'success', '2026-02-05 15:32:31'),
-(17, 26, 7, 'tanu salunke', 5000.00, '...', 'cash', NULL, 'success', '2026-02-06 04:05:24'),
-(18, 27, 8, 'Raj Sawant', 1000000.00, 'For Development purpose.', 'cash', NULL, 'success', '2026-02-06 04:06:01'),
-(19, 28, 7, 'tanu salunke', 99999999.99, '', 'cash', NULL, 'success', '2026-02-06 04:06:30'),
-(20, 29, 8, 'Raj Sawant', 99999999.99, 'bdjh', 'cash', NULL, 'success', '2026-02-06 04:06:56'),
-(21, 30, 7, 'tanu salunke', 99999999.99, '', 'cash', NULL, 'success', '2026-02-06 04:08:06'),
-(22, 32, 8, 'Raj Sawant', 99999999.99, 'oughui', 'cash', NULL, 'success', '2026-02-06 04:17:43'),
-(23, 33, 8, 'Raj Sawant', 99999999.99, '', 'cash', NULL, 'success', '2026-02-06 04:18:00'),
-(24, 35, 9, 'atharva dhuri', 10000.00, '', 'cash', NULL, 'success', '2026-02-06 04:50:02');
 
 -- --------------------------------------------------------
 
@@ -244,15 +236,16 @@ CREATE TABLE `pooja` (
   `fee` decimal(10,2) DEFAULT NULL,
   `payment_id` int(11) DEFAULT NULL,
   `status` enum('pending','paid','cancelled','completed') DEFAULT 'pending',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `pooja`
 --
 
-INSERT INTO `pooja` (`id`, `user_id`, `pooja_type_id`, `pooja_date`, `time_slot`, `description`, `fee`, `payment_id`, `status`, `created_at`) VALUES
-(8, 6, 2, '2026-02-18', 'evening', '', 200.00, NULL, 'pending', '2026-02-06 05:06:11');
+INSERT INTO `pooja` (`id`, `user_id`, `pooja_type_id`, `pooja_date`, `time_slot`, `description`, `fee`, `payment_id`, `status`, `created_at`, `updated_at`) VALUES
+(12, 15, 2, '2026-02-10', 'morning', 'hi', 200.00, NULL, 'pending', '2026-02-09 06:34:05', '2026-02-09 06:34:05');
 
 -- --------------------------------------------------------
 
@@ -264,18 +257,19 @@ CREATE TABLE `pooja_type` (
   `id` int(11) NOT NULL,
   `type` varchar(100) NOT NULL,
   `fee` decimal(10,2) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `pooja_type`
 --
 
-INSERT INTO `pooja_type` (`id`, `type`, `fee`, `created_at`) VALUES
-(1, 'Archana', 100.00, '2026-01-31 16:16:59'),
-(2, 'Abhishek', 200.00, '2026-01-31 16:16:59'),
-(3, 'Ganesh', 250.00, '2026-01-31 16:17:29'),
-(4, 'Satyanarayan', 501.00, '2026-01-31 16:17:29');
+INSERT INTO `pooja_type` (`id`, `type`, `fee`, `created_at`, `updated_at`) VALUES
+(1, 'Archana Pooja', 100.00, '2026-01-31 16:16:59', '2026-02-06 10:30:13'),
+(2, 'Abhishek Pooja', 200.00, '2026-01-31 16:16:59', '2026-02-06 10:30:13'),
+(3, 'Ganesh Pooja', 250.00, '2026-01-31 16:17:29', '2026-02-06 10:30:13'),
+(4, 'Satyanarayan Pooja', 501.00, '2026-01-31 16:17:29', '2026-02-06 10:30:13');
 
 -- --------------------------------------------------------
 
@@ -291,27 +285,18 @@ CREATE TABLE `receipt` (
   `amount` decimal(10,2) NOT NULL DEFAULT 0.00,
   `source_table` varchar(50) NOT NULL,
   `issued_on` datetime DEFAULT current_timestamp(),
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `verified_by_secretary` int(11) DEFAULT NULL,
+  `verified_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `receipt`
 --
 
-INSERT INTO `receipt` (`id`, `user_id`, `receipt_no`, `purpose`, `amount`, `source_table`, `issued_on`, `created_at`) VALUES
-(23, 6, 'DON/2026/0205162707/284', 'donation', 121.00, 'donations', '2026-02-05 20:57:07', '2026-02-05 15:27:07'),
-(24, 6, 'DON/2026/0205163003/215', 'donation', 1.00, 'donations', '2026-02-05 21:00:03', '2026-02-05 15:30:03'),
-(25, 6, 'DON/2026/0205163231/753', 'donation', 1.00, 'donations', '2026-02-05 21:02:31', '2026-02-05 15:32:31'),
-(26, 7, 'DON/2026/0206050524/592', 'donation', 5000.00, 'donations', '2026-02-06 09:35:24', '2026-02-06 04:05:24'),
-(27, 8, 'DON/2026/0206050601/655', 'donation', 1000000.00, 'donations', '2026-02-06 09:36:01', '2026-02-06 04:06:01'),
-(28, 7, 'DON/2026/0206050630/138', 'donation', 99999999.99, 'donations', '2026-02-06 09:36:30', '2026-02-06 04:06:30'),
-(29, 8, 'DON/2026/0206050657/828', 'donation', 99999999.99, 'donations', '2026-02-06 09:36:57', '2026-02-06 04:06:57'),
-(30, 7, 'DON/2026/0206050806/499', 'donation', 99999999.99, 'donations', '2026-02-06 09:38:06', '2026-02-06 04:08:06'),
-(31, 8, 'CON/2026/0206051245/287', 'contribution', 0.00, 'contributions', '2026-02-06 09:42:45', '2026-02-06 04:12:45'),
-(32, 8, 'DON/2026/0206051743/697', 'donation', 99999999.99, 'donations', '2026-02-06 09:47:43', '2026-02-06 04:17:43'),
-(33, 8, 'DON/2026/0206051800/794', 'donation', 99999999.99, 'donations', '2026-02-06 09:48:00', '2026-02-06 04:18:00'),
-(34, 8, 'CON/2026/0206053931/959', 'contribution', 0.00, 'contributions', '2026-02-06 10:09:31', '2026-02-06 04:39:31'),
-(35, 9, 'DON/2026/0206055002/840', 'donation', 10000.00, 'donations', '2026-02-06 10:20:02', '2026-02-06 04:50:02');
+INSERT INTO `receipt` (`id`, `user_id`, `receipt_no`, `purpose`, `amount`, `source_table`, `issued_on`, `created_at`, `updated_at`, `verified_by_secretary`, `verified_at`) VALUES
+(36, 10, 'DON/2026/0206151902/685', 'donation', 10.00, 'donations', '2026-02-06 19:49:02', '2026-02-06 14:19:02', '2026-02-08 13:58:13', 15, '2026-02-08 19:28:13');
 
 -- --------------------------------------------------------
 
@@ -323,20 +308,21 @@ CREATE TABLE `roles` (
   `id` int(11) NOT NULL,
   `name` varchar(50) NOT NULL,
   `description` text DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `roles`
 --
 
-INSERT INTO `roles` (`id`, `name`, `description`, `created_at`) VALUES
-(1, 'customer', 'Customer', '2026-01-28 10:27:01'),
-(2, 'member', 'Member', '2026-01-27 16:06:09'),
-(3, 'secretary', 'Secretary', '2026-01-27 16:05:53'),
-(4, 'treasurer', 'Treasurer', '2026-01-27 16:05:53'),
-(98, 'vice chairman', 'Vice Chairman', '2026-01-27 16:04:11'),
-(99, 'chairman', 'Chairman', '2026-01-27 16:04:11');
+INSERT INTO `roles` (`id`, `name`, `description`, `created_at`, `updated_at`) VALUES
+(1, 'customer', 'Customer', '2026-01-28 10:27:01', '2026-02-06 10:30:13'),
+(2, 'member', 'Member', '2026-01-27 16:06:09', '2026-02-06 10:30:13'),
+(3, 'secretary', 'Secretary', '2026-01-27 16:05:53', '2026-02-06 10:30:13'),
+(4, 'treasurer', 'Treasurer', '2026-01-27 16:05:53', '2026-02-06 10:30:13'),
+(98, 'vice chairman', 'Vice Chairman', '2026-01-27 16:04:11', '2026-02-06 10:30:13'),
+(99, 'chairman', 'Chairman', '2026-01-27 16:04:11', '2026-02-06 10:30:13');
 
 -- --------------------------------------------------------
 
@@ -352,15 +338,16 @@ CREATE TABLE `temple_info` (
   `contact` varchar(100) DEFAULT NULL,
   `time` varchar(100) DEFAULT NULL,
   `address` varchar(255) NOT NULL,
-  `location` varchar(255) DEFAULT NULL
+  `location` varchar(255) DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `temple_info`
 --
 
-INSERT INTO `temple_info` (`id`, `temple_name`, `description`, `photo`, `contact`, `time`, `address`, `location`) VALUES
-(1, 'Mahapurush Temple', 'A sacred temple dedicated to Lord Shiva, offering peace and spiritual harmony.', '', '+91 9823369562', '8:00 AM - 8:00 PM', 'A/P: Budruk, Oros', '4P76+HF3, Sindhu Durg, Oros, Maharashtra 416812');
+INSERT INTO `temple_info` (`id`, `temple_name`, `description`, `photo`, `contact`, `time`, `address`, `location`, `updated_at`) VALUES
+(1, 'Mahapurush Temple', 'A sacred temple dedicated to Lord Shiva, offering peace and spiritual harmony.', '', '+91 9823369562', '8:00 AM - 8:00 PM', 'A/P: Budruk, Oros', '4P76+HF3, Sindhu Durg, Oros, Maharashtra 416812', '2026-02-06 10:30:13');
 
 -- --------------------------------------------------------
 
@@ -373,22 +360,27 @@ CREATE TABLE `users` (
   `first_name` varchar(100) NOT NULL,
   `last_name` varchar(100) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
-  `photo` varchar(255) NOT NULL,
+  `photo` varchar(255) DEFAULT NULL,
   `email` varchar(150) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `first_name`, `last_name`, `phone`, `photo`, `email`, `password`, `created_at`) VALUES
-(5, 'Abhishek', 'Bhat', '9823369562', 'user_697a0bf54cbcb4.54961703.jpeg', 'abhishekbhat014@gmail.com', '$2y$10$KfLlAZCa/BSCHnji1zULoO5A0ovagpR5mQX8OoRc3/t4uTakdAt/S', '2026-01-28 13:15:33'),
-(6, 'Yojana', 'Gawade', '8999057576', '', 'gawadeyojana010@gmail.com', '$2y$10$W.keHS.KpSPHCSz.1iToY.u5pvApEjUaGTl4HI4uqLBLJaT6owbDu', '2026-01-29 06:50:15'),
-(7, 'tanu', 'salunke', '9785641425', 'user_6985684e0f6df3.19499536.jpg', 'tanus@gmail.com', '$2y$10$vw3Qfp0EcTRUUwQh0oajB.S5nhHhwn83AySh0B0R1l5u0d8kVDSR6', '2026-02-06 04:04:30'),
-(8, 'Raj', 'Sawant', '9422911029', 'user_698568516419c0.43455690.jpeg', 'sawanty2764@gmail.com', '$2y$10$qgR7vN9rkaa5gJpjpY/SZO3RHBEdx08RpeCPfoHEQAZJTCG25q8uy', '2026-02-06 04:04:33'),
-(9, 'atharva', 'dhuri', '3366554411', 'user_698572e5b48d93.47410126.jpeg', 'ad@gmail.com', '$2y$10$L.EdBP9SJIIc0zQYY39M9OgayVwWNQQOjMzO0vl7Klipga48X7CMu', '2026-02-06 04:49:41');
+INSERT INTO `users` (`id`, `first_name`, `last_name`, `phone`, `photo`, `email`, `password`, `created_at`, `updated_at`) VALUES
+(10, 'Normal', 'Customer', '1234567890', NULL, 'customer1@gmail.com', '$2y$10$GavV.I885gPQLmj6H0Bsbu0e7Q/iDAyCq2oBmsg6EVuxzEM4JDKvy', '2026-02-06 10:33:44', '2026-02-06 15:05:05'),
+(11, 'First', 'Member', '1234567899', NULL, 'member1@gmail.com', '$2y$10$sP.88lADtQZ5Mhlc3/jw9uZXpMkdZOLJSH74ARQi6mob6/Lw7jSgK', '2026-02-06 10:36:03', '2026-02-08 07:28:42'),
+(12, 'First', 'Secretary', '1234567811', NULL, 'secretary@gmail.com', '$2y$10$0fA9/9U7yxZo93zO.ewCROH7NvtKQ79u/B.LT4GAxF3UzViArvrBi', '2026-02-06 10:36:58', '2026-02-08 07:28:53'),
+(13, 'First', 'Chairman', '1233333333', NULL, 'chairman@gmail.com', '$2y$10$6OzQU9qVOSiaNWbFYJbiiOC83C/mST6JHpsXStXoevdBv4kxFdmW2', '2026-02-06 10:37:25', '2026-02-08 07:28:49'),
+(14, 'First', 'Vicechairman', '1111111111', NULL, 'vicechairman@gmail.com', '$2y$10$.R4jIkU4B14.TNMzfO7qIuvvm.7gl.otVEWrAwMZNYABLqZeu45Ze', '2026-02-06 10:37:48', '2026-02-08 07:28:59'),
+(15, 'Abhishek', 'Bhat', '9823369562', NULL, 'abhishekbhat014@gmail.com', '$2y$10$d6RjhG7y4GnolX0HChe7AOv2FaqyoABFCo9cuN7EPUdK.B7kVJgSS', '2026-02-06 10:47:12', '2026-02-08 12:16:00'),
+(16, 'Yojana', 'Gawade', '8999057576', NULL, 'gawadeyojana010@gmail.com', '$2y$10$tnbidxYPxJeqrSs0PYutAednrjCEVJl4jk/ebkIAtPg0akBTiy97O', '2026-02-06 10:48:13', '2026-02-08 07:28:56'),
+(17, 'Santosh', 'Gawade', '2222222222', NULL, 'santoshgawade@gmail.com', '$2y$10$luDrbEJxJIoCeEWAfvvZgutZHbAOdqpCU8lrU9xlflxR3.ptj4wY.', '2026-02-06 10:51:22', '2026-02-06 10:51:22'),
+(18, 'adsf', 'afds', '1234555555', NULL, 'customer11@gmail.com', '$2y$10$4wFOCO1AByz0he2HlKSWpOozBx6.bFvWSwIFemi/pvk4FXtgzBa2G', '2026-02-09 05:48:54', '2026-02-09 05:48:54');
 
 -- --------------------------------------------------------
 
@@ -399,19 +391,21 @@ INSERT INTO `users` (`id`, `first_name`, `last_name`, `phone`, `photo`, `email`,
 CREATE TABLE `user_roles` (
   `user_id` int(11) NOT NULL,
   `role_id` int(11) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `user_roles`
 --
 
-INSERT INTO `user_roles` (`user_id`, `role_id`, `created_at`) VALUES
-(5, 2, '2026-01-28 13:15:33'),
-(6, 99, '2026-02-05 16:30:13'),
-(7, 1, '2026-02-06 04:04:30'),
-(8, 1, '2026-02-06 04:04:33'),
-(9, 1, '2026-02-06 04:49:41');
+INSERT INTO `user_roles` (`user_id`, `role_id`, `created_at`, `updated_at`) VALUES
+(15, 1, '2026-02-06 10:47:12', '2026-02-06 10:47:12'),
+(15, 2, '2026-02-06 10:51:22', '2026-02-08 09:48:03'),
+(15, 3, '2026-02-06 10:33:44', '2026-02-08 13:39:01'),
+(15, 4, '2026-02-06 10:48:13', '2026-02-08 10:12:00'),
+(15, 98, '2026-02-07 13:38:48', '2026-02-07 15:38:14'),
+(15, 99, '2026-02-07 15:38:43', '2026-02-07 15:38:43');
 
 --
 -- Indexes for dumped tables
@@ -465,8 +459,7 @@ ALTER TABLE `event_participants`
 -- Indexes for table `feedbacks`
 --
 ALTER TABLE `feedbacks`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `user_id` (`user_id`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `gallery`
@@ -575,19 +568,19 @@ ALTER TABLE `events`
 -- AUTO_INCREMENT for table `event_participants`
 --
 ALTER TABLE `event_participants`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `feedbacks`
 --
 ALTER TABLE `feedbacks`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `gallery`
 --
 ALTER TABLE `gallery`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `gallery_category`
@@ -599,13 +592,13 @@ ALTER TABLE `gallery_category`
 -- AUTO_INCREMENT for table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `pooja`
 --
 ALTER TABLE `pooja`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `pooja_type`
@@ -617,7 +610,7 @@ ALTER TABLE `pooja_type`
 -- AUTO_INCREMENT for table `receipt`
 --
 ALTER TABLE `receipt`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT for table `roles`
@@ -635,7 +628,7 @@ ALTER TABLE `temple_info`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- Constraints for dumped tables
@@ -663,12 +656,6 @@ ALTER TABLE `donations`
 ALTER TABLE `event_participants`
   ADD CONSTRAINT `event_participants_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `event_participants_ibfk_2` FOREIGN KEY (`event_id`) REFERENCES `events` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `feedbacks`
---
-ALTER TABLE `feedbacks`
-  ADD CONSTRAINT `feedbacks_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `gallery`

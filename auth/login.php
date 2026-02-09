@@ -1,14 +1,24 @@
 <?php
-// inlcude laguage file
+// Include language file
 require __DIR__ . '/../includes/lang.php';
 
-// include db file
+// Include db file
 $dbPath = __DIR__ . '/../config/db.php';
 
 if (file_exists($dbPath)) {
     require $dbPath;
 } else {
     die($t['db_connection_missing']);
+}
+
+// FIX: Check if user is already logged in
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
+    header("Location: redirect.php");
+    exit;
 }
 
 $error = "";
@@ -52,6 +62,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $_SESSION['user_name'] = trim($user['first_name'] . ' ' . $user['last_name']);
                 $_SESSION['user_photo'] = $user['photo'] ?? null;
                 $_SESSION['roles'] = $roles;
+                $_SESSION['user_email'] = $email;
                 $_SESSION['logged_in'] = true;
                 $_SESSION['primary_role'] = $roles[0] ?? "customer";
 
@@ -137,7 +148,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         .ant-card-body {
             padding: 40px;
-            /* Consistent 32px-40px padding */
         }
 
         /* --- Form Controls --- */
@@ -163,6 +173,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             background: #fafafa;
             border-color: #d9d9d9;
             color: var(--ant-text-sec);
+        }
+
+        /* --- REMOVE BOOTSTRAP VALIDATION SUCCESS ICONS --- */
+        .was-validated .form-control:valid {
+            background-image: none !important;
+            border-color: #d9d9d9 !important;
+            padding-right: 12px !important;
+        }
+
+        .was-validated .form-control:valid:focus {
+            border-color: var(--ant-primary) !important;
+            box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1) !important;
         }
 
         /* --- Buttons --- */
@@ -322,6 +344,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         });
     </script>
     <script>
+        // Only keep this if you want to prevent form resubmission on refresh
+        // It does NOT handle the back button cache issue alone.
         if (window.history.replaceState) {
             window.history.replaceState(null, null, window.location.href);
         }

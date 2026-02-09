@@ -38,7 +38,7 @@ $result = mysqli_query($con, $sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Donations - <?= $t['title'] ?></title>
+    <title><?php echo $t['view_all_donations']; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -225,7 +225,7 @@ $result = mysqli_query($con, $sql);
                     </div>
                 <?php endif; ?>
 
-                <div class="user-pill">
+                <div class="user-pill shadow-sm">
                     <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
                     <span
@@ -241,8 +241,8 @@ $result = mysqli_query($con, $sql);
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Donations</h2>
-                    <p class="text-secondary mb-0">View all successful donations and payment records.</p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['view_all_donations']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['payment_records_desc']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -252,10 +252,10 @@ $result = mysqli_query($con, $sql);
                                 <table class="table ant-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Receipt No</th>
-                                            <th>Donor Name</th>
-                                            <th>Amount</th>
-                                            <th>Date</th>
+                                            <th><?php echo $t['receipt_no']; ?></th>
+                                            <th><?php echo $t['donor_name']; ?></th>
+                                            <th><?php echo $t['amount']; ?></th>
+                                            <th><?php echo $t['date']; ?></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -277,7 +277,7 @@ $result = mysqli_query($con, $sql);
                                             <tr>
                                                 <td colspan="4" class="text-center py-5 text-muted">
                                                     <i class="bi bi-inbox fs-1 opacity-25 d-block mb-3"></i>
-                                                    No donations found.
+                                                    <?php echo $t['no_donations_found']; ?>
                                                 </td>
                                             </tr>
                                         <?php endif; ?>
@@ -294,7 +294,7 @@ $result = mysqli_query($con, $sql);
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Disable Right Click
-        document.addEventListener('contextmenu', function (e) {
+        document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
         });
     </script>

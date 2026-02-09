@@ -21,7 +21,7 @@ $loggedInUserPhoto = get_user_avatar_url('../../');
 $successMsg = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // In a real app, you would update the DB here.
-    $successMsg = "Settings updated successfully.";
+    $successMsg = $t['settings_updated_success'] ?? "Settings updated successfully.";
 }
 ?>
 
@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings - <?= $t['title'] ?></title>
+    <title><?php echo $t['settings_title']; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -145,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background: radial-gradient(circle at top right, #e6f4ff 0%, #ffffff 80%);
             padding: 40px 32px;
             border-bottom: 1px solid var(--ant-border-color);
-            margin-bottom: 0;
+            margin-bottom: 32px;
         }
 
         .ant-card {
@@ -162,12 +162,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: var(--ant-text-sec);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            border-color: var(--ant-primary);
-            box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
         }
 
         .btn-primary {
@@ -243,12 +237,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Settings</h2>
-                    <p class="text-secondary mb-0">Configure temple-level system settings and operational preferences.
-                    </p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['settings_title']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['settings_desc']; ?></p>
                 </div>
 
-                <div class="px-4 pb-5 pt-4">
+                <div class="px-4 pb-5">
 
                     <?php if ($successMsg): ?>
                         <div class="alert alert-success border-0 shadow-sm d-flex align-items-center mb-4" role="alert">
@@ -263,20 +256,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <div class="row g-4">
                                     <div class="col-md-6">
                                         <label
-                                            class="form-label"><?php echo $t['notification_email'] ?? 'Notification Email'; ?></label>
+                                            class="form-label"><?php echo $t['notification_email']; ?></label>
                                         <input type="email" class="form-control" name="notification_email"
                                             value="chairman@temple.com">
                                         <div class="form-text">Email to receive system alerts.</div>
                                     </div>
                                     <div class="col-md-6">
                                         <label
-                                            class="form-label"><?php echo $t['default_approver'] ?? 'Default Approver'; ?></label>
+                                            class="form-label"><?php echo $t['default_approver']; ?></label>
                                         <input type="text" class="form-control" value="Chairman" readonly>
                                         <div class="form-text">System default setting.</div>
                                     </div>
                                     <div class="col-md-6">
                                         <label
-                                            class="form-label"><?php echo $t['approval_mode'] ?? 'Approval Mode'; ?></label>
+                                            class="form-label"><?php echo $t['approval_mode']; ?></label>
                                         <select class="form-select" name="approval_mode">
                                             <option value="manual" selected>Manual Approval</option>
                                             <option value="auto">Auto-Approve Low Value</option>
@@ -284,7 +277,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </div>
                                     <div class="col-md-6">
                                         <label
-                                            class="form-label"><?php echo $t['auto_assign'] ?? 'Auto Assign'; ?></label>
+                                            class="form-label"><?php echo $t['auto_assign']; ?></label>
                                         <select class="form-select" name="auto_assign">
                                             <option value="disabled" selected>Disabled</option>
                                             <option value="enabled">Enabled</option>
@@ -294,7 +287,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <div class="col-12 mt-4 pt-3 border-top text-end">
                                         <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">
                                             <i class="bi bi-save me-1"></i>
-                                            <?php echo $t['save_changes'] ?? 'Save Changes'; ?>
+                                            <?php echo $t['save_changes']; ?>
                                         </button>
                                     </div>
                                 </div>
@@ -309,7 +302,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Disable Right Click
-        document.addEventListener('contextmenu', function (e) {
+        document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
         });
     </script>

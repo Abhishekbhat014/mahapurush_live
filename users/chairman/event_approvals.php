@@ -62,7 +62,7 @@ $events = mysqli_query($con, "
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Approvals - <?= $t['title'] ?></title>
+    <title><?php echo $t['event_approvals_title']; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -275,8 +275,8 @@ $events = mysqli_query($con, "
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Event Approvals</h2>
-                    <p class="text-secondary mb-0">Review pending event requests.</p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['event_approvals_title']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['event_approvals_desc']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -284,7 +284,7 @@ $events = mysqli_query($con, "
                     <?php if (isset($_GET['msg']) && $_GET['msg'] == 'success'): ?>
                         <div class="alert alert-success border-0 shadow-sm d-flex align-items-center mb-4" role="alert">
                             <i class="bi bi-check-circle-fill me-2"></i>
-                            <div>Action completed successfully.</div>
+                            <div><?php echo $t['action_completed_success']; ?></div>
                         </div>
                     <?php endif; ?>
 
@@ -293,11 +293,11 @@ $events = mysqli_query($con, "
                             <table class="table ant-table mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Title</th>
-                                        <th>Date</th>
-                                        <th>Description</th>
-                                        <th>Created By</th>
-                                        <th class="text-end">Action</th>
+                                        <th><?php echo $t['title_label']; ?></th>
+                                        <th><?php echo $t['date']; ?></th>
+                                        <th><?php echo $t['description']; ?></th>
+                                        <th><?php echo $t['created_by']; ?></th>
+                                        <th class="text-end"><?php echo $t['action']; ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -313,7 +313,7 @@ $events = mysqli_query($con, "
                                                     </div>
                                                 </td>
                                                 <td class="text-muted small">
-                                                    <?= htmlspecialchars(substr($row['description'], 0, 50)) ?>...
+                                                    <?= htmlspecialchars(substr($row['name'], 0, 50)) ?>...
                                                 </td>
                                                 <td>
                                                     <span class="badge bg-light text-dark border fw-normal">
@@ -323,11 +323,11 @@ $events = mysqli_query($con, "
                                                 <td class="text-end">
                                                     <a href="?action=approve&id=<?= $row['id'] ?>"
                                                         class="btn btn-success btn-sm action-btn me-1">
-                                                        <i class="bi bi-check-lg"></i> Approve
+                                                        <i class="bi bi-check-lg"></i> <?php echo $t['approve_btn']; ?>
                                                     </a>
                                                     <a href="?action=reject&id=<?= $row['id'] ?>"
                                                         class="btn btn-danger btn-sm action-btn">
-                                                        <i class="bi bi-x-lg"></i> Reject
+                                                        <i class="bi bi-x-lg"></i> <?php echo $t['reject_btn']; ?>
                                                     </a>
                                                 </td>
                                             </tr>
@@ -336,7 +336,7 @@ $events = mysqli_query($con, "
                                         <tr>
                                             <td colspan="5" class="text-center py-5 text-muted">
                                                 <i class="bi bi-calendar-check fs-1 opacity-25 d-block mb-3"></i>
-                                                No pending events for approval.
+                                                <?php echo $t['no_pending_events']; ?>
                                             </td>
                                         </tr>
                                     <?php endif; ?>

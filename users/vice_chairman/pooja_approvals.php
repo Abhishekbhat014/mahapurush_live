@@ -28,7 +28,7 @@ if ($roleRes && mysqli_num_rows($roleRes) > 0) {
 }
 
 // Check permission (Vice Chairman only)
-$canApprove = ($userRole == 3);
+$canApprove = ($userRole == 3); // Adjust role ID as per your DB
 
 // --- 2. HANDLE APPROVAL ACTION ---
 if (isset($_GET['approve']) && $canApprove) {
@@ -65,7 +65,7 @@ $result = mysqli_query($con, $sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pooja Approvals - <?= $t['title'] ?></title>
+    <title><?php echo $t['pooja_approvals_title']; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -281,8 +281,8 @@ $result = mysqli_query($con, $sql);
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Pooja Approvals</h2>
-                    <p class="text-secondary mb-0">Approve, assign, edit, or delete requests.</p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['pooja_approvals_title']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['pooja_approvals_desc']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -290,7 +290,7 @@ $result = mysqli_query($con, $sql);
                     <?php if (isset($_GET['msg']) && $_GET['msg'] == 'approved'): ?>
                         <div class="alert alert-success border-0 shadow-sm d-flex align-items-center mb-4" role="alert">
                             <i class="bi bi-check-circle-fill me-2"></i>
-                            <div>Request successfully approved!</div>
+                            <div><?php echo $t['approved_successfully']; ?></div>
                         </div>
                     <?php endif; ?>
 
@@ -330,12 +330,12 @@ $result = mysqli_query($con, $sql);
                                                     <?php if ($canApprove): ?>
                                                         <a href="?approve=<?= $r['id'] ?>"
                                                             class="btn btn-success btn-sm action-btn">
-                                                            <i class="bi bi-check-lg me-1"></i> <?= $t['approve'] ?? 'Approve'; ?>
+                                                            <i class="bi bi-check-lg me-1"></i> <?php echo $t['approve']; ?>
                                                         </a>
                                                     <?php else: ?>
                                                         <button class="btn btn-secondary btn-sm action-btn" disabled
                                                             title="Only Vice Chairman can approve">
-                                                            <i class="bi bi-lock-fill me-1"></i> <?= $t['approve'] ?? 'Approve'; ?>
+                                                            <i class="bi bi-lock-fill me-1"></i> <?php echo $t['approve']; ?>
                                                         </button>
                                                     <?php endif; ?>
                                                 </td>
@@ -345,7 +345,7 @@ $result = mysqli_query($con, $sql);
                                         <tr>
                                             <td colspan="6" class="text-center py-5 text-muted">
                                                 <i class="bi bi-calendar2-x fs-1 opacity-25 d-block mb-3"></i>
-                                                <?php echo $t['no_bookings_scheduled'] ?? 'No pending requests found.'; ?>
+                                                <?php echo $t['no_pending_requests']; ?>
                                             </td>
                                         </tr>
                                     <?php endif; ?>
@@ -361,7 +361,7 @@ $result = mysqli_query($con, $sql);
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Disable Right Click
-        document.addEventListener('contextmenu', function (e) {
+        document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
         });
     </script>

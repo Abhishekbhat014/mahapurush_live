@@ -15,6 +15,7 @@ $primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
 $currLang = $_SESSION['lang'] ?? 'en';
 $currentPage = 'reports.php';
 $loggedInUserPhoto = get_user_avatar_url('../../');
+$userName = $_SESSION['user_name'] ?? 'User';
 
 // --- REPORT LOGIC ---
 $fromDate = $_GET['from_date'] ?? date('Y-m-01'); // Default: Start of current month
@@ -59,18 +60,19 @@ if ($con) {
 ?>
 
 <!DOCTYPE html>
-<html lang="<?= $lang ?>">
+<html lang="<?= $currLang ?>">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reports - <?= $t['title'] ?? 'Temple' ?></title>
+    <title><?php echo $t['financial_reports_title']; ?> - <?= $t['title'] ?? 'Temple' ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
     <style>
         /* --- GLOBAL THEME VARIABLES --- */
         :root {
+            /* Standard App Colors (Blue) */
             --ant-primary: #1677ff;
             --ant-primary-hover: #4096ff;
             --ant-bg-layout: #f0f2f5;
@@ -89,6 +91,7 @@ if ($con) {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--ant-bg-layout);
             color: var(--ant-text);
+            /* Disable text selection globally */
             -webkit-user-select: none;
             user-select: none;
         }
@@ -193,6 +196,27 @@ if ($con) {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
 
+        .form-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ant-text-sec);
+            margin-bottom: 6px;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 8px;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            font-size: 14px;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--ant-primary);
+            box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+        }
+
         .btn-primary {
             background: var(--ant-primary);
             border: none;
@@ -204,6 +228,7 @@ if ($con) {
         .btn-primary:hover {
             background: var(--ant-primary-hover);
             transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(22, 119, 255, 0.2);
         }
 
         .summary-box {
@@ -225,6 +250,35 @@ if ($con) {
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 12px;
+        }
+
+        /* Sidebar */
+        .ant-sidebar {
+            background: #fff;
+            border-right: 1px solid var(--ant-border-color);
+            height: calc(100vh - 64px);
+            position: sticky;
+            top: 64px;
+            padding: 20px 0;
+        }
+
+        .nav-link-custom {
+            padding: 12px 24px;
+            color: var(--ant-text);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .nav-link-custom:hover,
+        .nav-link-custom.active {
+            color: var(--ant-primary);
+            background: #e6f4ff;
+            border-right: 3px solid var(--ant-primary);
         }
     </style>
 </head>
@@ -277,8 +331,7 @@ if ($con) {
                 <div class="user-pill">
                     <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
-                    <span
-                        class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                    <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($userName) ?></span>
                 </div>
             </div>
         </div>
@@ -290,9 +343,9 @@ if ($con) {
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Financial Reports</h2>
+                    <h2 class="fw-bold mb-1"><?php echo $t['financial_reports_title']; ?></h2>
                     <p class="text-secondary mb-0">
-                        Generate summary of donations, receipts and collections for a selected period.
+                        <?php echo $t['financial_reports_desc']; ?>
                     </p>
                 </div>
 
@@ -301,18 +354,20 @@ if ($con) {
 
                         <form method="GET" class="row g-3 mb-5 align-items-end">
                             <div class="col-md-4">
-                                <label class="form-label small text-muted text-uppercase fw-bold">From Date</label>
+                                <label
+                                    class="form-label small text-muted text-uppercase fw-bold"><?php echo $t['from_date']; ?></label>
                                 <input type="date" name="from_date" class="form-control"
                                     value="<?= htmlspecialchars($fromDate) ?>">
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label small text-muted text-uppercase fw-bold">To Date</label>
+                                <label
+                                    class="form-label small text-muted text-uppercase fw-bold"><?php echo $t['to_date']; ?></label>
                                 <input type="date" name="to_date" class="form-control"
                                     value="<?= htmlspecialchars($toDate) ?>">
                             </div>
                             <div class="col-md-4">
                                 <button class="btn btn-primary w-100">
-                                    <i class="bi bi-bar-chart-line me-2"></i> Generate Report
+                                    <i class="bi bi-bar-chart-line me-2"></i> <?php echo $t['generate_report']; ?>
                                 </button>
                             </div>
                         </form>
@@ -320,54 +375,54 @@ if ($con) {
                         <div class="row g-4 mb-4">
                             <div class="col-md-4">
                                 <div class="summary-box">
-                                    <h6 class="text-primary">Total Collected</h6>
+                                    <h6 class="text-primary"><?php echo $t['total_collected']; ?></h6>
                                     <h3 class="fw-bold text-dark">₹<?= number_format($totalAmount, 2) ?></h3>
-                                    <small class="text-muted">For selected period</small>
+                                    <small class="text-muted"><?php echo $t['selected_period']; ?></small>
                                 </div>
                             </div>
 
                             <div class="col-md-4">
                                 <div class="summary-box">
-                                    <h6 class="text-success">Total Transactions</h6>
+                                    <h6 class="text-success"><?php echo $t['total_transactions']; ?></h6>
                                     <h3 class="fw-bold text-dark"><?= number_format($totalCount) ?></h3>
-                                    <small class="text-muted">Receipts Generated</small>
+                                    <small class="text-muted"><?php echo $t['receipts_generated_small']; ?></small>
                                 </div>
                             </div>
 
                             <div class="col-md-4">
                                 <div class="summary-box">
-                                    <h6 class="text-info">Average Donation</h6>
+                                    <h6 class="text-info"><?php echo $t['average_donation']; ?></h6>
                                     <h3 class="fw-bold text-dark">
                                         ₹<?= $totalCount > 0 ? number_format($totalAmount / $totalCount, 2) : '0.00' ?>
                                     </h3>
-                                    <small class="text-muted">Per transaction</small>
+                                    <small class="text-muted"><?php echo $t['per_transaction']; ?></small>
                                 </div>
                             </div>
                         </div>
 
                         <?php if (!empty($modeBreakdown)): ?>
-                            <h5 class="fw-bold mb-3">Breakdown by Payment Mode</h5>
+                            <h5 class="fw-bold mb-3"><?php echo $t['breakdown_by_payment_mode']; ?></h5>
                             <div class="table-responsive">
                                 <table class="table table-bordered align-middle">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>Payment Mode</th>
-                                            <th class="text-center">Transactions</th>
-                                            <th class="text-end">Total Amount</th>
+                                            <th><?php echo $t['payment_mode']; ?></th>
+                                            <th class="text-center"><?php echo $t['transactions']; ?></th>
+                                            <th class="text-end"><?php echo $t['total_amount']; ?></th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php foreach ($modeBreakdown as $mode): ?>
                                             <tr>
                                                 <td class="text-capitalize fw-medium">
-                                                    <?= htmlspecialchars($mode['payment_mode']) ?>
+                                                    <?= htmlspecialchars($mode['payment_method']) ?>
                                                 </td>
                                                 <td class="text-center"><?= $mode['cnt'] ?></td>
                                                 <td class="text-end fw-bold">₹<?= number_format($mode['total'], 2) ?></td>
                                             </tr>
                                         <?php endforeach; ?>
                                         <tr class="table-secondary fw-bold">
-                                            <td>Total</td>
+                                            <td><?php echo $t['total'] ?? 'Total'; ?></td>
                                             <td class="text-center"><?= $totalCount ?></td>
                                             <td class="text-end">₹<?= number_format($totalAmount, 2) ?></td>
                                         </tr>

@@ -11,12 +11,14 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 }
 
 $uid = (int) $_SESSION['user_id'];
-$currentPage = 'gallery.php';
+$availableRoles = $_SESSION['roles'] ?? [];
+$primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
 $currLang = $_SESSION['lang'] ?? 'en';
+$currentPage = 'gallery.php';
+$loggedInUserPhoto = get_user_avatar_url('../../');
+
 $success = '';
 $error = '';
-
-$loggedInUserPhoto = get_user_avatar_url('../../');
 
 $galleryDir = __DIR__ . '/../../gallery';
 if (!is_dir($galleryDir)) {
@@ -335,6 +337,43 @@ while ($row = mysqli_fetch_assoc($imgRes)) {
             background: #e6f4ff;
             color: #1677ff;
         }
+
+        /* --- HOVER DROPDOWN LOGIC --- */
+        @media (min-width: 992px) {
+            .dropdown:hover .dropdown-menu {
+                display: block;
+                margin-top: 0;
+            }
+
+            .dropdown .dropdown-menu {
+                display: none;
+            }
+
+            .dropdown:hover>.dropdown-menu {
+                display: block;
+                animation: fadeIn 0.2s ease-in-out;
+            }
+        }
+
+        /* --- ACTIVE DROPDOWN ITEM (Dark Blue) --- */
+        .dropdown-item.active,
+        .dropdown-item:active {
+            background-color: var(--ant-primary) !important;
+            color: #fff !important;
+            font-weight: 600;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 
@@ -347,32 +386,47 @@ while ($row = mysqli_fetch_assoc($imgRes)) {
                 </button>
             </div>
             <div class="d-flex align-items-center gap-3">
+
                 <div class="dropdown">
                     <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
                         <i class="bi bi-translate me-1"></i>
                         <?= ($currLang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
-                        <li>
-                            <a class="dropdown-item small fw-medium <?= ($currLang == 'en') ? 'active' : '' ?>"
-                                href="?lang=en" aria-current="<?= ($currLang == 'en') ? 'true' : 'false' ?>">
-                                <?php echo $t['lang_english']; ?>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item small fw-medium <?= ($currLang == 'mr') ? 'active' : '' ?>"
-                                href="?lang=mr" aria-current="<?= ($currLang == 'mr') ? 'true' : 'false' ?>">
-                                <?php echo $t['lang_marathi_full']; ?>
-                            </a>
-                        </li>
+                        <li><a class="dropdown-item small fw-medium <?= ($currLang == 'en') ? 'active' : '' ?>"
+                                href="?lang=en">English</a></li>
+                        <li><a class="dropdown-item small fw-medium <?= ($currLang == 'mr') ? 'active' : '' ?>"
+                                href="?lang=mr">Marathi</a></li>
                     </ul>
                 </div>
+
+                <?php if (!empty($availableRoles) && count($availableRoles) > 1): ?>
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <i class="bi bi-person-badge me-1"></i>
+                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                            <?php foreach ($availableRoles as $role): ?>
+                                <li>
+                                    <form action="../../auth/switch_role.php" method="post" class="px-2 py-1">
+                                        <button type="submit" name="role" value="<?= htmlspecialchars($role) ?>"
+                                            class="dropdown-item small fw-medium <?= ($role === $primaryRole) ? 'active' : '' ?>">
+                                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $role))) ?>
+                                        </button>
+                                    </form>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
+
                 <div class="user-pill">
-                    <img src="<?= $loggedInUserPhoto ?>" class="rounded-circle" width="28" height="28"
+                    <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
-                    <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
-                    <div class="vr mx-2 text-muted opacity-25"></div>
-                    <a href="../../auth/logout.php" class="text-danger"><i class="bi bi-power"></i></a>
+                    <span
+                        class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
                 </div>
             </div>
         </div>
@@ -385,7 +439,9 @@ while ($row = mysqli_fetch_assoc($imgRes)) {
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
                     <h2 class="fw-bold mb-1"><?php echo $t['gallery_manager'] ?? 'Gallery Manager'; ?></h2>
-                    <p class="text-secondary mb-0">Upload and manage temple photos and event images displayed to devotees.</p>
+                    <p class="text-secondary mb-0">
+                        <?php echo $t['gallery_manager_desc'] ?? 'Upload and manage temple photos and event images displayed to devotees.'; ?>
+                    </p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -408,7 +464,8 @@ while ($row = mysqli_fetch_assoc($imgRes)) {
                     <div class="row g-4">
                         <div class="col-lg-4">
                             <div class="ant-card p-4 mb-4">
-                                <h6 class="fw-bold mb-3"><?php echo $t['manage_categories'] ?? 'Manage Categories'; ?></h6>
+                                <h6 class="fw-bold mb-3"><?php echo $t['manage_categories'] ?? 'Manage Categories'; ?>
+                                </h6>
                                 <form method="POST" class="mb-3">
                                     <label class="form-label small fw-bold">
                                         <?php echo $t['category_name'] ?? 'Category Name'; ?>
@@ -442,26 +499,34 @@ while ($row = mysqli_fetch_assoc($imgRes)) {
                                             </form>
                                         <?php endforeach; ?>
                                     <?php else: ?>
-                                        <div class="text-muted small"><?php echo $t['no_categories'] ?? 'No categories yet.'; ?></div>
+                                        <div class="text-muted small">
+                                            <?php echo $t['no_categories'] ?? 'No categories yet.'; ?>
+                                        </div>
                                     <?php endif; ?>
                                 </div>
                             </div>
 
                             <div class="ant-card p-4">
-                                <h6 class="fw-bold mb-3"><?php echo $t['add_gallery_item'] ?? 'Add Gallery Image'; ?></h6>
+                                <h6 class="fw-bold mb-3"><?php echo $t['add_gallery_item'] ?? 'Add Gallery Image'; ?>
+                                </h6>
                                 <form method="POST" enctype="multipart/form-data">
                                     <div class="mb-3">
-                                        <label class="form-label small fw-bold"><?php echo $t['category'] ?? 'Category'; ?></label>
+                                        <label
+                                            class="form-label small fw-bold"><?php echo $t['category'] ?? 'Category'; ?></label>
                                         <select class="form-select" name="gallery_category_id" required>
-                                            <option value=""><?php echo $t['select_category'] ?? 'Select Category'; ?></option>
+                                            <option value=""><?php echo $t['select_category'] ?? 'Select Category'; ?>
+                                            </option>
                                             <?php foreach ($categories as $cat): ?>
-                                                <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['type']) ?></option>
+                                                <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['type']) ?>
+                                                </option>
                                             <?php endforeach; ?>
                                         </select>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label small fw-bold"><?php echo $t['image'] ?? 'Image'; ?></label>
-                                        <input type="file" class="form-control" name="gallery_image" accept="image/*" required>
+                                        <label
+                                            class="form-label small fw-bold"><?php echo $t['image'] ?? 'Image'; ?></label>
+                                        <input type="file" class="form-control" name="gallery_image" accept="image/*"
+                                            required>
                                     </div>
                                     <button class="btn btn-primary w-100" type="submit" name="add_image">
                                         <?php echo $t['upload'] ?? 'Upload'; ?>
@@ -477,7 +542,7 @@ while ($row = mysqli_fetch_assoc($imgRes)) {
                                         <div class="col-md-6 col-xl-4">
                                             <div class="gallery-card">
                                                 <img src="../../gallery/<?= htmlspecialchars($img['content']) ?>"
-                                                    alt="<?php echo $t['gallery_image_alt']; ?>">
+                                                    alt="<?php echo $t['gallery_image_alt'] ?? 'Gallery Image'; ?>">
                                                 <div class="p-3">
                                                     <div class="small text-muted mb-1">
                                                         <?= htmlspecialchars($img['category'] ?? ($t['uncategorized'] ?? 'Uncategorized')) ?>
@@ -502,25 +567,34 @@ while ($row = mysqli_fetch_assoc($imgRes)) {
                                                 <div class="modal-content">
                                                     <form method="POST" enctype="multipart/form-data">
                                                         <div class="modal-header">
-                                                            <h5 class="modal-title"><?php echo $t['edit_gallery_item'] ?? 'Edit Gallery Image'; ?></h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                            <h5 class="modal-title">
+                                                                <?php echo $t['edit_gallery_item'] ?? 'Edit Gallery Image'; ?>
+                                                            </h5>
+                                                            <button type="button" class="btn-close"
+                                                                data-bs-dismiss="modal"></button>
                                                         </div>
                                                         <div class="modal-body">
                                                             <input type="hidden" name="image_id" value="<?= $img['id'] ?>">
                                                             <div class="mb-3">
-                                                                <label class="form-label small fw-bold"><?php echo $t['category'] ?? 'Category'; ?></label>
+                                                                <label
+                                                                    class="form-label small fw-bold"><?php echo $t['category'] ?? 'Category'; ?></label>
                                                                 <select class="form-select" name="gallery_category_id" required>
-                                                                    <option value=""><?php echo $t['select_category'] ?? 'Select Category'; ?></option>
+                                                                    <option value="">
+                                                                        <?php echo $t['select_category'] ?? 'Select Category'; ?>
+                                                                    </option>
                                                                     <?php foreach ($categories as $cat): ?>
-                                                                        <option value="<?= $cat['id'] ?>" <?= ($img['gallery_category_id'] == $cat['id']) ? 'selected' : '' ?>>
+                                                                        <option value="<?= $cat['id'] ?>"
+                                                                            <?= ($img['gallery_category_id'] == $cat['id']) ? 'selected' : '' ?>>
                                                                             <?= htmlspecialchars($cat['type']) ?>
                                                                         </option>
                                                                     <?php endforeach; ?>
                                                                 </select>
                                                             </div>
                                                             <div class="mb-2">
-                                                                <label class="form-label small fw-bold"><?php echo $t['replace_image'] ?? 'Replace Image (optional)'; ?></label>
-                                                                <input type="file" class="form-control" name="gallery_image" accept="image/*">
+                                                                <label
+                                                                    class="form-label small fw-bold"><?php echo $t['replace_image'] ?? 'Replace Image (optional)'; ?></label>
+                                                                <input type="file" class="form-control" name="gallery_image"
+                                                                    accept="image/*">
                                                             </div>
                                                         </div>
                                                         <div class="modal-footer">

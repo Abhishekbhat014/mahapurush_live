@@ -14,11 +14,7 @@ require __DIR__ . '/../../config/db.php';
 // Fetch upcoming events
 $events = [];
 if ($con) {
-    $query = "
-        SELECT 
-            *
-        FROM events;
-    ";
+    $query = "SELECT * FROM events ORDER BY conduct_on ASC";
     $res = mysqli_query($con, $query);
     if ($res) {
         while ($row = mysqli_fetch_assoc($res)) {
@@ -41,9 +37,7 @@ $userPhotoUrl = get_user_avatar_url('../../');
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Events -
-        <?= $t['title'] ?? 'Temple' ?>
-    </title>
+    <title><?php echo $t['event_management_title']; ?> - <?= $t['title'] ?? 'Temple' ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -65,8 +59,6 @@ $userPhotoUrl = get_user_avatar_url('../../');
             color: var(--ant-text);
             /* Disable text selection */
             -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
             user-select: none;
         }
 
@@ -238,8 +230,10 @@ $userPhotoUrl = get_user_avatar_url('../../');
                         <?= ($currLang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
-                        <li><a class="dropdown-item small fw-medium" href="?lang=en">English</a></li>
-                        <li><a class="dropdown-item small fw-medium" href="?lang=mr">Marathi</a></li>
+                        <li><a class="dropdown-item small fw-medium"
+                                href="?lang=en"><?php echo $t['lang_english']; ?></a></li>
+                        <li><a class="dropdown-item small fw-medium"
+                                href="?lang=mr"><?php echo $t['lang_marathi_full']; ?></a></li>
                     </ul>
                 </div>
 
@@ -282,13 +276,13 @@ $userPhotoUrl = get_user_avatar_url('../../');
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
                     <div class="small text-muted mb-1">
-                        <?php echo $t['dashboard'] ?? 'Dashboard'; ?> /
-                        <?php echo $t['events'] ?? 'Events'; ?>
+                        <?php echo $t['dashboard']; ?> /
+                        <?php echo $t['events']; ?>
                     </div>
                     <h2 class="fw-bold mb-1">
-                        <?php echo $t['upcoming_events'] ?? 'Upcoming Events'; ?>
+                        <?php echo $t['event_management_title']; ?>
                     </h2>
-                    <p class="text-secondary mb-0">View all temple events and celebrations.</p>
+                    <p class="text-secondary mb-0"><?php echo $t['event_management_subtitle']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -298,13 +292,13 @@ $userPhotoUrl = get_user_avatar_url('../../');
                                 <thead>
                                     <tr>
                                         <th>
-                                            <?php echo $t['event_name'] ?? 'Event Name'; ?>
+                                            <?php echo $t['event_name']; ?>
                                         </th>
                                         <th>
-                                            <?php echo $t['conduct_on'] ?? 'Conduct On'; ?>
+                                            <?php echo $t['conduct_on']; ?>
                                         </th>
                                         <th class="text-end">
-                                            <?php echo $t['action'] ?? 'Action'; ?>
+                                            <?php echo $t['action']; ?>
                                         </th>
                                     </tr>
                                 </thead>
@@ -321,7 +315,7 @@ $userPhotoUrl = get_user_avatar_url('../../');
                                                 </td>
                                                 <td class="text-end">
                                                     <a href="event_details.php?id=<?= $event['id'] ?>" class="ant-btn-primary">
-                                                        View
+                                                        <?php echo $t['view_event']; ?>
                                                     </a>
                                                 </td>
                                             </tr>
@@ -330,7 +324,7 @@ $userPhotoUrl = get_user_avatar_url('../../');
                                         <tr>
                                             <td colspan="3" class="text-center py-5 text-muted">
                                                 <i class="bi bi-calendar-x fs-1 opacity-25 d-block mb-2"></i>
-                                                No upcoming events found.
+                                                <?php echo $t['no_events_found']; ?>
                                             </td>
                                         </tr>
                                     <?php endif; ?>

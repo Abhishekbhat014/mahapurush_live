@@ -171,7 +171,7 @@ $currLang = $_SESSION['lang'] ?? 'en';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile - <?= $t['title'] ?? 'Temple' ?></title>
+    <title><?php echo $t['my_profile_title']; ?> - <?= $t['title'] ?? 'Temple' ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -404,19 +404,19 @@ $currLang = $_SESSION['lang'] ?? 'en';
                         <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown"
                             aria-expanded="false">
                             <i class="bi bi-person-badge me-1"></i>
-                                <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
+                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
-                                <?php foreach ($availableRoles as $role): ?>
+                            <?php foreach ($availableRoles as $role): ?>
                                 <li>
                                     <form action="../../auth/switch_role.php" method="post" class="px-2 py-1">
                                         <button type="submit" name="role" value="<?= htmlspecialchars($role) ?>"
                                             class="dropdown-item small fw-medium <?= ($role === $primaryRole) ? 'active' : '' ?>">
-                                                    <?= htmlspecialchars(ucwords(str_replace('_', ' ', $role))) ?>
+                                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $role))) ?>
                                         </button>
                                     </form>
                                 </li>
-                                <?php endforeach; ?>
+                            <?php endforeach; ?>
                         </ul>
                     </div>
                 <?php endif; ?>
@@ -437,8 +437,8 @@ $currLang = $_SESSION['lang'] ?? 'en';
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">My Profile</h2>
-                    <p class="text-secondary mb-0">Manage your personal information and security settings.</p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['my_profile_title']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['my_profile_desc']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -466,39 +466,42 @@ $currLang = $_SESSION['lang'] ?? 'en';
                                             alt="Profile">
                                         <?php if (!empty($user['photo'])): ?>
                                             <button type="button" class="delete-photo-btn" data-bs-toggle="modal"
-                                                data-bs-target="#deletePhotoModal" title="Delete Photo">
+                                                data-bs-target="#deletePhotoModal"
+                                                title="<?php echo $t['delete_photo']; ?>">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         <?php endif; ?>
                                     </div>
                                     <h5 class="fw-bold mb-1">
-                                        <?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?></h5>
+                                        <?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?>
+                                    </h5>
                                     <p class="text-muted small mb-0">
-                                        <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?></p>
+                                        <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
+                                    </p>
                                 </div>
                             </div>
 
                             <div class="ant-card">
-                                <div class="ant-card-head">Change Password</div>
+                                <div class="ant-card-head"><?php echo $t['change_password']; ?></div>
                                 <div class="ant-card-body">
                                     <form method="POST" class="needs-validation" novalidate>
                                         <div class="mb-3">
-                                            <label class="form-label">Current Password</label>
+                                            <label class="form-label"><?php echo $t['current_password']; ?></label>
                                             <input type="password" name="current_password" class="form-control"
                                                 required>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">New Password</label>
+                                            <label class="form-label"><?php echo $t['new_password']; ?></label>
                                             <input type="password" name="new_password" class="form-control" required
                                                 minlength="6">
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Confirm Password</label>
+                                            <label class="form-label"><?php echo $t['confirm_password']; ?></label>
                                             <input type="password" name="confirm_password" class="form-control"
                                                 required>
                                         </div>
                                         <button type="submit" name="change_password" class="btn btn-primary w-100">
-                                            Update Password
+                                            <?php echo $t['update_password']; ?>
                                         </button>
                                     </form>
                                 </div>
@@ -507,36 +510,38 @@ $currLang = $_SESSION['lang'] ?? 'en';
 
                         <div class="col-lg-8">
                             <div class="ant-card">
-                                <div class="ant-card-head">Personal Information</div>
+                                <div class="ant-card-head"><?php echo $t['personal_information']; ?></div>
                                 <div class="ant-card-body">
                                     <form method="POST" enctype="multipart/form-data" class="needs-validation"
                                         novalidate>
                                         <div class="row g-3">
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">First Name</label>
+                                                <label class="form-label"><?php echo $t['first_name']; ?></label>
                                                 <input type="text" name="first_name" class="form-control"
                                                     value="<?= htmlspecialchars($user['first_name']) ?>" required>
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">Last Name</label>
+                                                <label class="form-label"><?php echo $t['last_name']; ?></label>
                                                 <input type="text" name="last_name" class="form-control"
                                                     value="<?= htmlspecialchars($user['last_name']) ?>" required>
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">Phone Number</label>
+                                                <label class="form-label"><?php echo $t['phone_number']; ?></label>
                                                 <input type="tel" name="phone" class="form-control" pattern="[0-9]{10}"
                                                     value="<?= htmlspecialchars($user['phone']) ?>" required>
-                                                <div class="invalid-feedback">Valid 10-digit number required.</div>
+                                                <div class="invalid-feedback"><?php echo $t['err_invalid_phone']; ?>
+                                                </div>
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">Email Address</label>
+                                                <label class="form-label"><?php echo $t['email_address']; ?></label>
                                                 <input type="email" class="form-control bg-light"
                                                     value="<?= htmlspecialchars($user['email']) ?>" readonly>
                                                 <div class="form-text small text-muted">Email cannot be changed.</div>
                                             </div>
 
                                             <div class="col-12 mb-3">
-                                                <label class="form-label">Update Profile Photo</label>
+                                                <label
+                                                    class="form-label"><?php echo $t['profile_photo_optional']; ?></label>
                                                 <input type="file" name="photo" class="form-control" accept="image/*">
                                                 <div class="form-text small text-muted">Supported formats: JPG, JPEG,
                                                     PNG. Max size: 2MB.</div>
@@ -544,7 +549,7 @@ $currLang = $_SESSION['lang'] ?? 'en';
                                         </div>
                                         <div class="d-flex justify-content-end mt-4">
                                             <button type="submit" name="update_details" class="btn btn-primary px-5">
-                                                Save Changes
+                                                <?php echo $t['save_changes']; ?>
                                             </button>
                                         </div>
                                     </form>
@@ -563,18 +568,18 @@ $currLang = $_SESSION['lang'] ?? 'en';
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content border-0 shadow">
                     <div class="modal-header border-0 pb-0">
-                        <h5 class="modal-title fw-bold">Delete Photo</h5>
+                        <h5 class="modal-title fw-bold"><?php echo $t['delete_photo_title']; ?></h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body pt-3 pb-4">
-                        <p class="text-muted mb-0">Are you sure you want to remove your profile photo?</p>
+                        <p class="text-muted mb-0"><?php echo $t['delete_photo_msg']; ?></p>
                     </div>
                     <div class="modal-footer border-0 pt-0">
                         <button type="button" class="btn btn-light rounded-pill px-4"
-                            data-bs-dismiss="modal">Cancel</button>
+                            data-bs-dismiss="modal"><?php echo $t['cancel']; ?></button>
                         <form method="POST" class="m-0">
                             <button type="submit" name="delete_photo"
-                                class="btn btn-danger rounded-pill px-4">Delete</button>
+                                class="btn btn-danger rounded-pill px-4"><?php echo $t['delete']; ?></button>
                         </form>
                     </div>
                 </div>

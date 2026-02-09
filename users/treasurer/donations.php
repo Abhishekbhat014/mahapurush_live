@@ -13,15 +13,16 @@ $availableRoles = $_SESSION['roles'] ?? [];
 $primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
 $currLang = $_SESSION['lang'] ?? 'en';
 $loggedInUserPhoto = get_user_avatar_url('../../');
+$userName = $_SESSION['user_name'] ?? 'User';
 ?>
 
 <!DOCTYPE html>
-<html lang="<?= $lang ?>">
+<html lang="<?= $currLang ?>">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Donations - <?= $t['title'] ?? 'Temple' ?></title>
+    <title><?php echo $t['record_donation_title']; ?> - <?= $t['title'] ?? 'Temple' ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -58,6 +59,35 @@ $loggedInUserPhoto = get_user_avatar_url('../../');
         select {
             -webkit-user-select: text;
             user-select: text;
+        }
+
+        /* --- HOVER DROPDOWN LOGIC --- */
+        @media (min-width: 992px) {
+            .dropdown:hover .dropdown-menu {
+                display: block;
+                margin-top: 0;
+            }
+
+            .dropdown .dropdown-menu {
+                display: none;
+            }
+
+            .dropdown:hover>.dropdown-menu {
+                display: block;
+                animation: fadeIn 0.2s ease-in-out;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* --- HEADER STYLES --- */
@@ -99,23 +129,6 @@ $loggedInUserPhoto = get_user_avatar_url('../../');
             color: #1677ff;
         }
 
-        /* --- HOVER DROPDOWN LOGIC --- */
-        @media (min-width: 992px) {
-            .dropdown:hover .dropdown-menu {
-                display: block;
-                margin-top: 0;
-            }
-
-            .dropdown .dropdown-menu {
-                display: none;
-            }
-
-            .dropdown:hover>.dropdown-menu {
-                display: block;
-                animation: fadeIn 0.2s ease-in-out;
-            }
-        }
-
         /* --- ACTIVE DROPDOWN ITEM (Dark Blue) --- */
         .dropdown-item.active,
         .dropdown-item:active {
@@ -124,27 +137,44 @@ $loggedInUserPhoto = get_user_avatar_url('../../');
             font-weight: 600;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
         /* --- PAGE CONTENT --- */
         .dashboard-hero {
             background: radial-gradient(circle at top right, #f6ffed 0%, #ffffff 80%);
-            /* Treasurer Green Tint */
             padding: 40px 32px;
             border-bottom: 1px solid var(--ant-border-color);
             margin-bottom: 32px;
         }
 
+        /* --- Sidebar --- */
+        .ant-sidebar {
+            background: #fff;
+            border-right: 1px solid var(--ant-border-color);
+            height: calc(100vh - 64px);
+            position: sticky;
+            top: 64px;
+            padding: 20px 0;
+        }
+
+        .nav-link-custom {
+            padding: 12px 24px;
+            color: var(--ant-text);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .nav-link-custom:hover,
+        .nav-link-custom.active {
+            color: var(--ant-primary);
+            background: #e6f4ff;
+            border-right: 3px solid var(--ant-primary);
+        }
+
+        /* --- Card --- */
         .ant-card {
             background: #fff;
             border: 1px solid var(--ant-border-color);
@@ -152,7 +182,6 @@ $loggedInUserPhoto = get_user_avatar_url('../../');
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
 
-        /* Form Controls */
         .form-label {
             font-size: 13px;
             font-weight: 600;
@@ -236,7 +265,7 @@ $loggedInUserPhoto = get_user_avatar_url('../../');
                     </div>
                 <?php endif; ?>
 
-                <div class="user-pill">
+                <div class="user-pill shadow-sm">
                     <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
                     <span
@@ -252,9 +281,9 @@ $loggedInUserPhoto = get_user_avatar_url('../../');
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Record Donation</h2>
+                    <h2 class="fw-bold mb-1"><?php echo $t['record_donation_title']; ?></h2>
                     <p class="text-secondary mb-0">
-                        Enter donation payments received at the temple counter (cash / online / cheque).
+                        <?php echo $t['record_donation_subtitle']; ?>
                     </p>
                 </div>
 
@@ -264,17 +293,17 @@ $loggedInUserPhoto = get_user_avatar_url('../../');
                             <div class="row g-4">
 
                                 <div class="col-md-6">
-                                    <label class="form-label">Devotee Name</label>
+                                    <label class="form-label"><?php echo $t['devotee_name']; ?></label>
                                     <input type="text" name="devotee_name" class="form-control" required>
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label">Mobile Number</label>
+                                    <label class="form-label"><?php echo $t['mobile_number']; ?></label>
                                     <input type="text" name="mobile" class="form-control">
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label">Donation Amount (₹)</label>
+                                    <label class="form-label"><?php echo $t['donation_amount']; ?></label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-white border-end-0">₹</span>
                                         <input type="number" name="amount" class="form-control border-start-0 ps-0"
@@ -283,24 +312,24 @@ $loggedInUserPhoto = get_user_avatar_url('../../');
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label">Payment Mode</label>
+                                    <label class="form-label"><?php echo $t['payment_mode']; ?></label>
                                     <select name="payment_mode" class="form-select" required>
-                                        <option value="">Select Mode</option>
-                                        <option value="cash">Cash</option>
-                                        <option value="online">Online (UPI/Card)</option>
-                                        <option value="cheque">Cheque</option>
+                                        <option value=""><?php echo $t['select_mode']; ?></option>
+                                        <option value="cash"><?php echo $t['cash']; ?></option>
+                                        <option value="online"><?php echo $t['online']; ?></option>
+                                        <option value="cheque"><?php echo $t['cheque']; ?></option>
                                     </select>
                                 </div>
 
                                 <div class="col-12">
-                                    <label class="form-label">Purpose / Remarks</label>
+                                    <label class="form-label"><?php echo $t['purpose_remarks']; ?></label>
                                     <input type="text" name="remarks" class="form-control"
-                                        placeholder="E.g. General Fund, Annadhanam, etc.">
+                                        placeholder="<?php echo $t['purpose_placeholder']; ?>">
                                 </div>
 
                                 <div class="col-12 d-flex justify-content-end mt-4">
                                     <button type="submit" class="btn btn-primary px-5 py-2">
-                                        <i class="bi bi-save2 me-2"></i> Record Donation
+                                        <i class="bi bi-save2 me-2"></i> <?php echo $t['record_btn']; ?>
                                     </button>
                                 </div>
 

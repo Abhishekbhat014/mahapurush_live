@@ -168,7 +168,7 @@ if ($con && $con !== false) {
             <div class="col-lg-6">
                 <span class="text-primary fw-bold text-uppercase small mb-2 d-block"
                     style="letter-spacing: 1px;"><?php echo $t['our_sacred_heritage']; ?></span>
-                <h2 class="fw-bold mb-4"><?php echo $t['about_label']; ?> <?= $t['title'] ?></h2>
+                <h2 class="fw-bold mb-4"><?= $t['about'] ?></h2>
                 <p class="text-secondary fs-5 mb-4" style="line-height: 1.8;">
                     <?php
                     // Show first 300 characters of description as a summary

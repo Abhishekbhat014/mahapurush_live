@@ -22,6 +22,7 @@ $dbPath = __DIR__ . '/../../config/db.php';
 require $dbPath;
 
 $uid = (int) $_SESSION['user_id'];
+$currLang = $_SESSION['lang'] ?? 'en'; // Ensure lang variable is set
 
 // --- 1. Fetch User Photo (session cached) ---
 $loggedInUserPhoto = get_user_avatar_url('../../');
@@ -85,10 +86,7 @@ while ($erow = mysqli_fetch_assoc($resEvents)) {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--ant-bg-layout);
             color: var(--ant-text);
-            /* Disable text selection */
             -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
             user-select: none;
         }
 
@@ -143,7 +141,33 @@ while ($erow = mysqli_fetch_assoc($resEvents)) {
             z-index: 1000;
         }
 
-        /* --- Sidebar --- */
+        .user-pill {
+            background: #fff;
+            padding: 6px 16px;
+            border-radius: 50px;
+            border: 1px solid var(--ant-border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        .lang-btn {
+            border: none;
+            background: #f5f5f5;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+
+        .lang-btn:hover {
+            background: #e6f4ff;
+            color: #1677ff;
+        }
+
+        /* --- Sidebar & Nav --- */
         .ant-sidebar {
             background: #fff;
             border-right: 1px solid var(--ant-border-color);
@@ -222,33 +246,6 @@ while ($erow = mysqli_fetch_assoc($resEvents)) {
             vertical-align: middle;
             font-size: 14px;
         }
-
-        /* --- Header Elements --- */
-        .user-pill {
-            background: #fff;
-            padding: 6px 16px;
-            border-radius: 50px;
-            border: 1px solid var(--ant-border-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-        }
-
-        .lang-btn {
-            border: none;
-            background: #f5f5f5;
-            font-size: 13px;
-            font-weight: 600;
-            padding: 6px 12px;
-            border-radius: 6px;
-            transition: 0.2s;
-        }
-
-        .lang-btn:hover {
-            background: #e6f4ff;
-            color: #1677ff;
-        }
     </style>
 </head>
 
@@ -265,27 +262,20 @@ while ($erow = mysqli_fetch_assoc($resEvents)) {
                 <div class="dropdown">
                     <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
                         <i class="bi bi-translate me-1"></i>
-                        <?= ($lang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
+                        <?= ($currLang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
-                        <li>
-                            <a class="dropdown-item small fw-medium <?= ($lang == 'en') ? 'active' : '' ?>"
-                                href="?lang=en">
-                                <?php echo $t['lang_english']; ?>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item small fw-medium <?= ($lang == 'mr') ? 'active' : '' ?>"
-                                href="?lang=mr">
-                                <?php echo $t['lang_marathi_full']; ?>
-                            </a>
-                        </li>
+                        <li><a class="dropdown-item small fw-medium <?= ($currLang == 'en') ? 'active' : '' ?>"
+                                href="?lang=en"><?php echo $t['lang_english']; ?></a></li>
+                        <li><a class="dropdown-item small fw-medium <?= ($currLang == 'mr') ? 'active' : '' ?>"
+                                href="?lang=mr"><?php echo $t['lang_marathi_full']; ?></a></li>
                     </ul>
                 </div>
 
                 <?php if (!empty($availableRoles) && count($availableRoles) > 1): ?>
                     <div class="dropdown">
-                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
                             <i class="bi bi-person-badge me-1"></i>
                             <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
                         </button>
@@ -304,7 +294,7 @@ while ($erow = mysqli_fetch_assoc($resEvents)) {
                     </div>
                 <?php endif; ?>
 
-                <div class="user-pill shadow-sm">
+                <div class="user-pill">
                     <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
                     <span
@@ -321,10 +311,9 @@ while ($erow = mysqli_fetch_assoc($resEvents)) {
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
                     <h2 class="fw-bold mb-1"><?php echo $t['namaste']; ?>,
-                        <?= explode(' ', $_SESSION['user_name'])[0] ?>!
-                    </h2>
+                        <?= explode(' ', $_SESSION['user_name'])[0] ?>!</h2>
                     <p class="text-secondary mb-0">
-                        <?php echo $t['member_dashboard_subtitle'] ?? 'Welcome to the temple committee dashboard.'; ?>
+                        <?php echo $t['committee_dashboard_subtitle']; ?>
                     </p>
                 </div>
 
@@ -339,7 +328,7 @@ while ($erow = mysqli_fetch_assoc($resEvents)) {
                                         <i class="bi bi-hourglass-split fs-1 text-warning"></i>
                                     </div>
                                     <h3 class="fw-bold mb-1 display-5"><?= $pendingCount ?></h3>
-                                    <p class="text-muted mb-0 fw-medium">Pending Pooja Requests</p>
+                                    <p class="text-muted mb-0 fw-medium"><?php echo $t['pending_pooja_requests']; ?></p>
                                 </div>
                             </div>
                         </div>
@@ -347,7 +336,7 @@ while ($erow = mysqli_fetch_assoc($resEvents)) {
                         <div class="col-lg-8">
                             <div class="ant-card">
                                 <div class="ant-card-head">
-                                    <i class="bi bi-bank2 me-2 text-primary"></i>Temple Information
+                                    <i class="bi bi-bank2 me-2 text-primary"></i><?php echo $t['temple_information']; ?>
                                 </div>
                                 <div class="ant-card-body">
                                     <h5 class="fw-bold text-dark mb-2"><?= htmlspecialchars($temple['temple_name']) ?>
@@ -367,7 +356,8 @@ while ($erow = mysqli_fetch_assoc($resEvents)) {
                         <div class="col-12">
                             <div class="ant-card">
                                 <div class="ant-card-head d-flex justify-content-between align-items-center">
-                                    <span><i class="bi bi-calendar-event me-2 text-primary"></i>Today's Poojas</span>
+                                    <span><i
+                                            class="bi bi-calendar-event me-2 text-primary"></i><?php echo $t['todays_poojas']; ?></span>
                                     <span class="badge bg-light text-dark border"><?= date('d M Y') ?></span>
                                 </div>
                                 <div class="ant-card-body p-0">
@@ -375,9 +365,9 @@ while ($erow = mysqli_fetch_assoc($resEvents)) {
                                         <table class="table ant-table mb-0">
                                             <thead>
                                                 <tr>
-                                                    <th>Pooja</th>
-                                                    <th>Devotee</th>
-                                                    <th>Date</th>
+                                                    <th><?php echo $t['pooja']; ?></th>
+                                                    <th><?php echo $t['devotee']; ?></th>
+                                                    <th><?php echo $t['date']; ?></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -402,7 +392,7 @@ while ($erow = mysqli_fetch_assoc($resEvents)) {
                                                     <tr>
                                                         <td colspan="3" class="text-center text-muted py-5">
                                                             <i class="bi bi-calendar-x fs-1 opacity-25 d-block mb-2"></i>
-                                                            No poojas scheduled for today.
+                                                            <?php echo $t['no_todays_poojas']; ?>
                                                         </td>
                                                     </tr>
                                                 <?php endif; ?>
@@ -416,15 +406,15 @@ while ($erow = mysqli_fetch_assoc($resEvents)) {
                         <div class="col-12">
                             <div class="ant-card">
                                 <div class="ant-card-head">
-                                    <i class="bi bi-stars me-2 text-primary"></i>Upcoming Events
+                                    <i class="bi bi-stars me-2 text-primary"></i><?php echo $t['upcoming_events']; ?>
                                 </div>
                                 <div class="ant-card-body p-0">
                                     <div class="table-responsive">
                                         <table class="table ant-table mb-0">
                                             <thead>
                                                 <tr>
-                                                    <th>Event Name</th>
-                                                    <th>Scheduled Date</th>
+                                                    <th><?php echo $t['event_name']; ?></th>
+                                                    <th><?php echo $t['scheduled_date']; ?></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -440,7 +430,7 @@ while ($erow = mysqli_fetch_assoc($resEvents)) {
                                                         <td colspan="2" class="text-center text-muted py-5">
                                                             <i
                                                                 class="bi bi-calendar-range fs-1 opacity-25 d-block mb-2"></i>
-                                                            No upcoming events found.
+                                                            <?php echo $t['no_upcoming_events_found']; ?>
                                                         </td>
                                                     </tr>
                                                 <?php endif; ?>

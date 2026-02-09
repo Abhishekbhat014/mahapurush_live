@@ -76,7 +76,7 @@ if ($type === 'event') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reports - <?= $t['title'] ?></title>
+    <title><?php echo $t['reports_title']; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -190,7 +190,7 @@ if ($type === 'event') {
             background: radial-gradient(circle at top right, #e6f4ff 0%, #ffffff 80%);
             padding: 40px 32px;
             border-bottom: 1px solid var(--ant-border-color);
-            margin-bottom: 0;
+            margin-bottom: 32px;
         }
 
         .ant-card {
@@ -284,7 +284,7 @@ if ($type === 'event') {
                     </div>
                 <?php endif; ?>
 
-                <div class="user-pill">
+                <div class="user-pill shadow-sm">
                     <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
                     <span
@@ -300,44 +300,46 @@ if ($type === 'event') {
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Reports</h2>
-                    <p class="text-secondary mb-0">Generate summarized reports for temple activities.</p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['reports_title']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['reports_desc']; ?></p>
                 </div>
 
-                <div class="px-4 pb-5 pt-4">
-                    <div class="ant-card p-4">
+                <div class="px-4 pb-5">
 
-                        <form class="row g-3 mb-4 align-items-end" method="get">
+                    <div class="ant-card p-4 mb-4">
+                        <form method="GET" class="row g-3 align-items-end">
                             <div class="col-md-3">
-                                <label class="form-label">From Date</label>
+                                <label class="form-label"><?php echo $t['from_date']; ?></label>
                                 <input type="date" name="from" value="<?= htmlspecialchars($from) ?>"
                                     class="form-control">
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">To Date</label>
+                                <label class="form-label"><?php echo $t['to_date']; ?></label>
                                 <input type="date" name="to" value="<?= htmlspecialchars($to) ?>" class="form-control">
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">Report Type</label>
+                                <label class="form-label"><?php echo $t['report_type']; ?></label>
                                 <select name="type" class="form-select">
-                                    <option value="">Select Report...</option>
-                                    <option value="pooja" <?= $type == 'pooja' ? 'selected' : '' ?>>Pooja Report</option>
-                                    <option value="donation" <?= $type == 'donation' ? 'selected' : '' ?>>Donation Report
-                                    </option>
-                                    <option value="receipt" <?= $type == 'receipt' ? 'selected' : '' ?>>Receipt Report
-                                    </option>
-                                    <option value="event" <?= $type == 'event' ? 'selected' : '' ?>>Event Report</option>
+                                    <option value=""><?php echo $t['select_report']; ?></option>
+                                    <option value="pooja" <?= $type == 'pooja' ? 'selected' : '' ?>>
+                                        <?php echo $t['pooja_report']; ?></option>
+                                    <option value="donation" <?= $type == 'donation' ? 'selected' : '' ?>>
+                                        <?php echo $t['donation_report']; ?></option>
+                                    <option value="receipt" <?= $type == 'receipt' ? 'selected' : '' ?>>
+                                        <?php echo $t['receipt_report']; ?></option>
+                                    <option value="event" <?= $type == 'event' ? 'selected' : '' ?>>
+                                        <?php echo $t['event_report']; ?></option>
                                 </select>
                             </div>
                             <div class="col-md-3">
                                 <button class="btn btn-primary w-100 fw-bold">
-                                    <i class="bi bi-file-earmark-text me-2"></i> Generate Report
+                                    <i class="bi bi-file-earmark-text me-2"></i> <?php echo $t['generate_report']; ?>
                                 </button>
                             </div>
                         </form>
 
                         <?php if (!empty($reportData)): ?>
-                            <div class="table-responsive">
+                            <div class="table-responsive mt-4">
                                 <table class="table ant-table mb-0">
                                     <thead>
                                         <tr>
@@ -369,14 +371,14 @@ if ($type === 'event') {
                                 </table>
                             </div>
                         <?php elseif ($type): ?>
-                            <div class="text-center py-5 text-muted border rounded bg-light">
+                            <div class="text-center py-5 text-muted border rounded bg-light mt-4">
                                 <i class="bi bi-search fs-1 opacity-25 d-block mb-3"></i>
-                                No data found for the selected criteria.
+                                <?php echo $t['no_data_found']; ?>
                             </div>
                         <?php else: ?>
-                            <div class="text-center py-5 text-muted border rounded bg-light">
+                            <div class="text-center py-5 text-muted border rounded bg-light mt-4">
                                 <i class="bi bi-bar-chart-line fs-1 opacity-25 d-block mb-3"></i>
-                                Please select a report type and date range.
+                                <?php echo $t['select_report_prompt']; ?>
                             </div>
                         <?php endif; ?>
 

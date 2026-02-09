@@ -82,7 +82,7 @@ if ($methodRes) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vice Chairman Dashboard - <?= $t['title'] ?></title>
+    <title><?php echo $t['vice_chairman_dashboard']; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -324,7 +324,8 @@ if ($methodRes) {
 
                 <?php if (!empty($availableRoles) && count($availableRoles) > 1): ?>
                     <div class="dropdown">
-                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
                             <i class="bi bi-person-badge me-1"></i>
                             <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
                         </button>
@@ -348,8 +349,6 @@ if ($methodRes) {
                         style="object-fit: cover;">
                     <span
                         class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
-                    <div class="vr mx-2 text-muted opacity-25"></div>
-                    <a href="../../auth/logout.php" class="text-danger"><i class="bi bi-power"></i></a>
                 </div>
             </div>
         </div>
@@ -357,13 +356,12 @@ if ($methodRes) {
 
     <div class="container-fluid">
         <div class="row">
-
             <?php include 'sidebar.php'; ?>
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">Vice Chairman Overview</h2>
-                    <p class="text-secondary mb-0">Track temple operations, approvals, and daily updates.</p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['vice_chairman_dashboard']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['vice_chairman_dashboard_subtitle']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -373,9 +371,10 @@ if ($methodRes) {
                             <div class="ant-card">
                                 <div class="ant-card-body">
                                     <div class="kpi-icon bg-orange-soft shadow-sm"><i class="bi bi-box-seam"></i></div>
-                                    <span class="kpi-label">Pending Approvals</span>
+                                    <span class="kpi-label"><?php echo $t['pending_approvals']; ?></span>
                                     <h3 class="kpi-value"><?= $pendingPoojas ?></h3>
-                                    <p class="small text-muted mb-0 mt-2">Pooja Requests</p>
+                                    <p class="small text-muted mb-0 mt-2"><?php echo $t['pooja_requests_subtitle']; ?>
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -384,9 +383,10 @@ if ($methodRes) {
                                 <div class="ant-card-body">
                                     <div class="kpi-icon bg-blue-soft shadow-sm"><i class="bi bi-calendar-event"></i>
                                     </div>
-                                    <span class="kpi-label">Today's Poojas</span>
+                                    <span class="kpi-label"><?php echo $t['todays_poojas']; ?></span>
                                     <h3 class="kpi-value"><?= $todayPoojas ?></h3>
-                                    <p class="small text-muted mb-0 mt-2">Scheduled Today</p>
+                                    <p class="small text-muted mb-0 mt-2">
+                                        <?php echo $t['scheduled_today'] ?? 'Scheduled Today'; ?></p>
                                 </div>
                             </div>
                         </div>
@@ -395,9 +395,9 @@ if ($methodRes) {
                                 <div class="ant-card-body">
                                     <div class="kpi-icon bg-green-soft shadow-sm"><i class="bi bi-currency-rupee"></i>
                                     </div>
-                                    <span class="kpi-label">Today's Income</span>
+                                    <span class="kpi-label"><?php echo $t['todays_income']; ?></span>
                                     <h3 class="kpi-value">₹<?= number_format($todayAmount, 0) ?></h3>
-                                    <p class="small text-muted mb-0 mt-2">Total Collections</p>
+                                    <p class="small text-muted mb-0 mt-2"><?php echo $t['total_collections']; ?></p>
                                 </div>
                             </div>
                         </div>
@@ -405,9 +405,9 @@ if ($methodRes) {
                             <div class="ant-card">
                                 <div class="ant-card-body">
                                     <div class="kpi-icon bg-purple-soft shadow-sm"><i class="bi bi-people"></i></div>
-                                    <span class="kpi-label">Committee</span>
+                                    <span class="kpi-label"><?php echo $t['committee']; ?></span>
                                     <h3 class="kpi-value"><?= $totalCommittee ?></h3>
-                                    <p class="small text-muted mb-0 mt-2">Active Members</p>
+                                    <p class="small text-muted mb-0 mt-2"><?php echo $t['active_members']; ?></p>
                                 </div>
                             </div>
                         </div>
@@ -416,13 +416,15 @@ if ($methodRes) {
                     <div class="row g-4 mt-2">
                         <div class="col-lg-6">
                             <div class="chart-card">
-                                <div class="chart-title">Donations Trend</div>
+                                <div class="chart-title"><?php echo $t['donations_trend']; ?></div>
+
                                 <canvas id="donationsTrend"></canvas>
                             </div>
                         </div>
                         <div class="col-lg-6">
                             <div class="chart-card">
-                                <div class="chart-title">Receipts By Purpose</div>
+                                <div class="chart-title"><?php echo $t['receipts_by_purpose']; ?></div>
+
                                 <canvas id="receiptPurpose"></canvas>
                             </div>
                         </div>
@@ -431,13 +433,15 @@ if ($methodRes) {
                     <div class="row g-4 mt-2">
                         <div class="col-lg-6">
                             <div class="chart-card">
-                                <div class="chart-title">Pooja Status</div>
+                                <div class="chart-title"><?php echo $t['pooja_status']; ?></div>
+
                                 <canvas id="poojaStatus"></canvas>
                             </div>
                         </div>
                         <div class="col-lg-6">
                             <div class="chart-card">
-                                <div class="chart-title">Payment Methods</div>
+                                <div class="chart-title"><?php echo $t['payment_methods']; ?></div>
+
                                 <canvas id="paymentMethods"></canvas>
                             </div>
                         </div>
@@ -448,16 +452,16 @@ if ($methodRes) {
                             <div class="ant-card">
                                 <div class="ant-card-body d-flex justify-content-between align-items-center">
                                     <div>
-                                        <h6 class="fw-bold mb-1">Quick Actions</h6>
-                                        <p class="text-muted small mb-0">Shortcuts to manage approvals and events.</p>
+                                        <h6 class="fw-bold mb-1"><?php echo $t['quick_actions']; ?></h6>
+                                        <p class="text-muted small mb-0"><?php echo $t['quick_actions_subtitle']; ?></p>
                                     </div>
                                     <div class="d-flex gap-2">
                                         <a href="pooja_approvals.php"
-                                            class="btn btn-primary btn-sm rounded-pill px-3">Approve Requests</a>
+                                            class="btn btn-primary btn-sm rounded-pill px-3"><?php echo $t['approve_requests']; ?></a>
                                         <a href="events.php"
-                                            class="btn btn-outline-primary btn-sm rounded-pill px-3">View Events</a>
+                                            class="btn btn-outline-primary btn-sm rounded-pill px-3"><?php echo $t['view_events']; ?></a>
                                         <a href="committee.php"
-                                            class="btn btn-outline-primary btn-sm rounded-pill px-3">Committee</a>
+                                            class="btn btn-outline-primary btn-sm rounded-pill px-3"><?php echo $t['committee']; ?></a>
                                     </div>
                                 </div>
                             </div>
@@ -480,9 +484,28 @@ if ($methodRes) {
 
         // Chart Configuration
         const commonOptions = {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } },
-            scales: { x: { grid: { display: false } }, y: { grid: { color: '#f0f0f0' } } }
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 12
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    grid: {
+                        color: '#f0f0f0'
+                    }
+                }
+            }
         };
 
         // Donations Trend
@@ -491,9 +514,13 @@ if ($methodRes) {
             data: {
                 labels: <?= json_encode($monthlyDonations) ?>,
                 datasets: [{
-                    label: 'Amount', data: <?= json_encode($monthlyAmounts) ?>,
-                    borderColor: '#1677ff', backgroundColor: 'rgba(22,119,255,0.15)',
-                    fill: true, tension: 0.35, pointRadius: 3
+                    label: 'Amount',
+                    data: <?= json_encode($monthlyAmounts) ?>,
+                    borderColor: '#1677ff',
+                    backgroundColor: 'rgba(22,119,255,0.15)',
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 3
                 }]
             },
             options: commonOptions
@@ -509,7 +536,15 @@ if ($methodRes) {
                     backgroundColor: ['#1677ff', '#52c41a', '#faad14', '#722ed1', '#ff4d4f']
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
         });
 
         // Pooja Status
@@ -518,7 +553,8 @@ if ($methodRes) {
             data: {
                 labels: <?= json_encode($poojaLabels) ?>,
                 datasets: [{
-                    label: 'Count', data: <?= json_encode($poojaCounts) ?>,
+                    label: 'Count',
+                    data: <?= json_encode($poojaCounts) ?>,
                     backgroundColor: '#4096ff'
                 }]
             },
@@ -531,7 +567,8 @@ if ($methodRes) {
             data: {
                 labels: <?= json_encode($methodLabels) ?>,
                 datasets: [{
-                    label: 'Amount', data: <?= json_encode($methodTotals) ?>,
+                    label: 'Amount',
+                    data: <?= json_encode($methodTotals) ?>,
                     backgroundColor: '#52c41a'
                 }]
             },

@@ -5,6 +5,7 @@ require __DIR__ . '/../../config/db.php';
 require __DIR__ . '/../../includes/lang.php';
 require __DIR__ . '/../../includes/user_avatar.php';
 
+// Auth Check
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: ../../auth/login.php");
     exit;
@@ -17,19 +18,59 @@ $currLang = $_SESSION['lang'] ?? 'en';
 $currentPage = 'events.php';
 $loggedInUserPhoto = get_user_avatar_url('../../');
 
-// Handle Success Message
 $successMsg = '';
-if (isset($_GET['success']) && $_GET['success'] === '1') {
-    $successMsg = $t['event_added'] ?? 'Event added successfully.';
+$errorMsg = '';
+
+/* ============================
+   HANDLE FORM SUBMISSIONS
+============================ */
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    // 1. Create Event
+    if (isset($_POST['create_event'])) {
+        $name = trim($_POST['name']);
+        $duration = (int) $_POST['duration'];
+        $date = $_POST['conduct_on']; // Expected YYYY-MM-DD
+        $max = (int) $_POST['max_participants'];
+
+        if ($name && $date) {
+            $stmt = $con->prepare("INSERT INTO events (name, duration, conduct_on, max_participants, status, created_by, created_at) VALUES (?, ?, ?, ?, 'active', ?, NOW())");
+            $stmt->bind_param("sisii", $name, $duration, $date, $max, $uid);
+
+            if ($stmt->execute()) {
+                $successMsg = $t['event_create_success'] ?? 'Event created successfully.';
+            } else {
+                $errorMsg = $t['event_create_error'] ?? 'Failed to create event.';
+            }
+            $stmt->close();
+        } else {
+            $errorMsg = $t['err_fill_all'] ?? 'Please fill in all required fields.';
+        }
+    }
+
+    // 2. Delete Event (Soft Delete)
+    if (isset($_POST['delete_event'])) {
+        $id = (int) $_POST['event_id'];
+        $stmt = $con->prepare("UPDATE events SET status = 'cancelled' WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        if ($stmt->execute()) {
+            $successMsg = $t['cancel_event_success'] ?? 'Event cancelled successfully.';
+        }
+        $stmt->close();
+    }
 }
 
-// Fetch Events
-$eventsRes = mysqli_query(
-    $con,
-    "SELECT e.*, (SELECT COUNT(*) FROM event_participants ep WHERE ep.event_id = e.id) AS participant_count
-     FROM events e
-     ORDER BY e.conduct_on DESC, e.created_at DESC"
-);
+/* ============================
+   FETCH ACTIVE EVENTS
+============================ */
+// Fetching active events, ordered by date (nearest first)
+$events = mysqli_query($con, "
+    SELECT e.*, 
+           (SELECT COUNT(*) FROM event_participants ep WHERE ep.event_id = e.id) as current_participants 
+    FROM events e 
+    WHERE e.status != 'cancelled' 
+    ORDER BY e.conduct_on ASC
+");
 ?>
 
 <!DOCTYPE html>
@@ -38,7 +79,7 @@ $eventsRes = mysqli_query(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Events - <?= $t['title'] ?></title>
+    <title><?php echo $t['events_management_title']; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -163,6 +204,14 @@ $eventsRes = mysqli_query(
             overflow: hidden;
         }
 
+        .ant-card-head {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--ant-border-color);
+            font-weight: 700;
+            font-size: 15px;
+            background: #fafafa;
+        }
+
         /* Table Styling */
         .ant-table th {
             background: #fafafa;
@@ -179,6 +228,14 @@ $eventsRes = mysqli_query(
             border-bottom: 1px solid var(--ant-border-color);
             vertical-align: middle;
             font-size: 14px;
+        }
+
+        .form-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--ant-text-sec);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .btn-primary {
@@ -254,19 +311,8 @@ $eventsRes = mysqli_query(
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h2 class="fw-bold mb-1"><?php echo $t['manage_events'] ?? 'Manage Events'; ?></h2>
-                            <p class="text-secondary mb-0">
-                                <?php echo $t['event_list_desc'] ?? 'Create, view and manage temple events.'; ?>
-                            </p>
-                        </div>
-                        <div>
-                            <a href="create_event.php" class="btn btn-primary rounded-pill px-4">
-                                <i class="bi bi-plus-lg me-2"></i> <?php echo $t['create_event'] ?? 'Create Event'; ?>
-                            </a>
-                        </div>
-                    </div>
+                    <h2 class="fw-bold mb-1"><?php echo $t['events_management_title']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['events_management_desc']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -277,74 +323,104 @@ $eventsRes = mysqli_query(
                             <div><?= htmlspecialchars($successMsg) ?></div>
                         </div>
                     <?php endif; ?>
+                    <?php if ($errorMsg): ?>
+                        <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4" role="alert">
+                            <i class="bi bi-exclamation-circle-fill me-2"></i>
+                            <div><?= htmlspecialchars($errorMsg) ?></div>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="ant-card mb-4">
+                        <div class="ant-card-head"><?php echo $t['create_new_event']; ?></div>
+                        <div class="p-4">
+                            <form method="POST">
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-md-4">
+                                        <label
+                                            class="form-label"><?php echo $t['event_name'] ?? 'Event Name'; ?></label>
+                                        <input type="text" name="name" class="form-control"
+                                            placeholder="e.g. Maha Shivratri" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label"><?php echo $t['date'] ?? 'Date'; ?></label>
+                                        <input type="date" name="conduct_on" class="form-control" required
+                                            min="<?= date('Y-m-d') ?>">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label
+                                            class="form-label"><?php echo $t['duration_hrs'] ?? 'Duration (Hrs)'; ?></label>
+                                        <input type="number" name="duration" class="form-control" placeholder="2"
+                                            min="1" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label"><?php echo $t['capacity'] ?? 'Capacity'; ?></label>
+                                        <input type="number" name="max_participants" class="form-control"
+                                            placeholder="0 = Unlimited">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button name="create_event" class="btn btn-primary w-100 fw-bold">
+                                            <i class="bi bi-plus-lg"></i> <?php echo $t['create'] ?? 'Create'; ?>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
 
                     <div class="ant-card">
+                        <div class="ant-card-head"><?php echo $t['active_events'] ?? 'Active Events'; ?></div>
                         <div class="table-responsive">
                             <table class="table ant-table mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Event Name</th>
-                                        <th>Date</th>
-                                        <th>Duration</th>
-                                        <th>Capacity</th>
-                                        <th>Participants</th>
-                                        <th>Status</th>
-                                        <th class="text-end">Action</th>
+                                        <th><?php echo $t['event_name'] ?? 'Event Name'; ?></th>
+                                        <th><?php echo $t['date'] ?? 'Date'; ?></th>
+                                        <th><?php echo $t['duration_hrs'] ?? 'Duration'; ?></th>
+                                        <th><?php echo $t['capacity'] ?? 'Capacity'; ?></th>
+                                        <th><?php echo $t['registered'] ?? 'Registered'; ?></th>
+                                        <th class="text-end"><?php echo $t['action'] ?? 'Action'; ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php if ($eventsRes && mysqli_num_rows($eventsRes) > 0): ?>
-                                        <?php while ($event = mysqli_fetch_assoc($eventsRes)):
-                                            // Determine Status Badge
-                                            $today = date('Y-m-d');
-                                            $status = 'Upcoming';
-                                            $badgeClass = 'bg-primary-subtle text-primary border-primary-subtle';
-
-                                            if ($event['conduct_on'] < $today) {
-                                                $status = 'Completed';
-                                                $badgeClass = 'bg-secondary-subtle text-secondary border-secondary-subtle';
-                                            } elseif ($event['conduct_on'] == $today) {
-                                                $status = 'Today';
-                                                $badgeClass = 'bg-success-subtle text-success border-success-subtle';
-                                            }
-                                            ?>
+                                    <?php if (mysqli_num_rows($events) > 0): ?>
+                                        <?php while ($e = mysqli_fetch_assoc($events)): ?>
                                             <tr>
                                                 <td class="fw-bold text-dark">
-                                                    <?= htmlspecialchars($event['name']) ?>
+                                                    <?= htmlspecialchars($e['name']) ?>
                                                 </td>
                                                 <td>
-                                                    <div class="fw-medium">
-                                                        <?= $event['conduct_on'] ? date("d M Y", strtotime($event['conduct_on'])) : '-' ?>
-                                                    </div>
+                                                    <?= date('d M Y', strtotime($e['conduct_on'])) ?>
+                                                    <?php if ($e['conduct_on'] == date('Y-m-d')): ?>
+                                                        <span class="badge bg-success ms-1" style="font-size: 10px;">TODAY</span>
+                                                    <?php endif; ?>
                                                 </td>
-                                                <td class="text-muted small">
-                                                    <?= htmlspecialchars($event['duration'] ?: '-') ?>
+                                                <td><?= $e['duration'] ?> Hrs</td>
+                                                <td>
+                                                    <?= $e['max_participants'] == 0 ? '<span class="text-muted">' . ($t['infinite'] ?? 'Unlimited') . '</span>' : $e['max_participants'] ?>
                                                 </td>
                                                 <td>
-                                                    <?= ($event['max_participants'] ? (int) $event['max_participants'] : '<span class="text-muted">Unlimited</span>') ?>
-                                                </td>
-                                                <td class="fw-bold">
-                                                    <i class="bi bi-people me-1 text-muted"></i>
-                                                    <?= (int) $event['participant_count'] ?>
-                                                </td>
-                                                <td>
-                                                    <span class="badge <?= $badgeClass ?> border" style="font-weight: 500;">
-                                                        <?= $status ?>
+                                                    <span class="badge bg-light text-dark border">
+                                                        <i class="bi bi-people-fill me-1 text-primary"></i>
+                                                        <?= $e['current_participants'] ?>
                                                     </span>
                                                 </td>
                                                 <td class="text-end">
-                                                    <a href="edit_event.php?id=<?= $event['id'] ?>"
-                                                        class="btn btn-sm btn-light border rounded-pill px-3">
-                                                        <i class="bi bi-pencil-square me-1"></i> Edit
-                                                    </a>
+                                                    <form method="POST" style="display:inline;"
+                                                        onsubmit="return confirm('<?php echo $t['confirm_delete_event']; ?>');">
+                                                        <input type="hidden" name="event_id" value="<?= $e['id'] ?>">
+                                                        <button name="delete_event"
+                                                            class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                                            <i class="bi bi-trash"></i> <?php echo $t['cancel'] ?? 'Cancel'; ?>
+                                                        </button>
+                                                    </form>
                                                 </td>
                                             </tr>
                                         <?php endwhile; ?>
                                     <?php else: ?>
                                         <tr>
-                                            <td colspan="7" class="text-center py-5 text-muted">
+                                            <td colspan="6" class="text-center py-5 text-muted">
                                                 <i class="bi bi-calendar-x fs-1 opacity-25 d-block mb-3"></i>
-                                                <?php echo $t['no_events_found'] ?? 'No events found.'; ?>
+                                                <?php echo $t['no_events_found'] ?? 'No upcoming events found.'; ?>
                                             </td>
                                         </tr>
                                     <?php endif; ?>
@@ -352,6 +428,7 @@ $eventsRes = mysqli_query(
                             </table>
                         </div>
                     </div>
+
                 </div>
             </main>
         </div>
@@ -363,6 +440,11 @@ $eventsRes = mysqli_query(
         document.addEventListener('contextmenu', function (e) {
             e.preventDefault();
         });
+
+        // Prevent Resubmission
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
     </script>
 </body>
 

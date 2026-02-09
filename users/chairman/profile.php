@@ -1,16 +1,23 @@
 <?php
 require_once __DIR__ . '/../../includes/no_cache.php';
 session_start();
+require __DIR__ . '/../../config/db.php';
 require __DIR__ . '/../../includes/lang.php';
+require __DIR__ . '/../../includes/user_avatar.php';
 
 // Auth Check
-if (empty($_SESSION['logged_in'])) {
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: ../../auth/login.php");
     exit;
 }
 
-require __DIR__ . '/../../config/db.php';
 $uid = (int) $_SESSION['user_id'];
+$availableRoles = $_SESSION['roles'] ?? [];
+$primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
+$currLang = $_SESSION['lang'] ?? 'en';
+$currentPage = 'profile.php';
+$loggedInUserPhoto = get_user_avatar_url('../../');
+
 $successMsg = '';
 $errorMsg = '';
 
@@ -26,20 +33,19 @@ if (isset($_POST['delete_photo'])) {
                 unlink($oldPath);
             }
         }
-        $_SESSION['user_photo'] = null; // Update session
+        $_SESSION['user_photo'] = null;
         $successMsg = $t['profile_photo_deleted'] ?? 'Profile photo removed.';
     } else {
         $errorMsg = $t['profile_update_failed'] ?? 'Unable to update profile.';
     }
 }
 
-// --- B. HANDLE DETAILS UPDATE (AND PHOTO UPLOAD) ---
+// --- B. HANDLE DETAILS UPDATE ---
 if (isset($_POST['update_details'])) {
     $fNameRaw = trim($_POST['first_name'] ?? '');
     $lNameRaw = trim($_POST['last_name'] ?? '');
     $phoneRaw = trim($_POST['phone'] ?? '');
 
-    // 1. Basic Validation
     if ($fNameRaw === '' || $lNameRaw === '' || $phoneRaw === '') {
         $errorMsg = $t['err_fill_all'] ?? 'Please fill in all required fields.';
     } elseif (!preg_match('/^[\p{L}\s\.\'-]+$/u', $fNameRaw) || !preg_match('/^[\p{L}\s\.\'-]+$/u', $lNameRaw)) {
@@ -51,7 +57,7 @@ if (isset($_POST['update_details'])) {
     $photoName = null;
     $oldPhoto = null;
 
-    // 2. Handle File Upload
+    // Handle File Upload
     if (empty($errorMsg) && !empty($_FILES['photo']['name'])) {
         if ($_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
             $errorMsg = $t['err_file_upload_failed'] ?? 'Photo upload failed.';
@@ -62,21 +68,17 @@ if (isset($_POST['update_details'])) {
 
             if (!in_array($fileExt, $allowed)) {
                 $errorMsg = $t['err_invalid_file_type'] ?? 'Invalid format. Only JPG & PNG allowed.';
-            } elseif ($_FILES['photo']['size'] > 2 * 1024 * 1024) { // 2MB Limit
+            } elseif ($_FILES['photo']['size'] > 2 * 1024 * 1024) {
                 $errorMsg = $t['err_file_size'] ?? 'File too large (Max 2MB).';
             } else {
-                // Generate unique filename
                 $photoName = uniqid('user_', true) . '.' . $fileExt;
                 $uploadDir = __DIR__ . '/../../uploads/users/';
-
-                if (!is_dir($uploadDir)) {
+                if (!is_dir($uploadDir))
                     mkdir($uploadDir, 0777, true);
-                }
 
                 if (!move_uploaded_file($fileTmp, $uploadDir . $photoName)) {
                     $errorMsg = $t['err_file_upload_failed'] ?? 'Failed to save file.';
                 } else {
-                    // Get old photo to delete later
                     $existing = mysqli_fetch_assoc(mysqli_query($con, "SELECT photo FROM users WHERE id='$uid' LIMIT 1"));
                     $oldPhoto = !empty($existing['photo']) ? $existing['photo'] : null;
                 }
@@ -84,7 +86,6 @@ if (isset($_POST['update_details'])) {
         }
     }
 
-    // 3. Update Database
     if (empty($errorMsg)) {
         $fName = mysqli_real_escape_string($con, $fNameRaw);
         $lName = mysqli_real_escape_string($con, $lNameRaw);
@@ -93,29 +94,21 @@ if (isset($_POST['update_details'])) {
         $photoSql = $photoName ? ", photo='$photoName'" : '';
 
         if (mysqli_query($con, "UPDATE users SET first_name='$fName', last_name='$lName', phone='$phone' $photoSql WHERE id='$uid'")) {
-
-            // Delete old file if new one uploaded
             if ($photoName && $oldPhoto) {
                 $oldPath = __DIR__ . '/../../uploads/users/' . basename($oldPhoto);
-                if (is_file($oldPath)) {
+                if (is_file($oldPath))
                     unlink($oldPath);
-                }
             }
-
-            // Update Session
             $_SESSION['user_name'] = trim($fName . ' ' . $lName);
-            if ($photoName) {
+            if ($photoName)
                 $_SESSION['user_photo'] = $photoName;
-            }
 
             $successMsg = $t['profile_details_updated'] ?? 'Profile updated successfully.';
         } else {
-            // Cleanup uploaded file if DB failed
             if ($photoName) {
                 $newPath = __DIR__ . '/../../uploads/users/' . basename($photoName);
-                if (is_file($newPath)) {
+                if (is_file($newPath))
                     unlink($newPath);
-                }
             }
             $errorMsg = $t['profile_update_failed'] ?? 'Database update failed.';
         }
@@ -129,12 +122,11 @@ if (isset($_POST['change_password'])) {
     $confirmPass = $_POST['confirm_password'] ?? '';
 
     if ($currentPass === '' || $newPass === '' || $confirmPass === '') {
-        $errorMsg = $t['err_fill_all'] ?? 'Please fill in all required fields.';
+        $errorMsg = $t['err_fill_all'] ?? 'All password fields are required.';
     } elseif (strlen($newPass) < 6) {
         $errorMsg = $t['password_min_length'] ?? 'Password must be at least 6 characters.';
     } else {
         $userRow = mysqli_fetch_assoc(mysqli_query($con, "SELECT password FROM users WHERE id='$uid'"));
-
         if (password_verify($currentPass, $userRow['password'])) {
             if ($newPass === $confirmPass) {
                 $hashedNew = password_hash($newPass, PASSWORD_DEFAULT);
@@ -149,36 +141,31 @@ if (isset($_POST['change_password'])) {
     }
 }
 
-// FETCH CURRENT DATA
+// FETCH USER DATA
 $user = mysqli_fetch_assoc(mysqli_query($con, "SELECT * FROM users WHERE id='$uid' LIMIT 1"));
 $userPhotoUrl = !empty($user['photo'])
     ? '../../uploads/users/' . basename($user['photo'])
-    : 'https://ui-avatars.com/api/?name=' . urlencode($user['first_name'] . ' ' . $user['last_name']) . '&background=random'; // White BG for defaults
+    : 'https://ui-avatars.com/api/?name=' . urlencode($user['first_name'] . ' ' . $user['last_name']) . '&background=random';
 
-// Force refresh image cache
+// Force refresh image
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($errorMsg)) {
     $userPhotoUrl .= '?v=' . time();
 }
-
-$availableRoles = $_SESSION['roles'] ?? [];
-$primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
-$currLang = $_SESSION['lang'] ?? 'en';
 ?>
 
 <!DOCTYPE html>
-<html lang="<?= $currLang ?>">
+<html lang="<?= $lang ?>">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile - <?= $t['title'] ?? 'Temple' ?></title>
+    <title><?php echo $t['my_profile_title']; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
     <style>
-        /* --- GLOBAL THEME VARIABLES --- */
+        /* --- GLOBAL THEME VARIABLES (Blue) --- */
         :root {
-            /* Standard App Colors (Blue) */
             --ant-primary: #1677ff;
             --ant-primary-hover: #4096ff;
             --ant-bg-layout: #f0f2f5;
@@ -187,10 +174,6 @@ $currLang = $_SESSION['lang'] ?? 'en';
             --ant-text-sec: rgba(0, 0, 0, 0.45);
             --ant-radius: 12px;
             --ant-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08);
-
-            /* Treasurer Sidebar Overrides (Green) */
-            --tr-active-text: #52c41a;
-            --tr-active-bg: #f6ffed;
         }
 
         body {
@@ -201,7 +184,7 @@ $currLang = $_SESSION['lang'] ?? 'en';
             user-select: none;
         }
 
-        /* Allow inputs to be selectable */
+        /* Allow selection in inputs */
         input,
         textarea,
         select {
@@ -265,7 +248,7 @@ $currLang = $_SESSION['lang'] ?? 'en';
             }
         }
 
-        /* --- ACTIVE DROPDOWN ITEM (Dark Blue) --- */
+        /* Active Dropdown Item */
         .dropdown-item.active,
         .dropdown-item:active {
             background-color: var(--ant-primary) !important;
@@ -287,8 +270,7 @@ $currLang = $_SESSION['lang'] ?? 'en';
 
         /* --- PAGE CONTENT --- */
         .dashboard-hero {
-            background: radial-gradient(circle at top right, #f6ffed 0%, #ffffff 80%);
-            /* Treasurer Green Tint */
+            background: radial-gradient(circle at top right, #e6f4ff 0%, #ffffff 80%);
             padding: 40px 32px;
             border-bottom: 1px solid var(--ant-border-color);
             margin-bottom: 32px;
@@ -298,7 +280,8 @@ $currLang = $_SESSION['lang'] ?? 'en';
             background: #fff;
             border: 1px solid var(--ant-border-color);
             border-radius: var(--ant-radius);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            box-shadow: var(--ant-shadow);
+            overflow: hidden;
             margin-bottom: 24px;
         }
 
@@ -313,7 +296,7 @@ $currLang = $_SESSION['lang'] ?? 'en';
             padding: 24px;
         }
 
-        /* --- Profile Specific --- */
+        /* Profile Specific */
         .profile-avatar {
             width: 100px;
             height: 100px;
@@ -321,7 +304,6 @@ $currLang = $_SESSION['lang'] ?? 'en';
             border-radius: 50%;
             border: 4px solid #fff;
             background-color: #fff;
-            /* Fix for transparent images */
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
@@ -377,6 +359,7 @@ $currLang = $_SESSION['lang'] ?? 'en';
 </head>
 
 <body>
+
     <header class="ant-header shadow-sm">
         <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
@@ -422,7 +405,7 @@ $currLang = $_SESSION['lang'] ?? 'en';
                 <?php endif; ?>
 
                 <div class="user-pill">
-                    <img src="<?= htmlspecialchars($userPhotoUrl) ?>" class="rounded-circle" width="28" height="28"
+                    <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
                     <span
                         class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
@@ -437,22 +420,22 @@ $currLang = $_SESSION['lang'] ?? 'en';
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1">My Profile</h2>
-                    <p class="text-secondary mb-0">Manage your personal information and security settings.</p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['my_profile_title']; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['my_profile_desc']; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
 
                     <?php if ($successMsg): ?>
-                        <div class="alert border-0 shadow-sm mb-4"
-                            style="background: #f6ffed; color: #52c41a; border-radius: 8px;">
-                            <i class="bi bi-check-circle-fill me-2"></i> <?= htmlspecialchars($successMsg) ?>
+                        <div class="alert alert-success border-0 shadow-sm d-flex align-items-center mb-4" role="alert">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            <div><?= htmlspecialchars($successMsg) ?></div>
                         </div>
                     <?php endif; ?>
                     <?php if ($errorMsg): ?>
-                        <div class="alert border-0 shadow-sm mb-4"
-                            style="background: #fff2f0; color: #ff4d4f; border-radius: 8px;">
-                            <i class="bi bi-exclamation-circle-fill me-2"></i> <?= htmlspecialchars($errorMsg) ?>
+                        <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4" role="alert">
+                            <i class="bi bi-exclamation-circle-fill me-2"></i>
+                            <div><?= htmlspecialchars($errorMsg) ?></div>
                         </div>
                     <?php endif; ?>
 
@@ -466,39 +449,46 @@ $currLang = $_SESSION['lang'] ?? 'en';
                                             alt="Profile">
                                         <?php if (!empty($user['photo'])): ?>
                                             <button type="button" class="delete-photo-btn" data-bs-toggle="modal"
-                                                data-bs-target="#deletePhotoModal" title="Delete Photo">
+                                                data-bs-target="#deletePhotoModal"
+                                                title="<?php echo $t['delete_photo_title']; ?>">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         <?php endif; ?>
                                     </div>
                                     <h5 class="fw-bold mb-1">
-                                        <?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?></h5>
+                                        <?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?>
+                                    </h5>
                                     <p class="text-muted small mb-0">
-                                        <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?></p>
+                                        <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
+                                    </p>
+                                    <p class="text-muted small">
+                                        <?php echo $t['member_since']; ?>
+                                        <?= date("M Y", strtotime($user['created_at'])) ?>
+                                    </p>
                                 </div>
                             </div>
 
                             <div class="ant-card">
-                                <div class="ant-card-head">Change Password</div>
+                                <div class="ant-card-head"><?php echo $t['change_password']; ?></div>
                                 <div class="ant-card-body">
                                     <form method="POST" class="needs-validation" novalidate>
                                         <div class="mb-3">
-                                            <label class="form-label">Current Password</label>
+                                            <label class="form-label"><?php echo $t['current_password']; ?></label>
                                             <input type="password" name="current_password" class="form-control"
                                                 required>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">New Password</label>
+                                            <label class="form-label"><?php echo $t['new_password']; ?></label>
                                             <input type="password" name="new_password" class="form-control" required
                                                 minlength="6">
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Confirm Password</label>
+                                            <label class="form-label"><?php echo $t['confirm_password']; ?></label>
                                             <input type="password" name="confirm_password" class="form-control"
                                                 required>
                                         </div>
                                         <button type="submit" name="change_password" class="btn btn-primary w-100">
-                                            Update Password
+                                            <?php echo $t['update_password']; ?>
                                         </button>
                                     </form>
                                 </div>
@@ -507,44 +497,49 @@ $currLang = $_SESSION['lang'] ?? 'en';
 
                         <div class="col-lg-8">
                             <div class="ant-card">
-                                <div class="ant-card-head">Personal Information</div>
+                                <div class="ant-card-head"><?php echo $t['personal_information']; ?></div>
                                 <div class="ant-card-body">
                                     <form method="POST" enctype="multipart/form-data" class="needs-validation"
                                         novalidate>
                                         <div class="row g-3">
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">First Name</label>
+                                                <label class="form-label"><?php echo $t['first_name']; ?></label>
                                                 <input type="text" name="first_name" class="form-control"
                                                     value="<?= htmlspecialchars($user['first_name']) ?>" required>
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">Last Name</label>
+                                                <label class="form-label"><?php echo $t['last_name']; ?></label>
                                                 <input type="text" name="last_name" class="form-control"
                                                     value="<?= htmlspecialchars($user['last_name']) ?>" required>
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">Phone Number</label>
+                                                <label class="form-label"><?php echo $t['phone_number']; ?></label>
                                                 <input type="tel" name="phone" class="form-control" pattern="[0-9]{10}"
                                                     value="<?= htmlspecialchars($user['phone']) ?>" required>
-                                                <div class="invalid-feedback">Valid 10-digit number required.</div>
+                                                <div class="invalid-feedback"><?php echo $t['err_invalid_phone']; ?>
+                                                </div>
                                             </div>
                                             <div class="col-md-6 mb-3">
-                                                <label class="form-label">Email Address</label>
+                                                <label class="form-label"><?php echo $t['email_address']; ?></label>
                                                 <input type="email" class="form-control bg-light"
                                                     value="<?= htmlspecialchars($user['email']) ?>" readonly>
-                                                <div class="form-text small text-muted">Email cannot be changed.</div>
+                                                <div class="form-text small text-muted">
+                                                    <?php echo $t['email_cannot_change']; ?>
+                                                </div>
                                             </div>
 
                                             <div class="col-12 mb-3">
-                                                <label class="form-label">Update Profile Photo</label>
+                                                <label
+                                                    class="form-label"><?php echo $t['update_profile_photo']; ?></label>
                                                 <input type="file" name="photo" class="form-control" accept="image/*">
-                                                <div class="form-text small text-muted">Supported formats: JPG, JPEG,
-                                                    PNG. Max size: 2MB.</div>
+                                                <div class="form-text small text-muted">
+                                                    <?php echo $t['photo_upload_help']; ?>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="d-flex justify-content-end mt-4">
                                             <button type="submit" name="update_details" class="btn btn-primary px-5">
-                                                Save Changes
+                                                <?php echo $t['save_changes']; ?>
                                             </button>
                                         </div>
                                     </form>
@@ -563,18 +558,18 @@ $currLang = $_SESSION['lang'] ?? 'en';
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content border-0 shadow">
                     <div class="modal-header border-0 pb-0">
-                        <h5 class="modal-title fw-bold">Delete Photo</h5>
+                        <h5 class="modal-title fw-bold"><?php echo $t['delete_photo_title']; ?></h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body pt-3 pb-4">
-                        <p class="text-muted mb-0">Are you sure you want to remove your profile photo?</p>
+                        <p class="text-muted mb-0"><?php echo $t['delete_photo_msg']; ?></p>
                     </div>
                     <div class="modal-footer border-0 pt-0">
                         <button type="button" class="btn btn-light rounded-pill px-4"
-                            data-bs-dismiss="modal">Cancel</button>
+                            data-bs-dismiss="modal"><?php echo $t['cancel']; ?></button>
                         <form method="POST" class="m-0">
                             <button type="submit" name="delete_photo"
-                                class="btn btn-danger rounded-pill px-4">Delete</button>
+                                class="btn btn-danger rounded-pill px-4"><?php echo $t['delete']; ?></button>
                         </form>
                     </div>
                 </div>
@@ -584,7 +579,7 @@ $currLang = $_SESSION['lang'] ?? 'en';
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Form Validation
+        // Form Validation & Prevent Resubmission
         (function () {
             'use strict';
             var forms = document.querySelectorAll('.needs-validation');
@@ -599,7 +594,6 @@ $currLang = $_SESSION['lang'] ?? 'en';
             });
         })();
 
-        // Prevent resubmission on refresh
         if (window.history.replaceState) {
             window.history.replaceState(null, null, window.location.href);
         }
