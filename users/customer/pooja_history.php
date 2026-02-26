@@ -290,7 +290,6 @@ if ($con && $userId > 0) {
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <div class="small text-muted mb-1"><?php echo $t['dashboard'] ?? 'Dashboard'; ?></div>
                     <h2 class="fw-bold mb-1"><?php echo $t['pooja_history'] ?? 'My Pooja Bookings'; ?></h2>
                     <p class="text-secondary mb-0">
                         <?php echo $t['pooja_history_subtitle'] ?? 'View your pooja bookings and status.'; ?>
@@ -322,7 +321,7 @@ if ($con && $userId > 0) {
                                                     <td><?php echo !empty($b['pooja_date']) ? date('d M Y', strtotime($b['pooja_date'])) : '-'; ?>
                                                     </td>
                                                     <td class="fw-bold">
-                                                        <?php echo isset($b['fee']) ? '?' . number_format((float) $b['fee'], 0) : '-'; ?>
+                                                        <?php echo isset($b['fee']) ? '₹' . number_format((float) $b['fee'], 0) : '-'; ?>
                                                     </td>
                                                     <td>
                                                         <span

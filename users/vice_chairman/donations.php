@@ -17,16 +17,16 @@ $currLang = $_SESSION['lang'] ?? 'en';
 $currentPage = 'donations.php';
 $loggedInUserPhoto = get_user_avatar_url('../../');
 
-// --- FETCH DONATIONS ---
+// --- FETCH PURE DONATIONS ---
 $sql = "
-    SELECT p.id, p.amount, p.created_at, 
+    SELECT p.id, p.amount, p.created_at, p.note, p.payment_method,
            r.receipt_no, 
            COALESCE(u.first_name, 'Guest') as donor_name,
            u.last_name
     FROM payments p
     LEFT JOIN receipt r ON r.id = p.receipt_id
     LEFT JOIN users u ON u.id = p.user_id
-    WHERE p.status = 'success'
+    WHERE p.status = 'success' AND r.purpose = 'donation'
     ORDER BY p.created_at DESC
 ";
 $result = mysqli_query($con, $sql);
@@ -38,7 +38,7 @@ $result = mysqli_query($con, $sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $t['view_all_donations']; ?> - <?= $t['title'] ?></title>
+    <title><?php echo $t['recent_donations'] ?? 'Recent Donations'; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -241,8 +241,8 @@ $result = mysqli_query($con, $sql);
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1"><?php echo $t['view_all_donations']; ?></h2>
-                    <p class="text-secondary mb-0"><?php echo $t['payment_records_desc']; ?></p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['recent_donations'] ?? 'Recent Donations'; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['recent_donations_desc'] ?? 'A dedicated view of all philanthropic monetary contributions.'; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -252,9 +252,10 @@ $result = mysqli_query($con, $sql);
                                 <table class="table ant-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th><?php echo $t['receipt_no']; ?></th>
                                             <th><?php echo $t['donor_name']; ?></th>
                                             <th><?php echo $t['amount']; ?></th>
+                                            <th><?php echo $t['payment_method']; ?></th>
+                                            <th><?php echo $t['remarks'] ?? 'Remarks'; ?></th>
                                             <th><?php echo $t['date']; ?></th>
                                         </tr>
                                     </thead>
@@ -263,11 +264,17 @@ $result = mysqli_query($con, $sql);
                                             <?php while ($r = mysqli_fetch_assoc($result)): ?>
                                                 <tr>
                                                     <td class="fw-bold text-primary">
-                                                        #<?= htmlspecialchars($r['receipt_no'] ?? '-') ?></td>
-                                                    <td class="fw-medium">
                                                         <?= htmlspecialchars($r['donor_name'] . ' ' . ($r['last_name'] ?? '')) ?>
                                                     </td>
                                                     <td class="fw-bold">₹<?= number_format($r['amount'], 2) ?></td>
+                                                    <td>
+                                                        <span class="badge border bg-light text-dark fw-bold px-2 py-1">
+                                                            <?= htmlspecialchars(ucfirst($r['payment_method'] ?? 'Cash')) ?>
+                                                        </span>
+                                                    </td>
+                                                    <td class="text-muted small italic">
+                                                        <?= htmlspecialchars($r['note'] ?: '-') ?>
+                                                    </td>
                                                     <td class="text-muted small">
                                                         <?= date('d M Y, h:i A', strtotime($r['created_at'])) ?>
                                                     </td>
@@ -275,7 +282,7 @@ $result = mysqli_query($con, $sql);
                                             <?php endwhile; ?>
                                         <?php else: ?>
                                             <tr>
-                                                <td colspan="4" class="text-center py-5 text-muted">
+                                                <td colspan="5" class="text-center py-5 text-muted">
                                                     <i class="bi bi-inbox fs-1 opacity-25 d-block mb-3"></i>
                                                     <?php echo $t['no_donations_found']; ?>
                                                 </td>

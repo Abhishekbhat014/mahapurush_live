@@ -12,7 +12,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 }
 
 $uid = (int) $_SESSION['user_id'];
-$currentPage = 'contributions_review.php';
+$currentPage = 'contributions.php';
 $success = '';
 $error = '';
 

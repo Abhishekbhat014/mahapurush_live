@@ -313,7 +313,6 @@ if ($con) {
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <div class="small text-muted mb-1"><?php echo $t['dashboard'] ?? 'Dashboard'; ?></div>
                     <h2 class="fw-bold mb-1"><?php echo $t['events'] ?? 'Events'; ?></h2>
                     <p class="text-secondary mb-0">View upcoming temple events and register if available.</p>
                 </div>

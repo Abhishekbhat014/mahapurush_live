@@ -35,18 +35,17 @@ $pendingCount = mysqli_fetch_assoc(mysqli_query($con, "
     SELECT COUNT(*) as cnt FROM pooja WHERE status = 'pending'
 "))['cnt'] ?? 0;
 
-// --- 4. Today's Poojas ---
-$todaysPoojas = [];
-$resToday = mysqli_query($con, "
-    SELECT p.pooja_date, pt.type AS pooja_name, u.first_name AS devotee
+// --- 4. All Poojas ---
+$allPoojas = [];
+$resAllPoojas = mysqli_query($con, "
+    SELECT p.id, p.pooja_date, p.time_slot, p.status, pt.type AS pooja_name, u.first_name AS devotee
     FROM pooja p
     INNER JOIN pooja_type pt ON pt.id = p.pooja_type_id
     INNER JOIN users u ON u.id = p.user_id
-    WHERE DATE(p.pooja_date) = CURDATE()
-    ORDER BY p.pooja_date ASC
+    ORDER BY p.pooja_date DESC, p.created_at DESC
 ");
-while ($row = mysqli_fetch_assoc($resToday)) {
-    $todaysPoojas[] = $row;
+while ($row = mysqli_fetch_assoc($resAllPoojas)) {
+    $allPoojas[] = $row;
 }
 
 // --- 5. Upcoming Events ---
@@ -356,9 +355,8 @@ while ($erow = mysqli_fetch_assoc($resEvents)) {
                         <div class="col-12">
                             <div class="ant-card">
                                 <div class="ant-card-head d-flex justify-content-between align-items-center">
-                                    <span><i
-                                            class="bi bi-calendar-event me-2 text-primary"></i><?php echo $t['todays_poojas']; ?></span>
-                                    <span class="badge bg-light text-dark border"><?= date('d M Y') ?></span>
+                                    <span><i class="bi bi-calendar-event me-2 text-primary"></i><?php echo $t['all_poojas'] ?? 'All Pooja Bookings'; ?></span>
+                                    <span class="badge bg-light text-dark border"><?= count($allPoojas) ?> <?php echo $t['total'] ?? 'Total'; ?></span>
                                 </div>
                                 <div class="ant-card-body p-0">
                                     <div class="table-responsive">
@@ -368,31 +366,54 @@ while ($erow = mysqli_fetch_assoc($resEvents)) {
                                                     <th><?php echo $t['pooja']; ?></th>
                                                     <th><?php echo $t['devotee']; ?></th>
                                                     <th><?php echo $t['date']; ?></th>
+                                                    <th><?php echo $t['time_slot']; ?></th>
+                                                    <th><?php echo $t['status']; ?></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <?php foreach ($todaysPoojas as $p): ?>
+                                                <?php foreach ($allPoojas as $p): ?>
+                                                    <?php
+                                                    $statusKey = strtolower($p['status'] ?? 'pending');
+                                                    $badgeClass = match($statusKey) {
+                                                        'completed', 'paid' => 'success',
+                                                        'cancelled' => 'danger',
+                                                        'pending' => 'warning',
+                                                        default => 'secondary'
+                                                    };
+                                                    ?>
                                                     <tr>
                                                         <td class="fw-bold text-primary">
                                                             <?= htmlspecialchars($p['pooja_name']) ?></td>
                                                         <td>
-                                                            <div class="d-flex align-items-center gap-2">
+                                                            <a href="pooja_details.php?id=<?= (int)$p['id'] ?>"
+                                                               class="d-flex align-items-center gap-2 text-decoration-none text-dark hover-primary"
+                                                               title="View Details">
                                                                 <div class="rounded-circle bg-light d-flex align-items-center justify-content-center text-primary fw-bold"
                                                                     style="width:28px; height:28px; font-size:11px;">
                                                                     <?= strtoupper(substr($p['devotee'], 0, 1)) ?>
                                                                 </div>
-                                                                <?= htmlspecialchars($p['devotee']) ?>
-                                                            </div>
+                                                                <span class="text-primary text-decoration-underline-hover">
+                                                                    <?= htmlspecialchars($p['devotee']) ?>
+                                                                </span>
+                                                                <i class="bi bi-box-arrow-up-right small text-muted"></i>
+                                                            </a>
                                                         </td>
                                                         <td class="text-muted">
                                                             <?= date('d M Y', strtotime($p['pooja_date'])) ?></td>
+                                                        <td class="text-muted">
+                                                            <?= ucfirst($p['time_slot'] ?? '—') ?></td>
+                                                        <td>
+                                                            <span class="badge text-bg-<?= $badgeClass ?> rounded-pill">
+                                                                <?= ucfirst($statusKey) ?>
+                                                            </span>
+                                                        </td>
                                                     </tr>
                                                 <?php endforeach; ?>
-                                                <?php if (empty($todaysPoojas)): ?>
+                                                <?php if (empty($allPoojas)): ?>
                                                     <tr>
-                                                        <td colspan="3" class="text-center text-muted py-5">
+                                                        <td colspan="5" class="text-center text-muted py-5">
                                                             <i class="bi bi-calendar-x fs-1 opacity-25 d-block mb-2"></i>
-                                                            <?php echo $t['no_todays_poojas']; ?>
+                                                            <?php echo $t['no_todays_poojas'] ?? 'No pooja bookings found.'; ?>
                                                         </td>
                                                     </tr>
                                                 <?php endif; ?>

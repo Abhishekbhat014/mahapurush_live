@@ -21,6 +21,12 @@ if ($role === 'chairman') {
     $backUrl = '../chairman/receipts.php';
 } elseif ($role === 'secretary') {
     $backUrl = '../secretary/receipts.php';
+} elseif ($role === 'vice_chairman') {
+    $backUrl = '../vice_chairman/receipts.php';
+} elseif ($role === 'treasurer') {
+    $backUrl = '../treasurer/receipts.php';
+} elseif ($role === 'manager') {
+    $backUrl = '../manager/receipts.php';
 } elseif ($role === 'member') {
     $backUrl = '../member/my_receipts.php';
 }

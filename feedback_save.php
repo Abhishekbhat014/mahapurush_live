@@ -8,36 +8,31 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-
-
-$redirect = $_POST['redirect'] ?? ($_SERVER['HTTP_REFERER'] ?? 'index.php');
-
-function append_query_param(string $url, string $key, string $value): string
-{
-    $separator = (strpos($url, '?') !== false) ? '&' : '?';
-    return $url . $separator . urlencode($key) . '=' . urlencode($value);
-}
+$redirect = $_POST['redirect'] ?? 'index.php';
+$redirect = basename($redirect); // security
 
 $message = trim($_POST['message'] ?? '');
 $rating = (int) ($_POST['rating'] ?? 0);
 $email = trim($_POST['email'] ?? '');
-$userId = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
 
 if ($message === '' || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || $rating < 1 || $rating > 5) {
-    header("Location: " . append_query_param($redirect, 'feedback', 'error'));
+    $_SESSION['feedback'] = 'error';   // ✅ flash message
+    header("Location: $redirect");
     exit;
 }
 
 require __DIR__ . '/config/db.php';
 
-$stmt = $con->prepare("INSERT INTO feedbacks (user_id, email, message, rating) VALUES (?, ?, ?, ?)");
+$stmt = $con->prepare("INSERT INTO feedbacks (email, message, rating) VALUES (?, ?, ?)");
 if (!$stmt) {
-    header("Location: " . append_query_param($redirect, 'feedback', 'error'));
+    $_SESSION['feedback'] = 'error';   // ✅ flash message
+    header("Location: $redirect");
     exit;
 }
 
-$stmt->bind_param("issi", $userId, $email, $message, $rating);
+$stmt->bind_param("ssi", $email, $message, $rating);
 $stmt->execute();
 
-header("Location: " . append_query_param($redirect, 'feedback', 'success'));
+$_SESSION['feedback'] = 'success';     // ✅ flash message
+header("Location: $redirect");
 exit;

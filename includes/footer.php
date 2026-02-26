@@ -80,15 +80,16 @@ $footerIsLoggedIn = $_SESSION['logged_in'] ?? false;
             <div class="col-lg-4">
                 <h6 class="fw-bold mb-4 small"><?php echo $t['feedback'] ?? 'Feedback'; ?></h6>
 
-                <?php if (!empty($_GET['feedback']) && $_GET['feedback'] === 'success'): ?>
-                    <div class="alert alert-success py-2 small mb-3">
-                        <?php echo $t['feedback_thanks'] ?? 'Thank you for your feedback!'; ?>
+                <?php if (isset($_SESSION['feedback'])): ?>
+                    <div
+                        class="alert alert-<?= $_SESSION['feedback'] === 'success' ? 'success' : 'danger' ?> py-2 small mb-3">
+                        <?= $_SESSION['feedback'] === 'success'
+                            ? ($t['feedback_thanks'] ?? 'Thank you for your feedback!')
+                            : ($t['feedback_error'] ?? 'Please fill all fields and try again.'); ?>
                     </div>
-                <?php elseif (!empty($_GET['feedback']) && $_GET['feedback'] === 'error'): ?>
-                    <div class="alert alert-danger py-2 small mb-3">
-                        <?php echo $t['feedback_error'] ?? 'Please fill all fields and try again.'; ?>
-                    </div>
+                    <?php unset($_SESSION['feedback']); ?>
                 <?php endif; ?>
+
 
                 <form method="POST" action="feedback_save.php" class="d-grid gap-2">
                     <input type="hidden" name="redirect"

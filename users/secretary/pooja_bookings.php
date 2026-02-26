@@ -28,10 +28,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pooja_id'], $_POST['n
     $poojaId = (int) $_POST['pooja_id'];
     $newStatus = $_POST['new_status'];
 
+    $performedBy = isset($_POST['performed_by']) ? trim($_POST['performed_by']) : null;
+
     if (in_array($newStatus, ['approved', 'rejected'])) {
         // Only update if currently 'pending'
-        $stmt = $con->prepare("UPDATE pooja SET status=?, approved_by=?, approved_at=NOW() WHERE id=? AND status='pending'");
-        $stmt->bind_param("sii", $newStatus, $uid, $poojaId);
+        if ($newStatus === 'approved' && !empty($performedBy)) {
+            $stmt = $con->prepare("UPDATE pooja SET status=?, approved_by=?, performed_by=?, approved_at=NOW() WHERE id=? AND status='pending'");
+            $stmt->bind_param("sisi", $newStatus, $uid, $performedBy, $poojaId);
+        } else {
+            $stmt = $con->prepare("UPDATE pooja SET status=?, approved_by=?, approved_at=NOW() WHERE id=? AND status='pending'");
+            $stmt->bind_param("sii", $newStatus, $uid, $poojaId);
+        }
 
         if ($stmt->execute()) {
             $statusText = ($newStatus === 'approved') ? ($t['approved'] ?? 'Approved') : ($t['rejected'] ?? 'Rejected');
@@ -47,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pooja_id'], $_POST['n
    FETCH ALL BOOKINGS
 ============================ */
 $sql = "SELECT p.id, pt.type AS pooja_name, p.pooja_date, p.time_slot,
-               p.status, p.fee, u.first_name, u.last_name, p.created_at
+               p.status, p.fee, p.performed_by, u.first_name, u.last_name, p.created_at
         FROM pooja p
         JOIN pooja_type pt ON pt.id = p.pooja_type_id
         JOIN users u ON u.id = p.user_id
@@ -377,6 +384,7 @@ $result = mysqli_query($con, $sql);
                                         <th><?php echo $t['devotee_name'] ?? 'Devotee'; ?></th>
                                         <th><?php echo $t['pooja_type'] ?? 'Pooja Type'; ?></th>
                                         <th><?php echo $t['schedule'] ?? 'Schedule'; ?></th>
+                                        <th><?php echo $t['priest'] ?? 'Priest'; ?></th>
                                         <th><?php echo $t['fee'] ?? 'Fee'; ?></th>
                                         <th><?php echo $t['status'] ?? 'Status'; ?></th>
                                         <th class="text-end"><?php echo $t['actions'] ?? 'Actions'; ?></th>
@@ -409,6 +417,9 @@ $result = mysqli_query($con, $sql);
                                                         <?= $r['time_slot'] ?? $t['anytime'] ?? 'Anytime' ?>
                                                     </small>
                                                 </td>
+                                                <td>
+                                                    <?= htmlspecialchars($r['performed_by'] ?? 'Not Assigned') ?>
+                                                </td>
                                                 <td class="fw-bold">₹<?= number_format($r['fee'], 0) ?></td>
                                                 <td>
                                                     <span class="<?= $statusClass ?>">
@@ -418,14 +429,15 @@ $result = mysqli_query($con, $sql);
                                                 <td class="text-end">
                                                     <?php if ($r['status'] === 'pending'): ?>
                                                         <div class="d-flex justify-content-end gap-2">
-                                                            <form method="POST">
+                                                            <form method="POST" class="d-flex gap-2 align-items-center mb-0">
                                                                 <input type="hidden" name="pooja_id" value="<?= $r['id'] ?>">
                                                                 <input type="hidden" name="new_status" value="approved">
+                                                                <input type="text" name="performed_by" class="form-control form-control-sm" style="width:130px;" placeholder="<?= $t['priest_name'] ?? 'Priest Name' ?>" required>
                                                                 <button type="submit" class="btn-ant-success">
                                                                     <i class="bi bi-check2"></i> <?php echo $t['approve_btn']; ?>
                                                                 </button>
                                                             </form>
-                                                            <form method="POST">
+                                                            <form method="POST" class="mb-0 mt-1">
                                                                 <input type="hidden" name="pooja_id" value="<?= $r['id'] ?>">
                                                                 <input type="hidden" name="new_status" value="rejected">
                                                                 <button type="submit" class="btn-ant-danger">

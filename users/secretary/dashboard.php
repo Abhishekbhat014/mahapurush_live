@@ -389,7 +389,7 @@ if ($con) {
                                         </p>
                                     </div>
                                     <div class="d-flex gap-2">
-                                        <a href="contributions_review.php"
+                                        <a href="contributions.php"
                                             class="btn btn-primary btn-sm rounded-pill px-4 fw-bold">
                                             <?php echo $t['review_items']; ?>
                                         </a>

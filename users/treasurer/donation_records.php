@@ -18,7 +18,7 @@ $loggedInUserPhoto = get_user_avatar_url('../../');
 $userName = $_SESSION['user_name'] ?? 'User';
 
 // --- FILTER LOGIC ---
-$whereClause = "WHERE p.status = 'success'"; // Only show successful payments
+$whereClause = "WHERE p.status IN ('success', 'pending')"; // Show successful and pending payments
 
 // 1. Date Filter
 if (!empty($_GET['from_date']) && !empty($_GET['to_date'])) {
@@ -48,6 +48,7 @@ if ($con) {
             p.id, 
             p.amount, 
             p.payment_method, 
+            p.status,
             p.created_at, 
             
             r.receipt_no,
@@ -451,8 +452,17 @@ if ($con) {
                                                 $badgeClass = 'badge-cheque';
                                             ?>
                                             <tr>
-                                                <td class="fw-bold text-primary">
-                                                    #<?= htmlspecialchars($r['receipt_no'] ?? '-') ?>
+                                                <td class="fw-bold">
+                                                    <?php if ($r['status'] === 'pending'): ?>
+                                                        <form action="verify_donation.php" method="POST" class="d-inline">
+                                                            <input type="hidden" name="payment_id" value="<?= $r['id'] ?>">
+                                                            <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-3" onclick="return confirm('<?= $t['confirm_verify_cash'] ?? 'Approve this cash donation and generate receipt?' ?>');">
+                                                                <i class="bi bi-check-circle me-1"></i> <?= $t['verify_cash'] ?? 'Verify Cash' ?>
+                                                            </button>
+                                                        </form>
+                                                    <?php else: ?>
+                                                        <span class="text-primary">#<?= htmlspecialchars($r['receipt_no'] ?? '-') ?></span>
+                                                    <?php endif; ?>
                                                 </td>
                                                 <td class="text-muted small">
                                                     <?= date('d M Y', strtotime($r['created_at'])) ?>

@@ -15,11 +15,28 @@ $availableRoles = $_SESSION['roles'] ?? [];
 $primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
 
 
-$userId = $_SESSION['user_id'];
-$poojaTypeId = $_POST['pooja_type_id'];
-$poojaDate = $_POST['pooja_date'];
-$timeSlot = $_POST['time_slot'] ?? '';
-$description = $_POST['description'] ?? null;
+if (empty($_SESSION['user_id'])) {
+    header("Location: ../../auth/login.php");
+    exit;
+}
+
+$userId = (int) $_SESSION['user_id'];
+
+// Verify the user still exists in the database
+$userCheckStmt = $con->prepare("SELECT id FROM users WHERE id = ?");
+$userCheckStmt->bind_param("i", $userId);
+$userCheckStmt->execute();
+if ($userCheckStmt->get_result()->num_rows === 0) {
+    session_destroy();
+    header("Location: ../../auth/login.php?err=session_invalid");
+    exit;
+}
+$userCheckStmt->close();
+
+$poojaTypeId = (int) ($_POST['pooja_type_id'] ?? 0);
+$poojaDate = trim($_POST['pooja_date'] ?? '');
+$timeSlot = trim($_POST['time_slot'] ?? '');
+$description = trim($_POST['description'] ?? '');
 
 // fetch fee securely
 $stmt = $con->prepare("SELECT fee FROM pooja_type WHERE id = ?");

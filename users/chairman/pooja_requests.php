@@ -11,12 +11,14 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 }
 
 $uid = (int) $_SESSION['user_id'];
+$availableRoles = $_SESSION['roles'] ?? [];
+$primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
 $currentPage = 'pooja_requests.php';
 $currLang = $_SESSION['lang'] ?? 'en';
 
 $loggedInUserPhoto = get_user_avatar_url('../../');
 
-$sql = "SELECT p.id, pt.type AS pooja_name, p.pooja_date, p.time_slot, p.status, p.fee, u.first_name, u.last_name
+$sql = "SELECT p.id, pt.type AS pooja_name, p.pooja_date, p.time_slot, p.status, p.fee, p.performed_by, u.first_name, u.last_name
         FROM pooja p
         JOIN pooja_type pt ON pt.id = p.pooja_type_id
         JOIN users u ON u.id = p.user_id
@@ -165,7 +167,24 @@ $result = mysqli_query($con, $sql);
 
         .lang-btn:hover {
             background: #e6f4ff;
-            color: #1677ff;
+            color: var(--ant-primary);
+        }
+
+        @media (min-width: 992px) {
+            .dropdown:hover .dropdown-menu { display: block; margin-top: 0; }
+            .dropdown .dropdown-menu { display: none; }
+            .dropdown:hover>.dropdown-menu { display: block; animation: fadeIn 0.2s ease-in-out; }
+        }
+
+        .dropdown-item.active, .dropdown-item:active {
+            background-color: var(--ant-primary) !important;
+            color: #fff !important;
+            font-weight: 600;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -200,6 +219,28 @@ $result = mysqli_query($con, $sql);
                         </li>
                     </ul>
                 </div>
+
+                <?php if (!empty($availableRoles) && count($availableRoles) > 1): ?>
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <i class="bi bi-person-badge me-1"></i>
+                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                            <?php foreach ($availableRoles as $role): ?>
+                                <li>
+                                    <form action="../../auth/switch_role.php" method="post" class="px-2 py-1">
+                                        <button type="submit" name="role" value="<?= htmlspecialchars($role) ?>"
+                                            class="dropdown-item small fw-medium <?= ($role === $primaryRole) ? 'active' : '' ?>">
+                                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $role))) ?>
+                                        </button>
+                                    </form>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
                 <div class="user-pill">
                     <img src="<?= $loggedInUserPhoto ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
@@ -234,13 +275,20 @@ $result = mysqli_query($con, $sql);
                                         <th><?php echo $t['schedule'] ?? 'Schedule'; ?></th>
                                         <th><?php echo $t['fee'] ?? 'Fee'; ?></th>
                                         <th><?php echo $t['status'] ?? 'Status'; ?></th>
-                                        <th class="text-end"><?php echo $t['actions'] ?? 'Actions'; ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php if (mysqli_num_rows($result) > 0): ?>
                                         <?php while ($r = mysqli_fetch_assoc($result)): ?>
-                                            <tr>
+                                            <tr style="cursor: pointer;" onclick="viewPooja(
+                                                '<?= htmlspecialchars($r['first_name'] . ' ' . $r['last_name']) ?>',
+                                                '<?= htmlspecialchars($r['pooja_name']) ?>',
+                                                '<?= date('d M Y', strtotime($r['pooja_date'])) ?>',
+                                                '<?= htmlspecialchars($r['time_slot'] ?? 'Anytime') ?>',
+                                                '<?= htmlspecialchars($r['fee']) ?>',
+                                                '<?= htmlspecialchars($r['status']) ?>',
+                                                '<?= htmlspecialchars($r['performed_by'] ?? 'Not Assigned') ?>'
+                                            )">
                                                 <td class="fw-bold"><?= htmlspecialchars($r['first_name'] . ' ' . $r['last_name']) ?></td>
                                                 <td class="text-primary fw-medium"><?= htmlspecialchars($r['pooja_name']) ?></td>
                                                 <td>
@@ -251,14 +299,6 @@ $result = mysqli_query($con, $sql);
                                                 </td>
                                                 <td class="fw-bold">&#8377;<?= number_format($r['fee'], 0) ?></td>
                                                 <td><span class="badge-status"><?= htmlspecialchars($r['status']) ?></span></td>
-                                                <td class="text-end">
-                                                    <div class="d-inline-flex gap-2">
-                                                        <button class="btn btn-success btn-sm action-btn" disabled><?php echo $t['approve'] ?? 'Approve'; ?></button>
-                                                        <button class="btn btn-outline-primary btn-sm action-btn" disabled><?php echo $t['assign'] ?? 'Assign'; ?></button>
-                                                        <button class="btn btn-light btn-sm action-btn border" disabled><?php echo $t['edit'] ?? 'Edit'; ?></button>
-                                                        <button class="btn btn-outline-danger btn-sm action-btn" disabled><?php echo $t['delete'] ?? 'Delete'; ?></button>
-                                                    </div>
-                                                </td>
                                             </tr>
                                         <?php endwhile; ?>
                                     <?php else: ?>
@@ -278,7 +318,76 @@ $result = mysqli_query($con, $sql);
         </div>
     </div>
 
+    <!-- View Pooja Modal -->
+    <div class="modal fade" id="viewPoojaModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: var(--ant-radius); border: none;">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold"><?php echo $t['pooja_details'] ?? 'Pooja Details'; ?></h5>
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small mb-0"><?php echo $t['devotee_name'] ?? 'Devotee'; ?></label>
+                        <div class="fw-medium" id="modalDevotee"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small mb-0"><?php echo $t['pooja_type'] ?? 'Pooja Type'; ?></label>
+                        <div class="fw-medium text-primary" id="modalPoojaType"></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label text-muted small mb-0"><?php echo $t['pooja_date'] ?? 'Date'; ?></label>
+                            <div class="fw-medium" id="modalDate"></div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small mb-0"><?php echo $t['time_slot'] ?? 'Time Slot'; ?></label>
+                            <div class="fw-medium text-uppercase small" id="modalTimeSlot"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small mb-0"><?php echo $t['performed_by'] ?? 'Assigned Priest'; ?></label>
+                        <div class="fw-medium" id="modalPriest"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label text-muted small mb-0"><?php echo $t['fee'] ?? 'Fee'; ?></label>
+                            <div class="fw-bold" id="modalFee"></div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small mb-0"><?php echo $t['status'] ?? 'Status'; ?></label>
+                            <div><span class="badge-status" id="modalStatus"></span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal"><?php echo $t['close'] ?? 'Close'; ?></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const viewPoojaModal = new bootstrap.Modal(document.getElementById('viewPoojaModal'));
+        
+        function viewPooja(devotee, type, date, timeSlot, fee, status, priest) {
+            document.getElementById('modalDevotee').innerText = devotee;
+            document.getElementById('modalPoojaType').innerText = type;
+            document.getElementById('modalDate').innerText = date;
+            document.getElementById('modalTimeSlot').innerText = timeSlot;
+            document.getElementById('modalFee').innerText = '₹' + parseInt(fee).toLocaleString();
+            document.getElementById('modalStatus').innerText = status;
+            document.getElementById('modalPriest').innerText = priest;
+            
+            viewPoojaModal.show();
+        }
+
+        // Disable Right Click
+        document.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+        });
+    </script>
 </body>
 
 </html>

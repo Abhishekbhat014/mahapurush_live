@@ -45,6 +45,10 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <i class="bi bi-receipt-cutoff"></i> <span><?php echo $t['receipts']; ?></span>
         </a>
 
+        <a href="contributions.php" class="sb-link <?= ($currentPage == 'contributions.php') ? 'sb-active' : '' ?>">
+            <i class="bi bi-box-seam"></i> <span><?php echo $t['contributions_approval']; ?></span>
+        </a>
+
         <a href="events.php" class="sb-link <?= ($currentPage == 'events.php') ? 'sb-active' : '' ?>">
             <i class="bi bi-calendar-event"></i> <span><?php echo $t['events']; ?></span>
         </a>
@@ -92,6 +96,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <a href="receipts.php" class="sb-link <?= ($currentPage == 'receipts.php') ? 'sb-active' : '' ?>">
                 <i class="bi bi-receipt-cutoff"></i> <?php echo $t['receipts']; ?>
             </a>
+            
+            <a href="contributions.php" class="sb-link <?= ($currentPage == 'contributions.php') ? 'sb-active' : '' ?>">
+                <i class="bi bi-box-seam"></i> <?php echo $t['contributions_approval']; ?>
+            </a>
+            
             <a href="events.php" class="sb-link <?= ($currentPage == 'events.php') ? 'sb-active' : '' ?>">
                 <i class="bi bi-calendar-event"></i> <?php echo $t['events']; ?>
             </a>

@@ -1,50 +1,76 @@
 <?php
 require_once __DIR__ . '/../../includes/no_cache.php';
 session_start();
-require __DIR__ . '/../../config/db.php';
 require __DIR__ . '/../../includes/lang.php';
 require __DIR__ . '/../../includes/user_avatar.php';
+require __DIR__ . '/../../config/db.php';
 
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: ../../auth/login.php");
     exit;
 }
 
-$uid = (int) $_SESSION['user_id'];
 $availableRoles = $_SESSION['roles'] ?? [];
 $primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
 $currLang = $_SESSION['lang'] ?? 'en';
 $currentPage = 'receipts.php';
 $loggedInUserPhoto = get_user_avatar_url('../../');
+$userName = $_SESSION['user_name'] ?? 'User';
 
-// --- FETCH RECEIPTS ---
-$sql = "
-    SELECT p.id, p.amount, p.created_at, 
-           r.receipt_no, 
-           COALESCE(u.first_name, 'Guest') as donor_name,
-           u.last_name
-    FROM payments p
-    LEFT JOIN receipt r ON r.id = p.receipt_id
-    LEFT JOIN users u ON u.id = p.user_id
-    WHERE p.status = 'success'
-    ORDER BY p.created_at DESC
-";
-$result = mysqli_query($con, $sql);
+// --- SEARCH & FETCH LOGIC ---
+$search = $_GET['search'] ?? '';
+$receipts = [];
+
+if ($con) {
+    // Note: Added 'r.purpose' to SELECT list to show what the receipt is for
+    $query = "
+        SELECT 
+            r.id, 
+            r.receipt_no, 
+            r.purpose,
+            r.created_at,
+            r.amount, 
+            p.payment_method AS payment_mode, 
+            
+            COALESCE(u.first_name, 'Guest') AS devotee_name,
+            u.phone,
+            COALESCE(p.note, '') as remarks
+        FROM receipt r
+        LEFT JOIN payments p ON p.receipt_id = r.id
+        LEFT JOIN users u ON u.id = r.user_id
+        WHERE 1=1
+    ";
+
+    if (!empty($search)) {
+        $searchTerm = "%" . mysqli_real_escape_string($con, $search) . "%";
+        $query .= " AND (r.receipt_no LIKE '$searchTerm' OR u.first_name LIKE '$searchTerm' OR u.phone LIKE '$searchTerm' OR r.purpose LIKE '$searchTerm')";
+    }
+
+    $query .= " ORDER BY r.created_at DESC LIMIT 100";
+
+    $result = mysqli_query($con, $query);
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $receipts[] = $row;
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
-<html lang="<?= $lang ?>">
+<html lang="<?= $currLang ?>">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $t['receipts_management_title']; ?> - <?= $t['title'] ?></title>
+    <title><?php echo $t['receipts_title'] ?? 'All Receipts'; ?> - <?= $t['title'] ?? 'Temple' ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
     <style>
-        /* --- GLOBAL THEME VARIABLES (Blue) --- */
+        /* --- GLOBAL THEME VARIABLES --- */
         :root {
+            /* Standard App Colors (Blue) */
             --ant-primary: #1677ff;
             --ant-primary-hover: #4096ff;
             --ant-bg-layout: #f0f2f5;
@@ -59,8 +85,17 @@ $result = mysqli_query($con, $sql);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--ant-bg-layout);
             color: var(--ant-text);
+            /* Disable text selection globally */
             -webkit-user-select: none;
             user-select: none;
+        }
+
+        /* Allow inputs to be selectable */
+        input,
+        textarea,
+        select {
+            -webkit-user-select: text;
+            user-select: text;
         }
 
         /* --- HEADER STYLES --- */
@@ -119,7 +154,7 @@ $result = mysqli_query($con, $sql);
             }
         }
 
-        /* Active Dropdown Item */
+        /* --- ACTIVE DROPDOWN ITEM (Dark Blue) --- */
         .dropdown-item.active,
         .dropdown-item:active {
             background-color: var(--ant-primary) !important;
@@ -151,36 +186,74 @@ $result = mysqli_query($con, $sql);
             background: #fff;
             border: 1px solid var(--ant-border-color);
             border-radius: var(--ant-radius);
-            box-shadow: var(--ant-shadow);
-            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
 
-        .ant-card-body {
-            padding: 24px;
-        }
-
-        /* Table Styling */
+        /* --- TABLES --- */
         .ant-table th {
             background: #fafafa;
             font-weight: 600;
-            padding: 16px;
-            font-size: 13px;
+            padding: 14px 16px;
+            font-size: 12px;
             color: var(--ant-text-sec);
-            border-bottom: 1px solid var(--ant-border-color);
             text-transform: uppercase;
+            border-bottom: 1px solid var(--ant-border-color);
         }
 
         .ant-table td {
-            padding: 16px;
+            padding: 14px 16px;
             border-bottom: 1px solid var(--ant-border-color);
             vertical-align: middle;
             font-size: 14px;
+        }
+
+        .ant-table tr:hover td {
+            background-color: #fafafa;
+        }
+
+        .badge-soft {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .badge-cash {
+            background: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+        }
+
+        .badge-online {
+            background: #e6f4ff;
+            color: #1677ff;
+            border: 1px solid #91caff;
+        }
+
+        .badge-cheque {
+            background: #fff7e6;
+            color: #fa8c16;
+            border: 1px solid #ffd591;
+        }
+
+        .btn-primary {
+            background: var(--ant-primary);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            transition: 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: var(--ant-primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(22, 119, 255, 0.2);
         }
     </style>
 </head>
 
 <body>
-
     <header class="ant-header shadow-sm">
         <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center gap-3">
@@ -225,11 +298,10 @@ $result = mysqli_query($con, $sql);
                     </div>
                 <?php endif; ?>
 
-                <div class="user-pill shadow-sm">
+                <div class="user-pill">
                     <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
-                    <span
-                        class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                    <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($userName) ?></span>
                 </div>
             </div>
         </div>
@@ -241,53 +313,110 @@ $result = mysqli_query($con, $sql);
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1"><?php echo $t['receipts_management_title']; ?></h2>
-                    <p class="text-secondary mb-0"><?php echo $t['receipts_management_desc']; ?></p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['receipts_title'] ?? 'Total Receipts Database'; ?></h2>
+                    <p class="text-secondary mb-0">
+                        <?php echo $t['receipts_desc'] ?? 'A comprehensive, searchable list of all generated receipts.'; ?>
+                    </p>
                 </div>
 
                 <div class="px-4 pb-5">
-                    <div class="ant-card">
-                        <div class="ant-card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table ant-table mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th><?php echo $t['receipt_no']; ?></th>
-                                            <th><?php echo $t['donor_name']; ?></th>
-                                            <th><?php echo $t['amount']; ?></th>
-                                            <th><?php echo $t['date']; ?></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php if (mysqli_num_rows($result) > 0): ?>
-                                            <?php while ($r = mysqli_fetch_assoc($result)): ?>
-                                                <tr>
-                                                    <td class="fw-bold text-primary">
-                                                        #<?= htmlspecialchars($r['receipt_no'] ?? '-') ?></td>
-                                                    <td class="fw-medium">
-                                                        <?= htmlspecialchars($r['donor_name'] . ' ' . ($r['last_name'] ?? '')) ?>
-                                                    </td>
-                                                    <td class="fw-bold">₹<?= number_format($r['amount'], 2) ?></td>
-                                                    <td class="text-muted small">
-                                                        <?= date('d M Y, h:i A', strtotime($r['created_at'])) ?>
-                                                    </td>
-                                                </tr>
-                                            <?php endwhile; ?>
-                                        <?php else: ?>
+                    <div class="ant-card p-4">
+
+                        <form method="GET" class="row g-3 mb-4">
+                            <div class="col-md-5">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0"><i
+                                            class="bi bi-search text-muted"></i></span>
+                                    <input type="text" name="search" class="form-control border-start-0 ps-0"
+                                        placeholder="<?php echo $t['search_receipts_placeholder'] ?? 'Search by Receipt No or Name...'; ?>"
+                                        value="<?= htmlspecialchars($search) ?>">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-primary w-100">
+                                    <?php echo $t['search_btn'] ?? 'Search'; ?>
+                                </button>
+                            </div>
+                            <?php if (!empty($search)): ?>
+                                <div class="col-md-2">
+                                    <a href="receipts.php"
+                                        class="btn btn-light border w-100"><?php echo $t['clear_btn'] ?? 'Clear'; ?></a>
+                                </div>
+                            <?php endif; ?>
+                        </form>
+
+                        <div class="table-responsive">
+                            <table class="table ant-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th><?php echo $t['receipt_no'] ?? 'Receipt No'; ?></th>
+                                        <th><?php echo $t['devotee'] ?? 'Devotee'; ?></th>
+                                        <th><?php echo $t['amount'] ?? 'Amount'; ?></th>
+                                        <th><?php echo $t['purpose'] ?? 'Purpose'; ?></th>
+                                        <th><?php echo $t['date'] ?? 'Date'; ?></th>
+                                        <th class="text-end"><?php echo $t['action'] ?? 'Action'; ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (!empty($receipts)): ?>
+                                        <?php foreach ($receipts as $r):
+                                            $mode = strtolower($r['payment_mode'] ?? 'cash');
+                                            $badge = 'badge-cash'; 
+                                            if (strpos($mode, 'online') !== false)
+                                                $badge = 'badge-online';
+                                            if (strpos($mode, 'cheque') !== false)
+                                                $badge = 'badge-cheque';
+                                            ?>
                                             <tr>
-                                                <td colspan="4" class="text-center py-5 text-muted">
-                                                    <i class="bi bi-inbox fs-1 opacity-25 d-block mb-3"></i>
-                                                    <?php echo $t['no_receipts_found']; ?>
+                                                <td class="fw-bold text-primary">
+                                                    #<?= htmlspecialchars($r['receipt_no']) ?>
+                                                </td>
+                                                <td>
+                                                    <div class="fw-medium text-dark"><?= htmlspecialchars($r['devotee_name']) ?>
+                                                    </div>
+                                                    <div class="text-muted small"><?= htmlspecialchars($r['phone'] ?? '-') ?>
+                                                    </div>
+                                                </td>
+                                                <td class="fw-bold">
+                                                    <?= rtrim(rtrim(number_format($r['amount'], 2), '0'), '.') ?>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-light text-dark border fw-bold px-2 py-1">
+                                                        <?= htmlspecialchars(ucfirst($r['purpose'] ?? 'General')) ?>
+                                                    </span>
+                                                    <?php if(!empty($r['payment_mode'])): ?>
+                                                        <span class="badge-soft <?= $badge ?> ms-1">
+                                                            <?= htmlspecialchars($r['payment_mode']) ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td class="text-muted small">
+                                                    <?= date('d M Y, h:i A', strtotime($r['created_at'])) ?>
+                                                </td>
+                                                <td class="text-end">
+                                                    <a href="../receipt/view.php?no=<?= urlencode($r['receipt_no']) ?>" target="_blank"
+                                                        class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                                        <i class="bi bi-eye me-1"></i> <?php echo $t['view_receipt'] ?? 'View'; ?>
+                                                    </a>
                                                 </td>
                                             </tr>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
-                            </div>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr>
+                                            <td colspan="6" class="text-center py-5 text-muted">
+                                                <i class="bi bi-receipt fs-1 opacity-25 d-block mb-3"></i>
+                                                <p class="mb-0"><?php echo $t['no_receipts_found_criteria'] ?? 'No receipts found.'; ?></p>
+                                            </td>
+                                        </tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
                         </div>
+
                     </div>
                 </div>
             </main>
+
         </div>
     </div>
 

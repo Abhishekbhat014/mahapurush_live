@@ -2,6 +2,14 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+// Handle language switch from dropdown
+if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'mr'])) {
+    $_SESSION['lang'] = $_GET['lang'];
+    setcookie('lang', $_GET['lang'], time() + (86400 * 30), "/"); // 30 days
+    header("Location: " . strtok($_SERVER["REQUEST_URI"], '?')); // remove ?lang from URL
+    exit;
+}
+
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/lang.php';
 require_once __DIR__ . '/user_avatar.php';

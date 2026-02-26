@@ -27,6 +27,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <span><?php echo $t['pooja_requests'] ?? 'Pooja Requests (View Only)'; ?></span>
         </a>
 
+        <a href="my_donations.php" class="sb-link <?= ($currentPage == 'my_donations.php') ? 'sb-active' : '' ?>">
+            <i class="bi bi-gift"></i>
+            <span><?php echo $t['all_donations_contributions'] ?? 'All Donations & Contributions'; ?></span>
+        </a>
+
         <a href="events.php" class="sb-link <?= ($currentPage == 'events.php') ? 'sb-active' : '' ?>">
             <i class="bi bi-calendar-event"></i>
             <span><?php echo $t['events'] ?? 'Events'; ?></span>
@@ -70,6 +75,10 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
         <a href="pooja_requests.php" class="sb-link <?= ($currentPage == 'pooja_requests.php') ? 'sb-active' : '' ?>">
             <i class="bi bi-calendar-check"></i> <?php echo $t['pooja_requests'] ?? 'Pooja Requests (View Only)'; ?>
+        </a>
+
+        <a href="my_donations.php" class="sb-link <?= ($currentPage == 'my_donations.php') ? 'sb-active' : '' ?>">
+            <i class="bi bi-gift"></i> <?php echo $t['all_donations_contributions'] ?? 'All Donations & Contributions'; ?>
         </a>
 
         <a href="events.php" class="sb-link <?= ($currentPage == 'events.php') ? 'sb-active' : '' ?>">

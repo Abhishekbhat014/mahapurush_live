@@ -14,6 +14,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         --sb-active-bg: #e6f4ff;
         /* Light Blue Background */
     }
+
+    /* Prevent full sidebar scroll to keep logout sticky */
+    .sb-sidebar, .sb-offcanvas {
+        overflow-y: hidden !important;
+    }
 </style>
 
 <nav class="col-lg-2 d-none d-lg-flex flex-column sb-sidebar shadow-sm p-0">
@@ -24,7 +29,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         </small>
     </div>
 
-    <div class="nav flex-column flex-grow-1" style="overflow-y: auto;">
+    <div class="nav flex-column flex-grow-1" style="overflow-y: auto; flex-wrap: nowrap; min-height: 0; padding-bottom: 20px;">
 
         <a href="../../index.php" class="sb-link">
             <i class="bi bi-house"></i> <span><?php echo $t['home'] ?? 'Home'; ?></span>
@@ -37,12 +42,16 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <i class="bi bi-calendar2-check"></i> <span><?php echo $t['event_approvals'] ?? 'Event Approvals'; ?></span>
         </a>
 
+        <a href="pooja_requests.php" class="sb-link <?= ($currentPage == 'pooja_requests.php') ? 'sb-active' : '' ?>">
+            <i class="bi bi-journal-check"></i> <span><?php echo $t['pooja_approvals'] ?? 'Pooja Approvals'; ?></span>
+        </a>
+
         <a href="reports.php" class="sb-link <?= ($currentPage == 'reports.php') ? 'sb-active' : '' ?>">
             <i class="bi bi-bar-chart-line"></i> <span><?php echo $t['reports'] ?? 'Reports'; ?></span>
         </a>
 
-        <a href="committee.php" class="sb-link <?= ($currentPage == 'committee.php') ? 'sb-active' : '' ?>">
-            <i class="bi bi-people"></i> <span><?php echo $t['committee'] ?? 'Committee'; ?></span>
+        <a href="users.php" class="sb-link <?= ($currentPage == 'users.php') ? 'sb-active' : '' ?>">
+            <i class="bi bi-person-gear"></i> <span><?php echo $t['users_and_committee'] ?? 'Users & Committee'; ?></span>
         </a>
 
         <a href="gallery.php" class="sb-link <?= ($currentPage == 'gallery.php') ? 'sb-active' : '' ?>">
@@ -72,8 +81,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas"></button>
     </div>
 
-    <div class="offcanvas-body d-flex flex-column p-0 pt-3">
-        <div class="nav flex-column flex-grow-1" style="overflow-y: auto;">
+    <div class="offcanvas-body d-flex flex-column p-0 pt-3" style="overflow-y: hidden;">
+        <div class="nav flex-column flex-grow-1" style="overflow-y: auto; flex-wrap: nowrap; min-height: 0; padding-bottom: 20px;">
 
             <a href="../../index.php" class="sb-link">
                 <i class="bi bi-house"></i> <span><?php echo $t['home'] ?? 'Home'; ?></span>
@@ -87,12 +96,16 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <i class="bi bi-calendar2-check"></i> <span><?php echo $t['event_approvals'] ?? 'Event Approvals'; ?></span>
             </a>
 
+            <a href="pooja_requests.php" class="sb-link <?= ($currentPage == 'pooja_requests.php') ? 'sb-active' : '' ?>">
+                <i class="bi bi-journal-check"></i> <span><?php echo $t['pooja_approvals'] ?? 'Pooja Approvals'; ?></span>
+            </a>
+
             <a href="reports.php" class="sb-link <?= ($currentPage == 'reports.php') ? 'sb-active' : '' ?>">
                 <i class="bi bi-bar-chart-line"></i> <span><?php echo $t['reports'] ?? 'Reports'; ?></span>
             </a>
 
-            <a href="committee.php" class="sb-link <?= ($currentPage == 'committee.php') ? 'sb-active' : '' ?>">
-                <i class="bi bi-people"></i> <span><?php echo $t['committee'] ?? 'Committee'; ?></span>
+            <a href="users.php" class="sb-link <?= ($currentPage == 'users.php') ? 'sb-active' : '' ?>">
+                <i class="bi bi-person-gear"></i> <span><?php echo $t['users_and_committee'] ?? 'Users & Committee'; ?></span>
             </a>
 
             <a href="gallery.php" class="sb-link <?= ($currentPage == 'gallery.php') ? 'sb-active' : '' ?>">

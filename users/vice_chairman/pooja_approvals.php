@@ -27,33 +27,15 @@ if ($roleRes && mysqli_num_rows($roleRes) > 0) {
     $userRole = $row['role_id'];
 }
 
-// Check permission (Vice Chairman only)
-$canApprove = ($userRole == 3); // Adjust role ID as per your DB
-
-// --- 2. HANDLE APPROVAL ACTION ---
-if (isset($_GET['approve']) && $canApprove) {
-    $pid = (int) $_GET['approve'];
-
-    // Update status to Approved
-    $updateSql = "UPDATE pooja 
-                  SET status = 'Approved', 
-                      approved_by = $uid, 
-                      approved_at = NOW() 
-                  WHERE id = $pid AND status = 'Pending'";
-
-    if (mysqli_query($con, $updateSql)) {
-        header("Location: pooja_approvals.php?msg=approved");
-        exit;
-    }
-}
+// Vice Chairman is view-only for approvals
+// --- 2. HANDLE APPROVAL ACTION (Removed) ---
 
 // --- 3. FETCH PENDING REQUESTS ---
 $sql = "SELECT p.id, pt.type AS pooja_name, p.pooja_date, p.time_slot, 
-               p.status, p.fee, u.first_name, u.last_name
+               p.status, p.fee, p.performed_by, u.first_name, u.last_name
         FROM pooja p
         JOIN pooja_type pt ON pt.id = p.pooja_type_id
         JOIN users u ON u.id = p.user_id
-        WHERE p.status = 'Pending'
         ORDER BY p.pooja_date ASC";
 
 $result = mysqli_query($con, $sql);
@@ -65,7 +47,7 @@ $result = mysqli_query($con, $sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $t['pooja_approvals_title']; ?> - <?= $t['title'] ?></title>
+    <title><?php echo $t['pending_pooja_overview'] ?? 'Pending Poojas Overview'; ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -200,15 +182,49 @@ $result = mysqli_query($con, $sql);
             font-size: 14px;
         }
 
-        .badge-status {
-            font-size: 11px;
-            font-weight: 600;
+        /* Status Badges */
+        .badge-pending {
+            background: #fff7e6;
+            color: #fa8c16;
+            border: 1px solid #ffd591;
             padding: 4px 10px;
             border-radius: 4px;
+            font-size: 11px;
             text-transform: uppercase;
-            background: #fffbe6;
-            color: #faad14;
-            border: 1px solid #ffe58f;
+            font-weight: 600;
+        }
+
+        .badge-approved {
+            background: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .badge-rejected {
+            background: #fff1f0;
+            color: #ff4d4f;
+            border: 1px solid #ffa39e;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .badge-completed {
+            background: #e6f4ff;
+            color: #1677ff;
+            border: 1px solid #91caff;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 600;
         }
 
         .action-btn {
@@ -281,8 +297,8 @@ $result = mysqli_query($con, $sql);
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1"><?php echo $t['pooja_approvals_title']; ?></h2>
-                    <p class="text-secondary mb-0"><?php echo $t['pooja_approvals_desc']; ?></p>
+                    <h2 class="fw-bold mb-1"><?php echo $t['pooja_overview'] ?? 'Pooja Overview'; ?></h2>
+                    <p class="text-secondary mb-0"><?php echo $t['pooja_overview_desc'] ?? 'Overview of all pooja requests.'; ?></p>
                 </div>
 
                 <div class="px-4 pb-5">
@@ -302,14 +318,24 @@ $result = mysqli_query($con, $sql);
                                         <th><?php echo $t['devotee_name'] ?? 'Devotee'; ?></th>
                                         <th><?php echo $t['pooja_type'] ?? 'Pooja Type'; ?></th>
                                         <th><?php echo $t['schedule'] ?? 'Schedule'; ?></th>
+                                        <th><?php echo $t['priest'] ?? 'Priest'; ?></th>
                                         <th><?php echo $t['fee'] ?? 'Fee'; ?></th>
                                         <th><?php echo $t['status'] ?? 'Status'; ?></th>
-                                        <th class="text-end"><?php echo $t['actions'] ?? 'Actions'; ?></th>
+                                                    <!-- Actions removed for Vice Chairman -->
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php if (mysqli_num_rows($result) > 0): ?>
-                                        <?php while ($r = mysqli_fetch_assoc($result)): ?>
+                                        <?php while ($r = mysqli_fetch_assoc($result)): 
+                                            $statusClass = match (strtolower($r['status'])) {
+                                                'pending' => 'badge-pending',
+                                                'approved' => 'badge-approved',
+                                                'rejected' => 'badge-rejected',
+                                                'completed' => 'badge-completed',
+                                                'cancelled' => 'badge-rejected',
+                                                default => 'badge-pending'
+                                            };
+                                        ?>
                                             <tr>
                                                 <td class="fw-bold">
                                                     <?= htmlspecialchars($r['first_name'] . ' ' . $r['last_name']) ?>
@@ -324,28 +350,18 @@ $result = mysqli_query($con, $sql);
                                                         <?= htmlspecialchars($r['time_slot'] ?? 'Anytime') ?>
                                                     </small>
                                                 </td>
-                                                <td class="fw-bold">&#8377;<?= number_format($r['fee'], 0) ?></td>
-                                                <td><span class="badge-status"><?= htmlspecialchars($r['status']) ?></span></td>
-                                                <td class="text-end">
-                                                    <?php if ($canApprove): ?>
-                                                        <a href="?approve=<?= $r['id'] ?>"
-                                                            class="btn btn-success btn-sm action-btn">
-                                                            <i class="bi bi-check-lg me-1"></i> <?php echo $t['approve']; ?>
-                                                        </a>
-                                                    <?php else: ?>
-                                                        <button class="btn btn-secondary btn-sm action-btn" disabled
-                                                            title="Only Vice Chairman can approve">
-                                                            <i class="bi bi-lock-fill me-1"></i> <?php echo $t['approve']; ?>
-                                                        </button>
-                                                    <?php endif; ?>
+                                                <td>
+                                                    <?= htmlspecialchars($r['performed_by'] ?? 'Not Assigned') ?>
                                                 </td>
+                                                <td class="fw-bold">&#8377;<?= number_format($r['fee'], 0) ?></td>
+                                                <td><span class="<?= $statusClass ?>"><?= htmlspecialchars($r['status']) ?></span></td>
                                             </tr>
                                         <?php endwhile; ?>
                                     <?php else: ?>
                                         <tr>
                                             <td colspan="6" class="text-center py-5 text-muted">
                                                 <i class="bi bi-calendar2-x fs-1 opacity-25 d-block mb-3"></i>
-                                                <?php echo $t['no_pending_requests']; ?>
+                                                <?php echo $t['no_poojas_scheduled'] ?? 'No poojas found'; ?>
                                             </td>
                                         </tr>
                                     <?php endif; ?>

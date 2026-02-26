@@ -329,9 +329,6 @@ usort($items, function ($a, $b) {
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <div class="small text-muted mb-1">
-                        <?php echo $t['dashboard']; ?> / <?php echo $t['history'] ?? 'History'; ?>
-                    </div>
                     <h2 class="fw-bold mb-1"><?php echo $t['history'] ?? 'History'; ?></h2>
                     <p class="text-secondary mb-0"><?php echo $t['history_subtitle'] ?? 'All your temple service activity in one place.'; ?></p>
                 </div>

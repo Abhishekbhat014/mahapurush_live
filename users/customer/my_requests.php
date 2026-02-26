@@ -299,9 +299,6 @@ $userPhoto = get_user_avatar_url('../../');
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <div class="small text-muted mb-1">
-                        <?php echo $t['dashboard']; ?> / <?php echo $t['my_requests']; ?>
-                    </div>
                     <h2 class="fw-bold mb-1"><?php echo $t['my_requests']; ?></h2>
                     <p class="text-secondary mb-0"><?php echo $t['my_requests_subtitle']; ?></p>
                 </div>

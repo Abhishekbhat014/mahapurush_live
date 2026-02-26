@@ -256,6 +256,8 @@ return [
     'morning' => 'सकाळ',
     'mumbai' => 'मुंबई',
     'my_profile' => 'माझे प्रोफाइल',
+    'my_total_donations' => 'माझे एकूण देणगी',
+    'my_pooja_bookings' => 'माझ्या पूजा बुकिंग्स',
     'my_receipts' => 'माझ्या पावत्या',
     'my_requests' => 'माझ्या विनंत्या',
     'my_requests_subtitle' => 'तुमच्या योगदान, बुकिंग्स आणि पेमेंट्सची स्थिती पाहा.',
@@ -580,7 +582,7 @@ return [
     'role_name' => 'भूमिका',
     'email_label' => 'ईमेल',
     'phone_label' => 'फोन',
-    
+
     'no_committee_members' => 'कोणतेही समिती सदस्य आढळले नाहीत.',
     'pooja_approvals' => 'पूजा मंजुरी',
     'total_contribution' => 'एकूण योगदान',
@@ -637,4 +639,33 @@ return [
     'no_data_found' => 'निवडलेल्या निकषांसाठी कोणताही डेटा आढळला नाही.',
     'select_report_prompt' => 'कृपया अहवाल प्रकार आणि तारीख श्रेणी निवडा.',
     'title_label' => 'शीर्षक',
+    'devotee_dashboard' => 'ग्राहक डॅशबोर्ड',
+    'devotee_dashboard_subtitle' => 'तुमच्या भक्त डॅशबोर्डवर स्वागत आहे — पूजा बुक करा, देणग्या द्या, कार्यक्रम एक्सप्लोर करा आणि मंदिराच्या उपक्रमांशी जोडलेले रहा.',
+
+    // My Donations & Contributions properties
+    'my_donations_contributions' => 'माझ्या देणग्या आणि योगदान',
+    'all_donations_contributions' => 'सर्व देणग्या आणि योगदान',
+    'my_donations_cont_subtitle' => 'तुमच्या आर्थिक देणग्या आणि साहित्यांच्या योगदानाचा संपूर्ण इतिहास पहा.',
+    'all_donations_cont_subtitle' => 'सर्व आर्थिक देणग्या आणि साहित्यांच्या योगदानाचा संपूर्ण इतिहास पहा.',
+    'view_details' => 'तपशील पहा',
+    'donation_details' => 'देणगी तपशील',
+    'contribution_details' => 'योगदान तपशील',
+    'monetary_donations' => 'आर्थिक देणग्या',
+    'donation_purpose' => 'देणगीचा उद्देश',
+    'contribution_title' => 'योगदानाचे शीर्षक',
+    'no_donations_history' => 'अद्याप कोणत्याही आर्थिक देणग्या नोंदवलेल्या नाहीत.',
+    'no_contributions_history' => 'अद्याप कोणतेही साहित्याचे योगदान नोंदवलेले नाही.',
+    'donation_type' => 'देणगीचा प्रकार',
+
+    // User Management
+    'user_management' => 'वापरकर्ता व्यवस्थापन',
+    'user_management_desc' => 'नोंदणीकृत वापरकर्ते व्यवस्थापित करा आणि भूमिका द्या.',
+    'users' => 'वापरकर्ते',
+    'edit_roles' => 'भूमिका संपादित करा',
+    'update_roles' => 'भूमिका अद्यतनित करा',
+    'roles_updated_success' => 'भूमिका यशस्वीरित्या अद्यतनित केल्या.',
+    'roles_update_failed' => 'भूमिका अद्यतनित करण्यात अयशस्वी.',
+    'no_users_found' => 'कोणतेही वापरकर्ते आढळले नाहीत.',
+    'select_roles' => 'भूमिका निवडा',
+    'assign_roles' => 'भूमिका द्या',
 ];

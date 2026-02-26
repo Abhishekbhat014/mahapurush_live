@@ -7,6 +7,16 @@ session_start();
 require __DIR__ . '/../../includes/lang.php';
 require __DIR__ . '/../../includes/user_avatar.php';
 
+if (empty($_SESSION['logged_in'])) {
+    header("Location: ../../auth/login.php");
+    exit;
+}
+$availableRoles = $_SESSION['roles'] ?? [];
+$primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
+
+
+$currLang = $_SESSION['lang'] ?? 'en';
+
 // =========================================================
 // 2. DATABASE CONNECTION
 // =========================================================
@@ -23,15 +33,26 @@ $currentPage = 'donate.php';
 $displayName = $isLoggedIn ? $userName : $t['guest'];
 $loggedInUserPhoto = get_user_avatar_url('../../');
 
+$paymentMethods = [];
+if ($con) {
+    $res = $con->query("SELECT method_name FROM payment_methods WHERE is_active = 1 ORDER BY method_name ASC");
+    if ($res) {
+        while ($row = $res->fetch_assoc()) {
+            $paymentMethods[] = $row['method_name'];
+        }
+    }
+}
+
 // --- FORM HANDLING ---
 $error = '';
 $success = '';
+$receiptNo = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
     $donorName = trim($_POST['name'] ?? '');
     $amount = trim($_POST['amount'] ?? '');
     $note = trim($_POST['note'] ?? '');
     $paymentMethod = strtolower(trim($_POST['payment_method'] ?? 'cash'));
-    $allowedMethods = ['cash', 'upi'];
+    $allowedMethods = array_map('strtolower', $paymentMethods);
 
     if ($donorName === '' || !is_numeric($amount) || $amount <= 0) {
         $error = $t['err_valid_name_amount'];
@@ -40,24 +61,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
     } else {
         $con->begin_transaction();
         try {
-            // 1. Insert payment
-            $status = 'success';
-            $stmt = $con->prepare("INSERT INTO payments (user_id, donor_name, amount, note, payment_method, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())");
-            $stmt->bind_param("isdsss", $uid, $donorName, $amount, $note, $paymentMethod, $status);
-            $stmt->execute();
-            $paymentId = $stmt->insert_id;
+            $isPaymentValid = true;
+            $paymentStatus = ($paymentMethod === 'cash') ? 'pending' : 'success';
+            
+            // 1. Verify Razorpay if selected
+            if ($paymentMethod === 'razorpay') {
+                require_once __DIR__ . '/../../includes/razorpay_helper.php';
+                $razorpayPaymentId = $_POST['razorpay_payment_id'] ?? '';
+                $razorpayOrderId   = $_POST['razorpay_order_id'] ?? '';
+                $razorpaySignature = $_POST['razorpay_signature'] ?? '';
+                
+                if (empty($razorpayPaymentId) || empty($razorpayOrderId) || empty($razorpaySignature)) {
+                    $isPaymentValid = false;
+                    $error = "Payment failed or incomplete. Please check your transaction.";
+                } else {
+                    $isValidSignature = verifyRazorpaySignature($razorpayOrderId, $razorpayPaymentId, $razorpaySignature);
+                    if (!$isValidSignature) {
+                        $isPaymentValid = false;
+                        $error = "Payment signature verification failed.";
+                    }
+                    $note = "Razorpay P_ID: $razorpayPaymentId | " . $note;
+                }
+            }
 
-            // 2. Generate receipt
-            $receiptId = createReceipt($con, $uid, 'donation', (float) $amount, 'donations');
+            if ($isPaymentValid) {
+                // 2. Insert payment
+                $stmt = $con->prepare("INSERT INTO payments (user_id, donor_name, amount, note, payment_method, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())");
+                $stmt->bind_param("isdsss", $uid, $donorName, $amount, $note, $paymentMethod, $paymentStatus);
+                $stmt->execute();
+                $paymentId = $stmt->insert_id;
 
-            // 3. Attach receipt
-            attachReceiptToPayment($con, $paymentId, $receiptId);
+                if ($paymentStatus === 'success') {
+                    // 3. Generate receipt
+                    $receiptId = createReceipt($con, $uid, 'donation', (float) $amount, 'payments');
 
-            $con->commit();
-            $success = $t['donation_receipt_generated'];
+                    // 4. Attach receipt
+                    attachReceiptToPayment($con, $paymentId, $receiptId);
+
+                    // 5. Fetch receipt number for redirect button
+                    $rStmt = $con->prepare("SELECT receipt_no FROM receipt WHERE id = ? LIMIT 1");
+                    if ($rStmt) {
+                        $rStmt->bind_param("i", $receiptId);
+                        $rStmt->execute();
+                        $rStmt->bind_result($receiptNo);
+                        $rStmt->fetch();
+                        $rStmt->close();
+                    }
+                    $success = $t['donation_receipt_generated'];
+                } else {
+                    $success = $t['payment_pending_cash'] ?? 'Your cash donation request has been recorded and is pending verification.';
+                }
+                $con->commit();
+            } else {
+                $con->rollback();
+            }
         } catch (Exception $e) {
             $con->rollback();
             $error = $t['something_went_wrong'];
+            error_log("Payment Error: " . $e->getMessage());
         }
     }
 }
@@ -72,6 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
     <title><?php echo $t['donations']; ?> - <?php echo $t['title']; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="customer-responsive.css">
     <style>
         :root {
             --ant-primary: #1677ff;
@@ -126,6 +188,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
             transition: all 0.2s;
             text-decoration: none;
             font-size: 14px;
+        }
+
+        /* ADD THIS SECTION FOR HOVER DROPDOWNS */
+        @media (min-width: 992px) {
+            .dropdown:hover .dropdown-menu {
+                display: block;
+                margin-top: 0;
+                /* Removes gap so mouse can enter menu without it closing */
+            }
+
+            /* Optional: Add a slight animation */
+            .dropdown .dropdown-menu {
+                display: none;
+            }
+
+            .dropdown:hover>.dropdown-menu {
+                display: block;
+                animation: fadeIn 0.2s ease-in-out;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .nav-link-custom:hover,
@@ -192,7 +285,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
             margin: 0 auto 20px;
         }
 
-        /* FIXED USER PILL STYLE */
         .user-pill {
             background: #fff;
             padding: 6px 16px;
@@ -204,12 +296,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
         }
 
-        .full-center-wrapper {
-            min-height: calc(100vh - 128px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
+        .lang-btn {
+            border: none;
+            background: #f5f5f5;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+
+        .lang-btn:hover {
+            background: #e6f4ff;
+            color: #1677ff;
+        }
+
+        @media (max-width: 767.98px) {
+            .action-row {
+                position: sticky;
+                bottom: 0;
+                background: #fff;
+                padding: 12px;
+                margin: 16px -12px 0;
+                border-top: 1px solid var(--ant-border-color);
+                z-index: 5;
+            }
         }
     </style>
 </head>
@@ -222,10 +333,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
                 <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i
                         class="bi bi-list"></i></button>
             </div>
-            <div class="user-pill shadow-sm">
-                <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
-                    style="object-fit: cover;">
-                <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
+            <div class="d-flex align-items-center gap-3">
+                <div class="dropdown">
+                    <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-translate me-1"></i>
+                        <?= ($currLang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                        <li>
+                            <a class="dropdown-item small fw-medium <?= ($currLang == 'en') ? 'active' : '' ?>"
+                                href="?lang=en" aria-current="<?= ($currLang == 'en') ? 'true' : 'false' ?>">
+                                <?php echo $t['lang_english']; ?>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item small fw-medium <?= ($currLang == 'mr') ? 'active' : '' ?>"
+                                href="?lang=mr" aria-current="<?= ($currLang == 'mr') ? 'true' : 'false' ?>">
+                                <?php echo $t['lang_marathi_full']; ?>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <?php if (!empty($availableRoles) && count($availableRoles) > 1): ?>
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <i class="bi bi-person-badge me-1"></i>
+                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                            <?php foreach ($availableRoles as $role):
+                                $roleLabel = ucwords(str_replace('_', ' ', $role));
+                                ?>
+                                <li>
+                                    <form action="../../auth/switch_role.php" method="post" class="px-2 py-1">
+                                        <button type="submit" name="role" value="<?= htmlspecialchars($role) ?>"
+                                            class="dropdown-item small fw-medium <?= ($role === $primaryRole) ? 'active' : '' ?>">
+                                            <?= htmlspecialchars($roleLabel) ?>
+                                        </button>
+                                    </form>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
+                <div class="user-pill shadow-sm">
+                    <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
+                        style="object-fit: cover;">
+                    <span
+                        class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                </div>
             </div>
         </div>
     </header>
@@ -233,12 +391,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
     <div class="container-fluid">
         <div class="row">
 
-            <?php if ($isLoggedIn): ?>
-                <?php include 'sidebar.php'; ?>
-            <?php endif; ?>
+            <?php include 'sidebar.php'; ?>
 
-            <main class="<?php echo $isLoggedIn ? 'col-lg-10' : 'col-12'; ?> p-0">
-                <div class="dashboard-hero <?php echo !$isLoggedIn ? 'text-center' : ''; ?>">
+            <main class="col-lg-10 p-0">
+                <div class="dashboard-hero">
                     <div class="container">
                         <h2 class="fw-bold mb-1"><?php echo $t['donations']; ?></h2>
                         <p class="text-secondary mb-0">
@@ -247,7 +403,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
                     </div>
                 </div>
 
-                <div class="<?php echo !$isLoggedIn ? 'full-center-wrapper' : 'px-4 pb-5'; ?>">
+                <div class="px-4 pb-5">
                     <div class="ant-card">
                         <div class="ant-card-body">
                             <div class="text-center">
@@ -267,17 +423,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
                                 <div class="alert border-0 small py-3 text-center mb-4"
                                     style="background: #f6ffed; color: #52c41a; border-radius: 8px;">
                                     <i class="bi bi-check-circle-fill me-2"></i> <?= htmlspecialchars($success) ?>
+                                    <?php if (!empty($receiptNo)): ?>
+                                        <div class="mt-3">
+                                            <a href="../receipt/view.php?no=<?= urlencode($receiptNo) ?>"
+                                                class="btn btn-success btn-sm rounded-pill px-4">
+                                                <i class="bi bi-receipt-cutoff me-1"></i>
+                                                <?= htmlspecialchars($t['view_receipt'] ?? 'View Receipt') ?>
+                                            </a>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             <?php endif; ?>
 
                             <form method="POST" class="needs-validation" novalidate>
                                 <div class="mb-3">
-                                    <label
-                                        class="form-label"><?php echo $t['full_name']; ?></label>
+                                    <label class="form-label"><?php echo $t['full_name']; ?></label>
                                     <input type="text" name="name" class="form-control"
                                         value="<?= $isLoggedIn ? htmlspecialchars($displayName) : '' ?>"
                                         placeholder="<?php echo $t['full_name_placeholder']; ?>" required>
-                                    <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
+                                    <div class="invalid-feedback">
+                                        <?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label"><?php echo $t['amount_inr']; ?></label>
@@ -285,20 +450,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
                                         <span class="input-group-text bg-light border-end-0">₹</span>
                                         <input type="number" name="amount" class="form-control" min="1"
                                             placeholder="<?php echo $t['amount_placeholder']; ?>" required>
-                                        <div class="invalid-feedback"><?php echo $t['amount_required'] ?? 'Please enter a valid amount.'; ?></div>
+                                        <div class="invalid-feedback">
+                                            <?php echo $t['amount_required'] ?? 'Please enter a valid amount.'; ?></div>
                                     </div>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label"><?php echo $t['payment_method']; ?></label>
                                     <select class="form-select" name="payment_method" id="payment_method" required>
-                                        <option value="cash" <?= (isset($paymentMethod) && $paymentMethod === 'cash') ? 'selected' : '' ?>>
-                                            Cash
-                                        </option>
-                                        <option value="upi" <?= (isset($paymentMethod) && $paymentMethod === 'upi') ? 'selected' : '' ?>>
-                                            GPay (UPI)
-                                        </option>
+                                        <?php foreach ($paymentMethods as $pm): ?>
+                                            <option value="<?= htmlspecialchars(strtolower($pm)) ?>" <?= (isset($paymentMethod) && $paymentMethod === strtolower($pm)) ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($pm) ?>
+                                            </option>
+                                        <?php endforeach; ?>
                                     </select>
-                                    <div class="invalid-feedback"><?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
+                                    <div class="invalid-feedback">
+                                        <?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
                                 </div>
                                 <div id="gpayGateway" class="mb-4" style="display:none;">
                                     <div class="border rounded-3 p-3 bg-light text-center">
@@ -315,8 +481,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
                                     <textarea name="note" class="form-control" rows="3"
                                         placeholder="<?php echo $t['donation_note_placeholder']; ?>"></textarea>
                                 </div>
-                                <button type="submit" class="ant-btn-primary"><i
-                                        class="bi bi-shield-check me-2"></i><?php echo $t['donate_btn']; ?></button>
+                                <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
+                                <input type="hidden" name="razorpay_order_id" id="razorpay_order_id">
+                                <input type="hidden" name="razorpay_signature" id="razorpay_signature">
+                                
+                                <div class="action-row">
+                                    <button type="button" id="donateBtn" class="ant-btn-primary"><i
+                                            class="bi bi-shield-check me-2"></i><?php echo $t['donate_btn']; ?></button>
+                                </div>
                             </form>
                         </div>
                     </div>
@@ -325,19 +497,94 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
         (function () {
             'use strict';
-            var forms = document.querySelectorAll('.needs-validation');
-            Array.prototype.slice.call(forms).forEach(function (form) {
-                form.addEventListener('submit', function (event) {
-                    if (!form.checkValidity()) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                    }
+            var form = document.querySelector('.needs-validation');
+            var donateBtn = document.getElementById('donateBtn');
+            var methodSelect = document.getElementById('payment_method');
+            var amountInput = document.querySelector('input[name="amount"]');
+            var nameInput = document.querySelector('input[name="name"]');
+            
+            donateBtn.addEventListener('click', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
                     form.classList.add('was-validated');
-                }, false);
+                    return;
+                }
+
+                if (methodSelect.value.toLowerCase() === 'razorpay') {
+                    event.preventDefault();
+                    donateBtn.disabled = true;
+                    donateBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+
+                    // 1. Create Order via AJAX
+                    fetch('../../includes/razorpay_create_order.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            amount: amountInput.value,
+                            name: nameInput.value
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            alert(data.message || 'Error initiating payment');
+                            donateBtn.disabled = false;
+                            donateBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i><?php echo $t['donate_btn']; ?>';
+                            return;
+                        }
+
+                        // 2. Open Razorpay Checkout
+                        var options = {
+                            "key": data.key_id, 
+                            "amount": data.amount,
+                            "currency": "INR",
+                            "name": "Mahapurush Mandir",
+                            "description": "Donation",
+                            "order_id": data.order_id,
+                            "handler": function (response) {
+                                // 3. Set hidden fields and submit form
+                                document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
+                                document.getElementById('razorpay_order_id').value = response.razorpay_order_id;
+                                document.getElementById('razorpay_signature').value = response.razorpay_signature;
+                                
+                                form.submit();
+                            },
+                            "prefill": {
+                                "name": nameInput.value
+                            },
+                            "theme": {
+                                "color": "#1677ff"
+                            },
+                            "modal": {
+                                "ondismiss": function() {
+                                    donateBtn.disabled = false;
+                                    donateBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i><?php echo $t['donate_btn']; ?>';
+                                }
+                            }
+                        };
+                        var rzp1 = new Razorpay(options);
+                        rzp1.open();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Something went wrong. Please try again.');
+                        donateBtn.disabled = false;
+                        donateBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i><?php echo $t['donate_btn']; ?>';
+                    });
+
+                } else {
+                    // Normal form submission
+                    donateBtn.disabled = true;
+                    donateBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span><?php echo $t['donate_btn']; ?>...';
+                    form.submit();
+                }
             });
         })();
     </script>
@@ -363,4 +610,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
 </body>
 
 </html>
-

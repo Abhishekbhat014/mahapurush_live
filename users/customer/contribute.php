@@ -324,9 +324,6 @@ $currentPage = 'contribute.php';
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <div class="small text-muted mb-1">
-                        <?php echo $t['dashboard']; ?> / <?php echo $t['contribution']; ?>
-                    </div>
                     <h2 class="fw-bold mb-1"><?php echo $t['make_contribution']; ?></h2>
                     <p class="text-secondary mb-0"><?php echo $t['contribution_subtitle']; ?></p>
                 </div>

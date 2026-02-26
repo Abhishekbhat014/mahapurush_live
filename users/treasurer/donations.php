@@ -14,6 +14,24 @@ $primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
 $currLang = $_SESSION['lang'] ?? 'en';
 $loggedInUserPhoto = get_user_avatar_url('../../');
 $userName = $_SESSION['user_name'] ?? 'User';
+
+require __DIR__ . '/../../config/db.php';
+
+
+
+// Check for success or error messages
+$successMsg = $_GET['success'] ?? '';
+$errorMsg = $_GET['error'] ?? '';
+
+$paymentMethods = [];
+if ($con) {
+    $res = $con->query("SELECT method_name FROM payment_methods WHERE is_active = 1 ORDER BY method_name ASC");
+    if ($res) {
+        while ($row = $res->fetch_assoc()) {
+            $paymentMethods[] = $row['method_name'];
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -137,12 +155,24 @@ $userName = $_SESSION['user_name'] ?? 'User';
             font-weight: 600;
         }
 
-        /* --- PAGE CONTENT --- */
         .dashboard-hero {
             background: radial-gradient(circle at top right, #f6ffed 0%, #ffffff 80%);
             padding: 40px 32px;
             border-bottom: 1px solid var(--ant-border-color);
             margin-bottom: 32px;
+        }
+
+        .icon-circle {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #e6f4ff;
+            color: var(--ant-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin: 0 auto 16px;
         }
 
         /* --- Sidebar --- */
@@ -288,53 +318,76 @@ $userName = $_SESSION['user_name'] ?? 'User';
                 </div>
 
                 <div class="px-4 pb-5">
-                    <div class="ant-card p-4">
-                        <form action="save_donation.php" method="POST">
+                    <?php if ($successMsg): ?>
+                        <div class="alert alert-success d-flex align-items-center mb-4" role="alert">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            <div><?= htmlspecialchars($successMsg) ?></div>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ($errorMsg): ?>
+                        <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <div><?= htmlspecialchars($errorMsg) ?></div>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="row justify-content-center">
+                        <div class="col-lg-8">
+                            <div class="ant-card p-4 p-md-5">
+
+                                <div class="text-center mb-4">
+                                    <div class="icon-circle">
+                                        <i class="bi bi-heart-fill"></i>
+                                    </div>
+                                    <h4 class="fw-bold"><?php echo $t['record_donation_title']; ?></h4>
+                                    <p class="text-muted small">Please fill in the devotee's details securely.</p>
+                                </div>
+
+                                <form action="save_donation.php" method="POST">
                             <div class="row g-4">
 
                                 <div class="col-md-6">
                                     <label class="form-label"><?php echo $t['devotee_name']; ?></label>
-                                    <input type="text" name="devotee_name" class="form-control" required>
+                                    <input type="text" name="full_name" class="form-control" required>
                                 </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label"><?php echo $t['mobile_number']; ?></label>
-                                    <input type="text" name="mobile" class="form-control">
-                                </div>
+
 
                                 <div class="col-md-6">
                                     <label class="form-label"><?php echo $t['donation_amount']; ?></label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-white border-end-0">₹</span>
                                         <input type="number" name="amount" class="form-control border-start-0 ps-0"
-                                            required>
+                                            required min="1">
                                     </div>
                                 </div>
 
                                 <div class="col-md-6">
                                     <label class="form-label"><?php echo $t['payment_mode']; ?></label>
-                                    <select name="payment_mode" class="form-select" required>
+                                    <select name="payment_method" class="form-select" required>
                                         <option value=""><?php echo $t['select_mode']; ?></option>
-                                        <option value="cash"><?php echo $t['cash']; ?></option>
-                                        <option value="online"><?php echo $t['online']; ?></option>
-                                        <option value="cheque"><?php echo $t['cheque']; ?></option>
+                                        <?php foreach ($paymentMethods as $pm): ?>
+                                            <option value="<?= htmlspecialchars(strtolower($pm)) ?>"><?= htmlspecialchars($pm) ?></option>
+                                        <?php endforeach; ?>
                                     </select>
                                 </div>
 
                                 <div class="col-12">
                                     <label class="form-label"><?php echo $t['purpose_remarks']; ?></label>
-                                    <input type="text" name="remarks" class="form-control"
+                                    <input type="text" name="note" class="form-control"
                                         placeholder="<?php echo $t['purpose_placeholder']; ?>">
                                 </div>
 
-                                <div class="col-12 d-flex justify-content-end mt-4">
-                                    <button type="submit" class="btn btn-primary px-5 py-2">
-                                        <i class="bi bi-save2 me-2"></i> <?php echo $t['record_btn']; ?>
+                                <div class="col-12 mt-4 text-center">
+                                    <button type="submit" class="btn btn-primary w-100 py-2 ant-btn-primary">
+                                        <i class="bi bi-shield-check me-2"></i> <?php echo $t['record_btn']; ?>
                                     </button>
                                 </div>
 
                             </div>
-                        </form>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>

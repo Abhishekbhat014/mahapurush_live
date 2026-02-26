@@ -133,6 +133,8 @@ return [
     'description' => 'Description',
     'details' => 'Details',
     'devotee' => 'Devotee',
+    'devotee_dashboard' => 'Devotee Dashboard',
+    'devotee_dashboard_subtitle' => 'Welcome to your devotee dashboard — book poojas, make donations, explore events, and stay connected with temple activities',
     'devotee_contributor' => 'Devotee / Contributor',
     'devotee_name' => 'Devotee Name',
     'devotee_portal' => 'Devotee Portal',
@@ -267,6 +269,8 @@ return [
     'morning' => 'Morning',
     'mumbai' => 'Mumbai',
     'my_profile' => 'My Profile',
+    'my_total_donations' => 'My Total Donations',
+    'my_pooja_bookings' => 'My Pooja Bookings',
     'my_receipts' => 'My Receipts',
     'my_requests' => 'My Requests',
     'my_requests_subtitle' => 'Track the status of your material contributions, bookings, and payment queries.',
@@ -436,7 +440,7 @@ return [
     'mode' => 'Mode',
     'secretary_portal' => 'Secretary Portal',
     'secretary_menu' => 'Secretary Menu',
-    
+
     'search' => 'Search',
     'search_placeholder' => 'Devotee Name / Mobile',
     'filter' => 'Filter',
@@ -519,14 +523,14 @@ return [
     'todays_income' => "Today's Income",
     'total_collections' => 'Total Collections',
     'active_members' => 'Active Members',
-    
+
     'pooja_status' => 'Pooja Status',
-    
-    
+
+
     'quick_actions_subtitle' => 'Shortcuts to manage approvals and events.',
     'approve_requests' => 'Approve Requests',
     'view_events' => 'View Events',
-    
+
     'select_pooja_service' => '-- Select Pooja Service --',
     'select_pooja_service_label' => 'Select Pooja Service',
     'select_time_slot' => 'Select time slot',
@@ -582,11 +586,11 @@ return [
     'temple_activity_reports_desc' => 'Monitor temple collections, pooja activity and transactions for a selected period.',
     'total_temple_collection' => 'Total Temple Collection',
     'pooja_donation_receipts' => 'Pooja & Donation Receipts',
-    
+
     'role_name' => 'Role',
     'email_label' => 'Email',
     'phone_label' => 'Phone',
-    
+
     'no_committee_members' => 'No committee members found.',
     'total_contribution' => 'Total Contribution',
     'total_value_received' => 'Total Value Received',
@@ -615,7 +619,7 @@ return [
     'event_approvals_desc' => 'Review pending event requests.',
     'reports_title' => 'Reports',
     'reports_desc' => 'Generate summarized reports for temple activities.',
-    
+
     'report_type' => 'Report Type',
     'select_report' => 'Select Report...',
     'pooja_report' => 'Pooja Report',
@@ -625,7 +629,7 @@ return [
     'gallery_manager_desc' => 'Upload and manage temple photos and event images displayed to devotees.',
     'settings_title' => 'Settings',
     'settings_desc' => 'Configure temple-level system settings and operational preferences.',
-    
+
     'settings_updated_success' => 'Settings updated successfully.',
     'no_data_found' => 'No data found for the selected criteria.',
     'select_report_prompt' => 'Please select a report type and date range.',
@@ -644,4 +648,31 @@ return [
     'years_of_legacy' => 'Years of Legacy',
     'yoga' => 'Yoga',
     'your_feedback' => 'Your feedback',
+
+    // My Donations & Contributions properties
+    'my_donations_contributions' => 'My Donations & Contributions',
+    'all_donations_contributions' => 'All Donations & Contributions',
+    'my_donations_cont_subtitle' => 'View your complete history of monetary donations and material contributions.',
+    'all_donations_cont_subtitle' => 'View the complete history of all monetary donations and material contributions.',
+    'view_details' => 'View Details',
+    'donation_details' => 'Donation Details',
+    'contribution_details' => 'Contribution Details',
+    'monetary_donations' => 'Monetary Donations',
+    'donation_purpose' => 'Donation Purpose',
+    'contribution_title' => 'Contribution Title',
+    'no_donations_history' => 'No monetary donations recorded yet.',
+    'no_contributions_history' => 'No material contributions recorded yet.',
+    'donation_type' => 'Donation Type',
+
+    // User Management
+    'user_management' => 'User Management',
+    'user_management_desc' => 'Manage registered users and assign roles.',
+    'users' => 'Users',
+    'edit_roles' => 'Edit Roles',
+    'update_roles' => 'Update Roles',
+    'roles_updated_success' => 'Roles updated successfully.',
+    'roles_update_failed' => 'Failed to update roles.',
+    'no_users_found' => 'No users found.',
+    'select_roles' => 'Select Roles',
+    'assign_roles' => 'Assign Roles',
 ];

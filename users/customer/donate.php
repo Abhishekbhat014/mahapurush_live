@@ -33,6 +33,16 @@ $currentPage = 'donate.php';
 $displayName = $isLoggedIn ? $userName : $t['guest'];
 $loggedInUserPhoto = get_user_avatar_url('../../');
 
+$paymentMethods = [];
+if ($con) {
+    $res = $con->query("SELECT method_name FROM payment_methods WHERE is_active = 1 ORDER BY method_name ASC");
+    if ($res) {
+        while ($row = $res->fetch_assoc()) {
+            $paymentMethods[] = $row['method_name'];
+        }
+    }
+}
+
 // --- FORM HANDLING ---
 $error = '';
 $success = '';
@@ -42,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
     $amount = trim($_POST['amount'] ?? '');
     $note = trim($_POST['note'] ?? '');
     $paymentMethod = strtolower(trim($_POST['payment_method'] ?? 'cash'));
-    $allowedMethods = ['cash', 'upi'];
+    $allowedMethods = array_map('strtolower', $paymentMethods);
 
     if ($donorName === '' || !is_numeric($amount) || $amount <= 0) {
         $error = $t['err_valid_name_amount'];
@@ -51,36 +61,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
     } else {
         $con->begin_transaction();
         try {
-            // 1. Insert payment
-            $status = 'success';
-            $stmt = $con->prepare("INSERT INTO payments (user_id, donor_name, amount, note, payment_method, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())");
-            $stmt->bind_param("isdsss", $uid, $donorName, $amount, $note, $paymentMethod, $status);
-            $stmt->execute();
-            $paymentId = $stmt->insert_id;
-
-            // 2. Generate receipt
-            $receiptId = createReceipt($con, $uid, 'donation', (float) $amount, 'donations');
-
-            // 3. Attach receipt
-            attachReceiptToPayment($con, $paymentId, $receiptId);
-
-            // 4. Fetch receipt number for redirect button
-            $rStmt = $con->prepare("SELECT receipt_no FROM receipt WHERE id = ? LIMIT 1");
-            if ($rStmt) {
-                $rStmt->bind_param("i", $receiptId);
-                $rStmt->execute();
-                $rStmt->bind_result($receiptNo);
-                $rStmt->fetch();
-                $rStmt->close();
+            $isPaymentValid = true;
+            $paymentStatus = ($paymentMethod === 'cash') ? 'pending' : 'success';
+            
+            // 1. Verify Razorpay if selected
+            if ($paymentMethod === 'razorpay') {
+                require_once __DIR__ . '/../../includes/razorpay_helper.php';
+                $razorpayPaymentId = $_POST['razorpay_payment_id'] ?? '';
+                $razorpayOrderId   = $_POST['razorpay_order_id'] ?? '';
+                $razorpaySignature = $_POST['razorpay_signature'] ?? '';
+                
+                if (empty($razorpayPaymentId) || empty($razorpayOrderId) || empty($razorpaySignature)) {
+                    $isPaymentValid = false;
+                    $error = "Payment failed or incomplete. Please check your transaction.";
+                } else {
+                    $isValidSignature = verifyRazorpaySignature($razorpayOrderId, $razorpayPaymentId, $razorpaySignature);
+                    if (!$isValidSignature) {
+                        $isPaymentValid = false;
+                        $error = "Payment signature verification failed.";
+                    }
+                    // Optionally: could store razorpay IDs in note or a new column
+                    $note = "Razorpay P_ID: $razorpayPaymentId | " . $note;
+                }
             }
 
-            $con->commit();
-            $success = $t['donation_receipt_generated'];
+            if ($isPaymentValid) {
+                // 2. Insert payment
+                $stmt = $con->prepare("INSERT INTO payments (user_id, donor_name, amount, note, payment_method, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())");
+                $stmt->bind_param("isdsss", $uid, $donorName, $amount, $note, $paymentMethod, $paymentStatus);
+                $stmt->execute();
+                $paymentId = $stmt->insert_id;
+
+                if ($paymentStatus === 'success') {
+                    // 3. Generate receipt
+                    $receiptId = createReceipt($con, $uid, 'donation', (float) $amount, 'payments');
+
+                    // 4. Attach receipt
+                    attachReceiptToPayment($con, $paymentId, $receiptId);
+
+                    // 5. Fetch receipt number for redirect button
+                    $rStmt = $con->prepare("SELECT receipt_no FROM receipt WHERE id = ? LIMIT 1");
+                    if ($rStmt) {
+                        $rStmt->bind_param("i", $receiptId);
+                        $rStmt->execute();
+                        $rStmt->bind_result($receiptNo);
+                        $rStmt->fetch();
+                        $rStmt->close();
+                    }
+                    $success = $t['donation_receipt_generated'];
+                } else {
+                    $success = $t['payment_pending_cash'] ?? 'Your cash donation request has been recorded and is pending verification.';
+                }
+                $con->commit();
+            } else {
+                $con->rollback();
+            }
         } catch (Exception $e) {
             $con->rollback();
             $error = $t['something_went_wrong'];
+            error_log("Payment Error: " . $e->getMessage());
         }
     }
+
 }
 ?>
 
@@ -356,9 +398,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
                     <div class="container">
-                        <div class="small text-muted mb-1">
-                            <?php echo $t['dashboard']; ?> / <?php echo $t['donations']; ?>
-                        </div>
                         <h2 class="fw-bold mb-1"><?php echo $t['donations']; ?></h2>
                         <p class="text-secondary mb-0">
                             <?php echo $t['donations_subtitle']; ?>
@@ -420,12 +459,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
                                 <div class="mb-3">
                                     <label class="form-label"><?php echo $t['payment_method']; ?></label>
                                     <select class="form-select" name="payment_method" id="payment_method" required>
-                                        <option value="cash" <?= (isset($paymentMethod) && $paymentMethod === 'cash') ? 'selected' : '' ?>>
-                                            Cash
-                                        </option>
-                                        <option value="upi" <?= (isset($paymentMethod) && $paymentMethod === 'upi') ? 'selected' : '' ?>>
-                                            GPay (UPI)
-                                        </option>
+                                        <?php foreach ($paymentMethods as $pm): ?>
+                                            <option value="<?= htmlspecialchars(strtolower($pm)) ?>" <?= (isset($paymentMethod) && $paymentMethod === strtolower($pm)) ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($pm) ?>
+                                            </option>
+                                        <?php endforeach; ?>
                                     </select>
                                     <div class="invalid-feedback">
                                         <?php echo $t['field_required'] ?? 'This field is required.'; ?></div>
@@ -445,8 +483,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
                                     <textarea name="note" class="form-control" rows="3"
                                         placeholder="<?php echo $t['donation_note_placeholder']; ?>"></textarea>
                                 </div>
+                                <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
+                                <input type="hidden" name="razorpay_order_id" id="razorpay_order_id">
+                                <input type="hidden" name="razorpay_signature" id="razorpay_signature">
+                                
                                 <div class="action-row">
-                                    <button type="submit" class="ant-btn-primary"><i
+                                    <button type="button" id="donateBtn" class="ant-btn-primary"><i
                                             class="bi bi-shield-check me-2"></i><?php echo $t['donate_btn']; ?></button>
                                 </div>
                             </form>
@@ -457,19 +499,94 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $con) {
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
         (function () {
             'use strict';
-            var forms = document.querySelectorAll('.needs-validation');
-            Array.prototype.slice.call(forms).forEach(function (form) {
-                form.addEventListener('submit', function (event) {
-                    if (!form.checkValidity()) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                    }
+            var form = document.querySelector('.needs-validation');
+            var donateBtn = document.getElementById('donateBtn');
+            var methodSelect = document.getElementById('payment_method');
+            var amountInput = document.querySelector('input[name="amount"]');
+            var nameInput = document.querySelector('input[name="name"]');
+            
+            donateBtn.addEventListener('click', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
                     form.classList.add('was-validated');
-                }, false);
+                    return;
+                }
+
+                if (methodSelect.value.toLowerCase() === 'razorpay') {
+                    event.preventDefault();
+                    donateBtn.disabled = true;
+                    donateBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+
+                    // 1. Create Order via AJAX
+                    fetch('../../includes/razorpay_create_order.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            amount: amountInput.value,
+                            name: nameInput.value
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.success) {
+                            alert(data.message || 'Error initiating payment');
+                            donateBtn.disabled = false;
+                            donateBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i><?php echo $t['donate_btn']; ?>';
+                            return;
+                        }
+
+                        // 2. Open Razorpay Checkout
+                        var options = {
+                            "key": data.key_id, 
+                            "amount": data.amount,
+                            "currency": "INR",
+                            "name": "Mahapurush Mandir",
+                            "description": "Donation",
+                            "order_id": data.order_id,
+                            "handler": function (response) {
+                                // 3. Set hidden fields and submit form
+                                document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
+                                document.getElementById('razorpay_order_id').value = response.razorpay_order_id;
+                                document.getElementById('razorpay_signature').value = response.razorpay_signature;
+                                
+                                form.submit();
+                            },
+                            "prefill": {
+                                "name": nameInput.value
+                            },
+                            "theme": {
+                                "color": "#1677ff"
+                            },
+                            "modal": {
+                                "ondismiss": function() {
+                                    donateBtn.disabled = false;
+                                    donateBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i><?php echo $t['donate_btn']; ?>';
+                                }
+                            }
+                        };
+                        var rzp1 = new Razorpay(options);
+                        rzp1.open();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Something went wrong. Please try again.');
+                        donateBtn.disabled = false;
+                        donateBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i><?php echo $t['donate_btn']; ?>';
+                    });
+
+                } else {
+                    // Normal form submission
+                    donateBtn.disabled = true;
+                    donateBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span><?php echo $t['donate_btn']; ?>...';
+                    form.submit();
+                }
             });
         })();
     </script>

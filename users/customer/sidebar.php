@@ -52,6 +52,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <span><?php echo $t['donations'] ?? 'Donations'; ?></span>
         </a>
 
+        <a href="contribute.php" class="sb-link <?= ($currentPage == 'contribute.php') ? 'sb-active' : '' ?>">
+            <i class="bi bi-box-seam"></i>
+            <span><?php echo $t['contribution'] ?? 'Contribute'; ?></span>
+        </a>
+
         <a href="my_receipts.php" class="sb-link <?= ($currentPage == 'my_receipts.php') ? 'sb-active' : '' ?>">
             <i class="bi bi-receipt-cutoff"></i>
             <span><?php echo $t['my_receipts'] ?? 'My Receipts'; ?></span>
@@ -105,6 +110,10 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
         <a href="donate.php" class="sb-link <?= ($currentPage == 'donate.php') ? 'sb-active' : '' ?>">
             <i class="bi bi-heart-fill"></i> <?php echo $t['donations'] ?? 'Donations'; ?>
+        </a>
+
+        <a href="contribute.php" class="sb-link <?= ($currentPage == 'contribute.php') ? 'sb-active' : '' ?>">
+            <i class="bi bi-box-seam"></i> <?php echo $t['contribution'] ?? 'Contribute'; ?>
         </a>
 
         <a href="my_receipts.php" class="sb-link <?= ($currentPage == 'my_receipts.php') ? 'sb-active' : '' ?>">

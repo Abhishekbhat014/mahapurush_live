@@ -199,15 +199,15 @@ if ($con && $con !== false) {
                 $icons = ['calendar2-check', 'heart-fill', 'people-fill', 'shop-window'];
                 $serviceTitles = [$t['service_pooja'], $t['service_donate'], $t['service_events'], $t['service_seva']];
                 for ($i = 0; $i < 4; $i++): ?>
-                    <div class="col-6 col-md-3">
-                        <div class="ant-card">
-                            <div class="ant-card-body text-center">
-                                <div class="service-icon"><i class="bi bi-<?= $icons[$i] ?>"></i></div>
-                                <div class="fw-bold mb-2"><?= $serviceTitles[$i] ?></div>
-                                <div class="small text-muted d-none d-md-block"><?php echo $t['service_desc']; ?></div>
+                            <div class="col-6 col-md-3">
+                                <div class="ant-card">
+                                    <div class="ant-card-body text-center">
+                                        <div class="service-icon"><i class="bi bi-<?= $icons[$i] ?>"></i></div>
+                                        <div class="fw-bold mb-2"><?= $serviceTitles[$i] ?></div>
+                                        <div class="small text-muted d-none d-md-block"><?php echo $t['service_desc']; ?></div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
                 <?php endfor; ?>
             </div>
         </div>
@@ -218,32 +218,32 @@ if ($con && $con !== false) {
             <div class="col-lg-8">
                 <h4 class="fw-bold mb-4"><?php echo $t['upcoming_events']; ?></h4>
                 <?php if ($eventQuery && mysqli_num_rows($eventQuery) > 0): ?>
-                    <?php while ($event = mysqli_fetch_assoc($eventQuery)): ?>
-                        <div class="ant-card mb-4 border-0">
-                            <div class="ant-card-body d-flex align-items-center gap-4">
-                                <div class="date-box shadow-sm">
-                                    <div class="fw-bold fs-4"><?= date("d", strtotime($event['conduct_on'])) ?></div>
-                                    <div class="small text-uppercase fw-bold" style="font-size: 10px; opacity: 0.9;">
-                                        <?= date("M", strtotime($event['conduct_on'])) ?>
-                                    </div>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h5 class="fw-bold mb-1"><?= htmlspecialchars($event['name']) ?></h5>
-                                    <div class="small text-muted"><i class="bi bi-clock me-1"></i> <?= $event['duration'] ?>
-                                    </div>
-                                </div>
-                                <a href="events.php?id=<?= $event['id'] ?>"
-                                    class="btn btn-light btn-sm px-4 rounded-pill border fw-bold text-primary"><?php echo $t['details']; ?></a>
-                            </div>
-                        </div>
-                    <?php endwhile; ?>
+                            <?php while ($event = mysqli_fetch_assoc($eventQuery)): ?>
+                                        <div class="ant-card mb-4 border-0">
+                                            <div class="ant-card-body d-flex align-items-center gap-4">
+                                                <div class="date-box shadow-sm">
+                                                    <div class="fw-bold fs-4"><?= date("d", strtotime($event['conduct_on'])) ?></div>
+                                                    <div class="small text-uppercase fw-bold" style="font-size: 10px; opacity: 0.9;">
+                                                        <?= date("M", strtotime($event['conduct_on'])) ?>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <h5 class="fw-bold mb-1"><?= htmlspecialchars($event['name']) ?></h5>
+                                                    <div class="small text-muted"><i class="bi bi-clock me-1"></i> <?= $event['duration'] ?>
+                                                    </div>
+                                                </div>
+                                                <a href="events.php?id=<?= $event['id'] ?>"
+                                                    class="btn btn-light btn-sm px-4 rounded-pill border fw-bold text-primary"><?php echo $t['details']; ?></a>
+                                            </div>
+                                        </div>
+                            <?php endwhile; ?>
                 <?php else: ?>
-                    <div class="ant-card">
-                        <div class="ant-card-body text-center py-5">
-                            <i class="bi bi-calendar-x fs-1 text-muted opacity-25 mb-3"></i>
-                            <p class="text-muted mb-0"><?php echo $t['no_upcoming_events']; ?></p>
-                        </div>
-                    </div>
+                            <div class="ant-card">
+                                <div class="ant-card-body text-center py-5">
+                                    <i class="bi bi-calendar-x fs-1 text-muted opacity-25 mb-3"></i>
+                                    <p class="text-muted mb-0"><?php echo $t['no_upcoming_events']; ?></p>
+                                </div>
+                            </div>
                 <?php endif; ?>
             </div>
 

@@ -14,13 +14,10 @@ $uid = (int) $_SESSION['user_id'];
 $availableRoles = $_SESSION['roles'] ?? [];
 $primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
 $currLang = $_SESSION['lang'] ?? 'en';
-$currentPage = 'committee.php';
+$currentPage = 'users.php';
 $loggedInUserPhoto = get_user_avatar_url('../../');
 
-$success = '';
-$error = '';
-
-// --- FETCH ROLES FOR FILTER ---
+// --- FETCH ALL ROLES FOR MODAL ---
 $roles = [];
 $roleRes = mysqli_query($con, "SELECT id, name FROM roles ORDER BY name");
 if ($roleRes) {
@@ -29,12 +26,15 @@ if ($roleRes) {
     }
 }
 
-// --- FETCH COMMITTEE MEMBERS ---
-$sql = "SELECT u.id, u.first_name, u.last_name, u.email, u.phone, u.photo, u.created_at, r.name AS role_name, r.id AS role_id
+// --- FETCH ALL USERS ---
+$sql = "SELECT u.id, u.first_name, u.last_name, u.email, u.phone, 
+               GROUP_CONCAT(r.id) as role_ids, 
+               GROUP_CONCAT(r.name) as role_names
         FROM users u
-        JOIN user_roles ur ON ur.user_id = u.id
-        JOIN roles r ON r.id = ur.role_id
-        ORDER BY r.name, u.first_name";
+        LEFT JOIN user_roles ur ON ur.user_id = u.id
+        LEFT JOIN roles r ON r.id = ur.role_id
+        GROUP BY u.id
+        ORDER BY u.first_name";
 $result = mysqli_query($con, $sql);
 ?>
 
@@ -44,12 +44,12 @@ $result = mysqli_query($con, $sql);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $t['committee_title']; ?> - <?= $t['title'] ?></title>
+    <title><?= $t['user_management'] ?? 'User Management' ?> - <?= $t['title'] ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
     <style>
-        /* --- GLOBAL THEME VARIABLES (Blue) --- */
+        /* --- GLOBAL THEME VARIABLES --- */
         :root {
             --ant-primary: #1677ff;
             --ant-primary-hover: #4096ff;
@@ -69,10 +69,7 @@ $result = mysqli_query($con, $sql);
             user-select: none;
         }
 
-        /* Allow selection in inputs */
-        input,
-        textarea,
-        select {
+        input, textarea, select {
             -webkit-user-select: text;
             user-select: text;
         }
@@ -113,44 +110,24 @@ $result = mysqli_query($con, $sql);
 
         .lang-btn:hover {
             background: #e6f4ff;
-            color: #1677ff;
+            color: var(--ant-primary);
         }
 
-        /* --- HOVER DROPDOWN LOGIC --- */
         @media (min-width: 992px) {
-            .dropdown:hover .dropdown-menu {
-                display: block;
-                margin-top: 0;
-            }
-
-            .dropdown .dropdown-menu {
-                display: none;
-            }
-
-            .dropdown:hover>.dropdown-menu {
-                display: block;
-                animation: fadeIn 0.2s ease-in-out;
-            }
+            .dropdown:hover .dropdown-menu { display: block; margin-top: 0; }
+            .dropdown .dropdown-menu { display: none; }
+            .dropdown:hover>.dropdown-menu { display: block; animation: fadeIn 0.2s ease-in-out; }
         }
 
-        /* Active Dropdown Item */
-        .dropdown-item.active,
-        .dropdown-item:active {
+        .dropdown-item.active, .dropdown-item:active {
             background-color: var(--ant-primary) !important;
             color: #fff !important;
             font-weight: 600;
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* --- PAGE CONTENT --- */
@@ -167,26 +144,6 @@ $result = mysqli_query($con, $sql);
             border-radius: var(--ant-radius);
             box-shadow: var(--ant-shadow);
             overflow: hidden;
-        }
-
-        /* Filter Bar */
-        .filter-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            flex-wrap: wrap;
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--ant-border-color);
-            background: #fafafa;
-        }
-
-        .filter-label {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--ant-text-sec);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         /* Table Styling */
@@ -207,25 +164,27 @@ $result = mysqli_query($con, $sql);
             font-size: 14px;
         }
 
-        /* Role Badge */
         .role-badge {
             font-size: 11px;
             font-weight: 600;
-            padding: 4px 10px;
+            padding: 4px 8px;
             border-radius: 4px;
             text-transform: uppercase;
             background: #f0f5ff;
             color: var(--ant-primary);
             border: 1px solid #d6e4ff;
+            margin-right: 4px;
+            margin-bottom: 4px;
+            display: inline-block;
         }
-
-        .clickable-row {
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .clickable-row:hover {
-            background-color: #fafafa;
+        
+        /* Modal Checkbox list styling */
+        .role-checkbox-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--ant-border-color);
+            border-radius: 6px;
+            padding: 12px;
         }
     </style>
 </head>
@@ -240,7 +199,6 @@ $result = mysqli_query($con, $sql);
                 </button>
             </div>
             <div class="d-flex align-items-center gap-3">
-
                 <div class="dropdown">
                     <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
                         <i class="bi bi-translate me-1"></i>
@@ -279,8 +237,7 @@ $result = mysqli_query($con, $sql);
                 <div class="user-pill">
                     <img src="<?= htmlspecialchars($loggedInUserPhoto) ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
-                    <span
-                        class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                    <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
                 </div>
             </div>
         </div>
@@ -292,18 +249,22 @@ $result = mysqli_query($con, $sql);
 
             <main class="col-lg-10 p-0">
                 <div class="dashboard-hero">
-                    <h2 class="fw-bold mb-1"><?php echo $t['committee_title']; ?></h2>
-                    <p class="text-secondary mb-0"><?php echo $t['committee_desc']; ?></p>
+                    <h2 class="fw-bold mb-1"><?= $t['user_management'] ?? 'Users & Committee' ?></h2>
+                    <p class="text-secondary mb-0"><?= $t['user_management_desc'] ?? 'Manage registered users and assign roles.' ?></p>
                 </div>
 
                 <div class="p-4 pb-5">
-                    <div class="ant-card">
+                    
+                    <!-- Alert Placeholder -->
+                    <div id="alertBox" class="alert d-none" role="alert"></div>
 
-                        <div class="filter-bar">
-                            <div class="filter-label"><?php echo $t['filter_by_role']; ?></div>
+                    <div class="ant-card">
+                        
+                        <div class="filter-bar d-flex align-items-center justify-content-between p-3 border-bottom" style="background: #fafafa; gap: 12px; flex-wrap: wrap;">
+                            <div class="filter-label text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px;"><?php echo $t['filter_by_role'] ?? 'Filter by Role'; ?></div>
                             <div class="d-flex align-items-center gap-2">
                                 <select id="roleFilter" class="form-select form-select-sm" style="min-width: 200px;">
-                                    <option value="all"><?php echo $t['all_roles']; ?></option>
+                                    <option value="all"><?php echo $t['all_roles'] ?? 'All Roles'; ?></option>
                                     <?php foreach ($roles as $role): ?>
                                         <option value="<?= htmlspecialchars($role['name']) ?>">
                                             <?= htmlspecialchars(ucfirst($role['name'])) ?>
@@ -312,44 +273,25 @@ $result = mysqli_query($con, $sql);
                                 </select>
                             </div>
                         </div>
-
+                        
                         <div class="table-responsive">
                             <table class="table ant-table mb-0">
                                 <thead>
                                     <tr>
-                                        <th><?php echo $t['full_name']; ?></th>
-                                        <th><?php echo $t['role_name']; ?></th>
-                                        <th><?php echo $t['email_label']; ?></th>
-                                        <th><?php echo $t['phone_label']; ?></th>
+                                        <th><?= $t['user'] ?? 'User ID' ?></th>
+                                        <th><?= $t['full_name'] ?? 'Name' ?></th>
+                                        <th><?= $t['email_label'] ?? 'Email' ?></th>
+                                        <th><?= $t['phone_label'] ?? 'Phone' ?></th>
+                                        <th><?= $t['role_name'] ?? 'Roles' ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php if ($result && mysqli_num_rows($result) > 0): ?>
-                                        <?php while ($row = mysqli_fetch_assoc($result)): 
-                                            $name = trim($row['first_name'] . ' ' . $row['last_name']);
-                                            if (!empty($row['photo'])) {
-                                                $memberPhoto = '../../uploads/users/' . htmlspecialchars(basename($row['photo']));
-                                            } else {
-                                                $memberPhoto = 'https://ui-avatars.com/api/?name=' . urlencode($name) . '&background=random';
-                                            }
-                                            $joinDate = date('F j, Y', strtotime($row['created_at']));
-                                        ?>
-                                            <tr class="clickable-row view-member-btn" 
-                                                data-role="<?= htmlspecialchars($row['role_name']) ?>"
-                                                data-name="<?= htmlspecialchars($name) ?>"
-                                                data-rolename="<?= htmlspecialchars(ucfirst($row['role_name'])) ?>"
-                                                data-email="<?= htmlspecialchars($row['email']) ?>"
-                                                data-phone="<?= htmlspecialchars($row['phone']) ?>"
-                                                data-photo="<?= $memberPhoto ?>"
-                                                data-joined="<?= $joinDate ?>"
-                                                title="<?php echo $t['view_details'] ?? 'Click for profile'; ?>">
+                                        <?php while ($row = mysqli_fetch_assoc($result)): ?>
+                                            <tr style="cursor: pointer;" data-roles="<?= htmlspecialchars($row['role_names']) ?>" onclick="openRolesModal(<?= $row['id'] ?>, '<?= htmlspecialchars($row['role_ids'] ?? '') ?>')">
+                                                <td class="text-muted small">#<?= htmlspecialchars($row['id']) ?></td>
                                                 <td class="fw-bold text-dark">
-                                                    <?= htmlspecialchars($name) ?>
-                                                </td>
-                                                <td>
-                                                    <span class="role-badge">
-                                                        <?= htmlspecialchars($row['role_name']) ?>
-                                                    </span>
+                                                    <?= htmlspecialchars($row['first_name'] . ' ' . $row['last_name']) ?>
                                                 </td>
                                                 <td class="text-muted small">
                                                     <?= htmlspecialchars($row['email']) ?>
@@ -357,13 +299,25 @@ $result = mysqli_query($con, $sql);
                                                 <td class="text-muted small">
                                                     <?= htmlspecialchars($row['phone']) ?>
                                                 </td>
+                                                <td>
+                                                    <?php 
+                                                    if ($row['role_names']) {
+                                                        $roles_arr = explode(',', $row['role_names']);
+                                                        foreach ($roles_arr as $rname) {
+                                                            echo '<span class="role-badge">' . htmlspecialchars($rname) . '</span>';
+                                                        }
+                                                    } else {
+                                                        echo '<span class="text-muted small">-</span>';
+                                                    }
+                                                    ?>
+                                                </td>
                                             </tr>
                                         <?php endwhile; ?>
                                     <?php else: ?>
                                         <tr>
-                                            <td colspan="4" class="text-center py-5 text-muted">
+                                            <td colspan="5" class="text-center py-5 text-muted">
                                                 <i class="bi bi-people fs-1 opacity-25 d-block mb-3"></i>
-                                                <?php echo $t['no_committee_members']; ?>
+                                                <?= $t['no_users_found'] ?? 'No users found.' ?>
                                             </td>
                                         </tr>
                                     <?php endif; ?>
@@ -372,88 +326,134 @@ $result = mysqli_query($con, $sql);
                         </div>
                     </div>
                 </div>
+            </main>
+        </div>
+    </div>
 
-                <!-- Member Details Modal -->
-                <div class="modal fade" id="memberModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content" style="border-radius: 16px; border: none; overflow: hidden;">
-                            <div class="modal-header border-0 bg-light" style="padding: 24px;">
-                                <h5 class="modal-title fw-bold"><?php echo $t['member_details'] ?? 'Member Details'; ?></h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body text-center" style="padding: 32px 24px;">
-                                <img id="modalPhoto" src="" alt="Profile Photo" class="rounded-circle shadow-sm mb-3" style="width: 96px; height: 96px; object-fit: cover; border: 3px solid #fff;">
-                                <h4 id="modalName" class="fw-bold mb-1"></h4>
-                                <span id="modalRole" class="badge bg-primary rounded-pill px-3 py-2 mb-4"></span>
-                                
-                                <div class="text-start bg-light rounded p-3">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="bi bi-envelope text-muted me-3 fs-5"></i>
-                                        <div>
-                                            <div class="small text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;"><?php echo $t['email_label'] ?? 'Email'; ?></div>
-                                            <div id="modalEmail" class="fw-medium"></div>
-                                        </div>
+    <!-- Edit Roles Modal -->
+    <div class="modal fade" id="editRolesModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: var(--ant-radius); border: none;">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold"><?= $t['assign_roles'] ?? 'Assign Roles' ?></h5>
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="updateRolesForm">
+                        <input type="hidden" name="user_id" id="editUserId">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold"><?= $t['select_roles'] ?? 'Select Roles' ?></label>
+                            <div class="role-checkbox-list">
+                                <?php foreach ($roles as $role): ?>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input role-checkbox" type="checkbox" 
+                                            name="roles[]" value="<?= $role['id'] ?>" id="role_<?= $role['id'] ?>">
+                                        <label class="form-check-label text-capitalize" for="role_<?= $role['id'] ?>">
+                                            <?= htmlspecialchars($role['name']) ?>
+                                        </label>
                                     </div>
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="bi bi-telephone text-muted me-3 fs-5"></i>
-                                        <div>
-                                            <div class="small text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;"><?php echo $t['phone_label'] ?? 'Phone'; ?></div>
-                                            <div id="modalPhone" class="fw-medium"></div>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-calendar-check text-muted me-3 fs-5"></i>
-                                        <div>
-                                            <div class="small text-muted fw-bold" style="font-size: 11px; text-transform: uppercase;"><?php echo $t['joined'] ?? 'Joined'; ?></div>
-                                            <div id="modalJoined" class="fw-medium"></div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <?php endforeach; ?>
                             </div>
                         </div>
-                    </div>
+                    </form>
                 </div>
-            </main>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal"><?= $t['cancel'] ?? 'Cancel' ?></button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" id="saveRolesBtn" onclick="saveRoles()">
+                        <?= $t['update_roles'] ?? 'Update Roles' ?>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Role Filtering Script
-        const roleFilter = document.getElementById('roleFilter');
-        if (roleFilter) {
-            roleFilter.addEventListener('change', function () {
-                const value = this.value.toLowerCase();
-                const rows = document.querySelectorAll('tbody tr[data-role]');
-
-                rows.forEach(row => {
-                    const role = (row.getAttribute('data-role') || '').toLowerCase();
-                    if (value === 'all' || role === value) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
+        const editRolesModal = new bootstrap.Modal(document.getElementById('editRolesModal'));
+        
+        function openRolesModal(userId, roleIdsStr) {
+            document.getElementById('editUserId').value = userId;
+            
+            // Uncheck all first
+            document.querySelectorAll('.role-checkbox').forEach(cb => cb.checked = false);
+            
+            if (roleIdsStr) {
+                const activeRoleIds = roleIdsStr.split(',');
+                activeRoleIds.forEach(id => {
+                    const cb = document.getElementById('role_' + id);
+                    if (cb) cb.checked = true;
                 });
+            }
+            
+            editRolesModal.show();
+        }
+
+        function saveRoles() {
+            const btn = document.getElementById('saveRolesBtn');
+            const form = document.getElementById('updateRolesForm');
+            const formData = new FormData(form);
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...';
+
+            fetch('update_roles.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showAlert('success', '<?= $t['roles_updated_success'] ?? 'Roles updated successfully.' ?>');
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showAlert('danger', data.message || '<?= $t['roles_update_failed'] ?? 'Failed to update roles.' ?>');
+                    btn.disabled = false;
+                    btn.innerHTML = '<?= $t['update_roles'] ?? 'Update Roles' ?>';
+                }
+            })
+            .catch(err => {
+                showAlert('danger', '<?= $t['something_went_wrong'] ?? 'Something went wrong.' ?>');
+                btn.disabled = false;
+                btn.innerHTML = '<?= $t['update_roles'] ?? 'Update Roles' ?>';
+                console.error(err);
             });
         }
 
-        // Disable Right Click
-        document.addEventListener('contextmenu', function (e) {
-            e.preventDefault();
-        });
+        function showAlert(type, message) {
+            const box = document.getElementById('alertBox');
+            box.className = `alert alert-${type}`;
+            box.innerHTML = message;
+            box.classList.remove('d-none');
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
-        // Modal Logic
-        const memberModal = new bootstrap.Modal(document.getElementById('memberModal'));
-        document.querySelectorAll('.view-member-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.getElementById('modalPhoto').src = this.dataset.photo;
-                document.getElementById('modalName').textContent = this.dataset.name;
-                document.getElementById('modalRole').textContent = this.dataset.rolename;
-                document.getElementById('modalEmail').textContent = this.dataset.email || 'N/A';
-                document.getElementById('modalPhone').textContent = this.dataset.phone || 'N/A';
-                document.getElementById('modalJoined').textContent = this.dataset.joined;
-                memberModal.show();
-            });
+        // --- Role Filter Logic ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const roleFilter = document.getElementById('roleFilter');
+            const userRows = document.querySelectorAll('tbody tr[data-roles]');
+
+            if (roleFilter) {
+                roleFilter.addEventListener('change', function() {
+                    const selectedRole = this.value.toLowerCase();
+                    
+                    userRows.forEach(row => {
+                        const rolesStr = row.getAttribute('data-roles') || '';
+                        const rolesArray = rolesStr.split(',').map(r => r.trim().toLowerCase());
+                        
+                        if (selectedRole === 'all') {
+                            row.style.display = '';
+                        } else {
+                            if (rolesArray.includes(selectedRole)) {
+                                row.style.display = '';
+                            } else {
+                                row.style.display = 'none';
+                            }
+                        }
+                    });
+                });
+            }
         });
     </script>
 </body>
