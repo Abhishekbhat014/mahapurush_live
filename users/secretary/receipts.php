@@ -12,6 +12,9 @@ if (!isset($_SESSION['logged_in'])) {
 }
 
 $uid = (int) $_SESSION['user_id'];
+$availableRoles = $_SESSION['roles'] ?? [];
+$primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
+$currLang = $_SESSION['lang'] ?? 'en';
 $currentPage = 'receipts.php';
 
 // --- Header Identity Logic (session cached) ---
@@ -200,6 +203,57 @@ $result = mysqli_query($con, $sql);
             gap: 10px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
         }
+
+        .lang-btn {
+            border: none;
+            background: #f5f5f5;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+
+        .lang-btn:hover {
+            background: #e6f4ff;
+            color: #1677ff;
+        }
+
+        /* --- HOVER DROPDOWN LOGIC --- */
+        @media (min-width: 992px) {
+            .dropdown:hover .dropdown-menu {
+                display: block;
+                margin-top: 0;
+            }
+
+            .dropdown .dropdown-menu {
+                display: none;
+            }
+
+            .dropdown:hover>.dropdown-menu {
+                display: block;
+                animation: fadeIn 0.2s ease-in-out;
+            }
+        }
+
+        .dropdown-item.active,
+        .dropdown-item:active {
+            background-color: var(--ant-primary) !important;
+            color: #fff !important;
+            font-weight: 600;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 
@@ -211,14 +265,49 @@ $result = mysqli_query($con, $sql);
                 <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i
                         class="bi bi-list"></i></button>
             </div>
-            <div class="user-pill">
-                <img src="<?= $loggedInUserPhoto ?>" class="rounded-circle" width="28" height="28"
-                    style="object-fit: cover;">
-                <span class="small fw-bold d-none d-md-inline">
-                    <?= htmlspecialchars($_SESSION['user_name']) ?>
-                </span>
-                <div class="vr mx-2 text-muted opacity-25"></div>
-                <a href="../../auth/logout.php" class="text-danger"><i class="bi bi-power"></i></a>
+            <div class="d-flex align-items-center gap-3">
+                <div class="dropdown">
+                    <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-translate me-1"></i>
+                        <?= ($currLang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                        <li><a class="dropdown-item small fw-medium <?= ($currLang == 'en') ? 'active' : '' ?>"
+                                href="?lang=en">English</a></li>
+                        <li><a class="dropdown-item small fw-medium <?= ($currLang == 'mr') ? 'active' : '' ?>"
+                                href="?lang=mr">Marathi</a></li>
+                    </ul>
+                </div>
+
+                <?php if (!empty($availableRoles) && count($availableRoles) > 1): ?>
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <i class="bi bi-person-badge me-1"></i>
+                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                            <?php foreach ($availableRoles as $role): ?>
+                                <li>
+                                    <form action="../../auth/switch_role.php" method="post" class="px-2 py-1 m-0">
+                                        <button type="submit" name="role" value="<?= htmlspecialchars($role) ?>"
+                                            class="dropdown-item small fw-medium <?= ($role === $primaryRole) ? 'active' : '' ?>">
+                                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $role))) ?>
+                                        </button>
+                                    </form>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
+
+                <div class="user-pill shadow-sm">
+                    <img src="<?= $loggedInUserPhoto ?>" class="rounded-circle" width="28" height="28"
+                        style="object-fit: cover;">
+                    <span class="small fw-bold d-none d-md-inline">
+                        <?= htmlspecialchars($_SESSION['user_name']) ?>
+                    </span>
+                </div>
             </div>
         </div>
     </header>

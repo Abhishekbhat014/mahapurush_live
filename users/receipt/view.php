@@ -81,7 +81,7 @@ if ($source === 'donations') {
 } elseif ($source === 'pooja') {
     $q = $con->prepare("SELECT pt.type AS name, pj.pooja_date, pj.time_slot FROM pooja pj JOIN pooja_type pt ON pt.id = pj.pooja_type_id WHERE pj.receipt_id = ? LIMIT 1");
 } elseif ($source === 'contributions') {
-    $q = $con->prepare("SELECT title AS name, quantity, unit, description FROM contributions WHERE receipt_id = ? LIMIT 1");
+    $q = $con->prepare("SELECT c.title AS name, c.quantity, c.unit, c.description, c.contributor_name, ct.type AS category FROM contributions c LEFT JOIN contribution_type ct ON c.contribution_type_id = ct.id WHERE c.receipt_id = ? LIMIT 1");
 }
 
 if (isset($q)) {
@@ -329,7 +329,7 @@ if (isset($q)) {
                     <div class="receipt-body">
                         <div>
                             <div class="label-text"><?php echo $t['contributor']; ?></div>
-                            <div class="value-text"><?= htmlspecialchars($details['name'] ?? $_SESSION['user_name']) ?></div>
+                            <div class="value-text"><?= htmlspecialchars($details['contributor_name'] ?? ($details['name'] ?? $_SESSION['user_name'])) ?></div>
                         </div>
 
                         <div class="text-end">
@@ -363,7 +363,14 @@ if (isset($q)) {
 
                         <?php if ($source === 'contributions'): ?>
                             <div class="field-full">
-                                <div class="label-text"><?php echo $t['quantity_received']; ?></div>
+                                <div class="label-text"><?php echo $t['item_name'] ?? 'Item Details'; ?></div>
+                                <div class="value-text">
+                                    <?= htmlspecialchars($details['name']) ?> 
+                                    <span class="badge bg-light text-secondary border ms-2"><?= htmlspecialchars($details['category']) ?></span>
+                                </div>
+                            </div>
+                            <div class="field-full">
+                                <div class="label-text"><?php echo $t['quantity_received'] ?? 'Quantity'; ?></div>
                                 <div class="value-text"><?= htmlspecialchars($details['quantity'] . ' ' . $details['unit']) ?></div>
                             </div>
                         <?php endif; ?>
@@ -371,7 +378,7 @@ if (isset($q)) {
                         <div class="field-full amount-block">
                             <div class="label-text"><?php echo $t['total_value_received']; ?></div>
                             <div class="amount-val">
-                                <?= $receipt['amount'] > 0 ? '&#8377;' . number_format($receipt['amount'], 2) : ['in_kind'] ?>
+                                <?= $receipt['amount'] > 0 ? '&#8377;' . number_format($receipt['amount'], 2) : ($t['in_kind'] ?? 'In Kind') ?>
                             </div>
                             <div class="small text-muted italic mt-1" style="font-size: 11px;">
                                 <?php echo $t['digital_document_note']; ?>
@@ -405,7 +412,7 @@ if (isset($q)) {
             <div class="row mt-5">
                 <div class="col-7">
                     <div class="label-text"><?php echo $t['devotee_contributor']; ?></div>
-                    <div class="data-text"><?= htmlspecialchars($details['name'] ?? $_SESSION['user_name']) ?></div>
+                    <div class="data-text"><?= htmlspecialchars($details['contributor_name'] ?? ($details['name'] ?? $_SESSION['user_name'])) ?></div>
 
                     <div class="label-text"><?php echo $t['purpose_of_payment']; ?></div>
                     <div class="data-text">
@@ -424,8 +431,10 @@ if (isset($q)) {
 
                 <div class="col-5 text-end">
                     <?php if ($source === 'contributions'): ?>
-                        <div class="label-text"><?php echo $t['quantity_received']; ?></div>
-                        <div class="data-text"><?= htmlspecialchars($details['quantity'] . ' ' . $details['unit']) ?></div>
+                        <div class="label-text"><?php echo $t['item_name'] ?? 'Item Details'; ?></div>
+                        <div class="data-text mb-2"><?= htmlspecialchars($details['name']) ?> (<?= htmlspecialchars($details['category'] ?? 'N/A') ?>)</div>
+                        <div class="label-text"><?php echo $t['quantity_received'] ?? 'Quantity'; ?></div>
+                        <div class="data-text mb-2"><?= htmlspecialchars($details['quantity'] . ' ' . $details['unit']) ?></div>
                     <?php endif; ?>
 
                     <div class="label-text"><?php echo $t['transaction_status']; ?></div>
@@ -441,7 +450,7 @@ if (isset($q)) {
             <div class="amount-block">
                 <div class="label-text"><?php echo $t['total_value_received']; ?></div>
                 <div class="amount-val">
-                    <?= $receipt['amount'] > 0 ? '&#8377;' . number_format($receipt['amount'], 2) : ['in_kind'] ?>
+                    <?= $receipt['amount'] > 0 ? '&#8377;' . number_format($receipt['amount'], 2) : ($t['in_kind'] ?? 'In Kind') ?>
                 </div>
                 <div class="small text-muted italic mt-2" style="font-size: 11px;">
                     <?php echo $t['digital_document_note']; ?>

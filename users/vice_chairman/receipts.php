@@ -354,7 +354,6 @@ if ($con) {
                                         <th><?php echo $t['amount'] ?? 'Amount'; ?></th>
                                         <th><?php echo $t['purpose'] ?? 'Purpose'; ?></th>
                                         <th><?php echo $t['date'] ?? 'Date'; ?></th>
-                                        <th class="text-end"><?php echo $t['action'] ?? 'Action'; ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -367,7 +366,7 @@ if ($con) {
                                             if (strpos($mode, 'cheque') !== false)
                                                 $badge = 'badge-cheque';
                                             ?>
-                                            <tr>
+                                            <tr style="cursor: pointer;" onclick="window.open('../receipt/view.php?no=<?= urlencode($r['receipt_no']) ?>', '_blank')">
                                                 <td class="fw-bold text-primary">
                                                     #<?= htmlspecialchars($r['receipt_no']) ?>
                                                 </td>
@@ -393,17 +392,11 @@ if ($con) {
                                                 <td class="text-muted small">
                                                     <?= date('d M Y, h:i A', strtotime($r['created_at'])) ?>
                                                 </td>
-                                                <td class="text-end">
-                                                    <a href="../receipt/view.php?no=<?= urlencode($r['receipt_no']) ?>" target="_blank"
-                                                        class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                                        <i class="bi bi-eye me-1"></i> <?php echo $t['view_receipt'] ?? 'View'; ?>
-                                                    </a>
-                                                </td>
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
                                         <tr>
-                                            <td colspan="6" class="text-center py-5 text-muted">
+                                            <td colspan="5" class="text-center py-5 text-muted">
                                                 <i class="bi bi-receipt fs-1 opacity-25 d-block mb-3"></i>
                                                 <p class="mb-0"><?php echo $t['no_receipts_found_criteria'] ?? 'No receipts found.'; ?></p>
                                             </td>

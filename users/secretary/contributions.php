@@ -12,6 +12,9 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 }
 
 $uid = (int) $_SESSION['user_id'];
+$availableRoles = $_SESSION['roles'] ?? [];
+$primaryRole = $_SESSION['primary_role'] ?? ($availableRoles[0] ?? 'customer');
+$currLang = $_SESSION['lang'] ?? 'en';
 $currentPage = 'contributions.php';
 $success = '';
 $error = '';
@@ -41,9 +44,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 /* ============================
    FETCH PENDING CONTRIBUTIONS
 ============================ */
-$sql = "SELECT c.id, c.title, c.quantity, c.unit, c.created_at, ct.type AS category, c.contributor_name
+$sql = "SELECT c.id, c.title, c.quantity, c.unit, c.created_at, ct.type AS category, c.contributor_name, c.description, u.phone, u.first_name, u.last_name
         FROM contributions c
         JOIN contribution_type ct ON ct.id = c.contribution_type_id
+        LEFT JOIN users u ON u.id = c.added_by
         WHERE c.status = 'pending'
         ORDER BY c.created_at ASC";
 $rows = mysqli_query($con, $sql);
@@ -196,6 +200,57 @@ $rows = mysqli_query($con, $sql);
             gap: 10px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
         }
+
+        .lang-btn {
+            border: none;
+            background: #f5f5f5;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+
+        .lang-btn:hover {
+            background: #e6f4ff;
+            color: #1677ff;
+        }
+
+        /* --- HOVER DROPDOWN LOGIC --- */
+        @media (min-width: 992px) {
+            .dropdown:hover .dropdown-menu {
+                display: block;
+                margin-top: 0;
+            }
+
+            .dropdown .dropdown-menu {
+                display: none;
+            }
+
+            .dropdown:hover>.dropdown-menu {
+                display: block;
+                animation: fadeIn 0.2s ease-in-out;
+            }
+        }
+
+        .dropdown-item.active,
+        .dropdown-item:active {
+            background-color: var(--ant-primary) !important;
+            color: #fff !important;
+            font-weight: 600;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 
@@ -206,19 +261,50 @@ $rows = mysqli_query($con, $sql);
             <div class="d-flex align-items-center gap-3">
                 <button class="btn btn-light d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu"><i
                         class="bi bi-list"></i></button>
-                <a href="../../index.php" class="fw-bold text-dark text-decoration-none fs-5 d-flex align-items-center">
-                    <i class="bi bi-flower1 text-warning me-2"></i>
-                    <?= $t['title'] ?>
-                </a>
             </div>
-            <div class="user-pill">
-                <img src="<?= $loggedInUserPhoto ?>" class="rounded-circle" width="28" height="28"
-                    style="object-fit: cover;">
-                <span class="small fw-bold d-none d-md-inline">
-                    <?= htmlspecialchars($_SESSION['user_name']) ?>
-                </span>
-                <div class="vr mx-2 text-muted opacity-25"></div>
-                <a href="../../auth/logout.php" class="text-danger"><i class="bi bi-power"></i></a>
+            <div class="d-flex align-items-center gap-3">
+                <div class="dropdown">
+                    <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-translate me-1"></i>
+                        <?= ($currLang == 'mr') ? $t['lang_marathi'] : $t['lang_english']; ?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                        <li><a class="dropdown-item small fw-medium <?= ($currLang == 'en') ? 'active' : '' ?>"
+                                href="?lang=en">English</a></li>
+                        <li><a class="dropdown-item small fw-medium <?= ($currLang == 'mr') ? 'active' : '' ?>"
+                                href="?lang=mr">Marathi</a></li>
+                    </ul>
+                </div>
+
+                <?php if (!empty($availableRoles) && count($availableRoles) > 1): ?>
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <i class="bi bi-person-badge me-1"></i>
+                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $primaryRole))) ?>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" style="border-radius: 10px;">
+                            <?php foreach ($availableRoles as $role): ?>
+                                <li>
+                                    <form action="../../auth/switch_role.php" method="post" class="px-2 py-1 m-0">
+                                        <button type="submit" name="role" value="<?= htmlspecialchars($role) ?>"
+                                            class="dropdown-item small fw-medium <?= ($role === $primaryRole) ? 'active' : '' ?>">
+                                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $role))) ?>
+                                        </button>
+                                    </form>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
+
+                <div class="user-pill shadow-sm">
+                    <img src="<?= $loggedInUserPhoto ?>" class="rounded-circle" width="28" height="28"
+                        style="object-fit: cover;">
+                    <span class="small fw-bold d-none d-md-inline">
+                        <?= htmlspecialchars($_SESSION['user_name']) ?>
+                    </span>
+                </div>
             </div>
         </div>
     </header>
@@ -266,13 +352,15 @@ $rows = mysqli_query($con, $sql);
                                 </thead>
                                 <tbody>
                                     <?php if (mysqli_num_rows($rows) > 0): ?>
-                                        <?php while ($r = mysqli_fetch_assoc($rows)): ?>
-                                            <tr>
+                                        <?php while ($r = mysqli_fetch_assoc($rows)): 
+                                                $fullName = trim(($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? ''));
+                                            ?>
+                                            <tr style="cursor: pointer;" onclick="showContributionModal('<?= htmlspecialchars(addslashes($r['contributor_name'])) ?>', '<?= htmlspecialchars(addslashes($fullName)) ?>', '<?= htmlspecialchars(addslashes($r['phone'] ?? 'N/A')) ?>', '<?= htmlspecialchars(addslashes($r['title'])) ?>', '<?= htmlspecialchars(addslashes($r['category'])) ?>', '<?= number_format($r['quantity'], 2) . ' ' . addslashes($r['unit']) ?>', '<?= date('d M Y, h:i A', strtotime($r['created_at'])) ?>', '<?= htmlspecialchars(addslashes($r['description'] ?? 'No additional details provided.')) ?>')">
                                                 <td class="fw-bold">
-                                                    <?= htmlspecialchars($r['contributor_name']) ?>
+                                                    <?= htmlspecialchars($r['contributor_name'] ?: 'Unknown') ?>
                                                 </td>
                                                 <td class="text-primary fw-medium">
-                                                    <?= htmlspecialchars($r['title']) ?>
+                                                    <?= htmlspecialchars($r['title'] ?: 'Unnamed Item') ?>
                                                 </td>
                                                 <td><span class="badge bg-light text-dark border">
                                                         <?= htmlspecialchars($r['category']) ?>
@@ -285,14 +373,14 @@ $rows = mysqli_query($con, $sql);
                                                 <td class="text-secondary small">
                                                     <?= date('d M Y', strtotime($r['created_at'])) ?>
                                                 </td>
-                                                <td class="text-end">
+                                                <td class="text-end" onclick="event.stopPropagation();">
                                                     <div class="d-flex justify-content-end gap-2">
-                                                        <form method="POST" class="needs-validation" novalidate>
+                                                        <form method="POST" class="needs-validation m-0" novalidate>
                                                             <input type="hidden" name="contribution_id" value="<?= $r['id'] ?>">
                                                             <input type="hidden" name="action" value="approved">
                                                             <button type="submit" class="btn-ant-success"><?php echo $t['approve']; ?></button>
                                                         </form>
-                                                        <form method="POST" class="needs-validation" novalidate>
+                                                        <form method="POST" class="needs-validation m-0" novalidate>
                                                             <input type="hidden" name="contribution_id" value="<?= $r['id'] ?>">
                                                             <input type="hidden" name="action" value="rejected">
                                                             <button type="submit" class="btn-ant-reject"><?php echo $t['reject']; ?></button>
@@ -318,8 +406,92 @@ $rows = mysqli_query($con, $sql);
         </div>
     </div>
 
+    <!-- Details Modal -->
+    <div class="modal fade" id="contributionModal" tabindex="-1" aria-labelledby="contributionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="contributionModalLabel"><?php echo $t['contribution_details'] ?? 'Contribution Details'; ?></h5>
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4 py-4">
+                    <div class="d-flex flex-column gap-3">
+                        
+                        <div class="p-3 bg-light rounded">
+                            <h6 class="text-muted text-uppercase small fw-bold mb-2">Contributor Information</h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Contributor Name</small>
+                                    <span class="fw-bold" id="modalContributor"></span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Submitted By</small>
+                                    <span class="fw-medium text-dark" id="modalAddedBy"></span>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-12">
+                                    <small class="text-muted d-block">Phone Number</small>
+                                    <span class="fw-medium text-dark" id="modalPhone"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 border rounded">
+                            <h6 class="text-muted text-uppercase small fw-bold mb-2">Item Details</h6>
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Item Name</small>
+                                    <span class="fw-bold text-primary" id="modalItem"></span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Category</small>
+                                    <span class="badge bg-secondary" id="modalCategory"></span>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Quantity</small>
+                                    <span class="fw-bold" id="modalQty"></span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Submitted On</small>
+                                    <span class="fw-medium" id="modalDate"></span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <small class="text-muted d-block">Description</small>
+                                    <p class="mb-0 text-dark" id="modalDesc" style="white-space: pre-wrap;"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0 justify-content-center">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal"><?php echo $t['close'] ?? 'Close'; ?></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        function showContributionModal(contributor, addedBy, phone, item, category, qty, date, desc) {
+            document.getElementById('modalContributor').innerText = contributor;
+            document.getElementById('modalAddedBy').innerText = addedBy;
+            document.getElementById('modalPhone').innerText = phone;
+            document.getElementById('modalItem').innerText = item;
+            document.getElementById('modalCategory').innerText = category;
+            document.getElementById('modalQty').innerText = qty;
+            document.getElementById('modalDate').innerText = date;
+            document.getElementById('modalDesc').innerText = desc;
+            
+            var myModal = new bootstrap.Modal(document.getElementById('contributionModal'));
+            myModal.show();
+        }
+
         (function () {
             'use strict';
             var forms = document.querySelectorAll('.needs-validation');
@@ -333,8 +505,7 @@ $rows = mysqli_query($con, $sql);
                 }, false);
             });
         })();
-    </script>
-    <script>
+
         if (window.history.replaceState) {
             window.history.replaceState(null, null, window.location.href);
         }

@@ -33,7 +33,7 @@ $donations = $q1->get_result()->fetch_all(MYSQLI_ASSOC);
 // 2. Material Contributions (Join contributions with contribution_type, users for contributor name)
 $contributions = [];
 $q2 = $con->prepare("
-    SELECT c.id, c.title, c.quantity, c.unit, ct.type AS category, c.status, c.created_at, u.first_name, u.last_name
+    SELECT c.id, c.title, c.quantity, c.unit, c.description, c.contributor_name, ct.type AS category, c.status, c.created_at, u.first_name, u.last_name
     FROM contributions c 
     JOIN contribution_type ct ON c.contribution_type_id = ct.id 
     JOIN users u ON c.added_by = u.id
@@ -300,12 +300,11 @@ $loggedInUserPhoto = get_user_avatar_url('../../');
                                         <th><?= $t['method'] ?? 'Method' ?></th>
                                         <th><?= $t['status'] ?? 'Status' ?></th>
                                         <th><?= $t['date'] ?? 'Date' ?></th>
-                                        <th class="text-end"><?= $t['action'] ?? 'Action' ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php if ($donations): foreach ($donations as $d): ?>
-                                        <tr>
+                                        <tr style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#moneyModal<?= $d['id'] ?>">
                                             <td class="fw-bold text-dark"><?= htmlspecialchars(trim(!empty($d['first_name']) ? $d['first_name'] . ' ' . $d['last_name'] : $d['donor_name'])) ?></td>
                                             <td class="fw-medium text-dark"><?= htmlspecialchars($d['note'] ?: ($t['donation'] ?? 'Donation')) ?></td>
                                             <td class="fw-bold text-success">₹<?= number_format($d['amount'], 2) ?></td>
@@ -316,11 +315,6 @@ $loggedInUserPhoto = get_user_avatar_url('../../');
                                                 </span>
                                             </td>
                                             <td class="text-muted small"><?= date('d M Y, h:i A', strtotime($d['created_at'])) ?></td>
-                                            <td class="text-end">
-                                                <button class="btn btn-sm btn-light rounded-pill px-3 shadow-sm border" data-bs-toggle="modal" data-bs-target="#moneyModal<?= $d['id'] ?>">
-                                                    <i class="bi bi-eye text-primary"></i> <?= $t['view_details'] ?? 'View Details' ?>
-                                                </button>
-                                            </td>
                                         </tr>
                                         
                                         <!-- Money Modal -->
@@ -370,7 +364,7 @@ $loggedInUserPhoto = get_user_avatar_url('../../');
 
                                     <?php endforeach; else: ?>
                                         <tr>
-                                            <td colspan="7" class="text-center py-5 text-muted small">
+                                            <td colspan="6" class="text-center py-5 text-muted small">
                                                 <i class="bi bi-journal-x d-block fs-3 opacity-25 mb-2"></i>
                                                 <?= $t['no_donations_history'] ?? 'No monetary donations recorded yet.' ?>
                                             </td>
@@ -397,12 +391,11 @@ $loggedInUserPhoto = get_user_avatar_url('../../');
                                         <th><?= $t['quantity'] ?? 'Quantity' ?></th>
                                         <th><?= $t['status'] ?? 'Status' ?></th>
                                         <th><?= $t['date'] ?? 'Date' ?></th>
-                                        <th class="text-end"><?= $t['action'] ?? 'Action' ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php if ($contributions): foreach ($contributions as $c): ?>
-                                        <tr>
+                                        <tr style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#materialModal<?= $c['id'] ?>">
                                             <td class="fw-bold text-dark"><?= htmlspecialchars(trim($c['first_name'] . ' ' . $c['last_name'])) ?></td>
                                             <td class="fw-bold text-primary"><?= htmlspecialchars($c['title']) ?></td>
                                             <td class="text-secondary"><?= htmlspecialchars($c['category']) ?></td>
@@ -413,11 +406,6 @@ $loggedInUserPhoto = get_user_avatar_url('../../');
                                                 </span>
                                             </td>
                                             <td class="text-muted small"><?= date('d M Y, h:i A', strtotime($c['created_at'])) ?></td>
-                                            <td class="text-end">
-                                                <button class="btn btn-sm btn-light rounded-pill px-3 shadow-sm border" data-bs-toggle="modal" data-bs-target="#materialModal<?= $c['id'] ?>">
-                                                    <i class="bi bi-eye text-primary"></i> <?= $t['view_details'] ?? 'View Details' ?>
-                                                </button>
-                                            </td>
                                         </tr>
                                         
                                         <!-- Material Modal -->
@@ -431,7 +419,7 @@ $loggedInUserPhoto = get_user_avatar_url('../../');
                                                     <div class="modal-body p-4">
                                                         <div class="mb-3 d-flex justify-content-between border-bottom pb-2">
                                                             <span class="text-muted"><?= $t['devotee'] ?? 'Devotee' ?></span>
-                                                            <span class="fw-bold"><?= htmlspecialchars(trim($c['first_name'] . ' ' . $c['last_name'])) ?></span>
+                                                            <span class="fw-bold"><?= htmlspecialchars($c['contributor_name'] ?: trim($c['first_name'] . ' ' . $c['last_name'])) ?></span>
                                                         </div>
                                                         <div class="mb-3 d-flex justify-content-between border-bottom pb-2">
                                                             <span class="text-muted"><?= $t['contribution_title'] ?? 'Title' ?></span>
@@ -449,9 +437,13 @@ $loggedInUserPhoto = get_user_avatar_url('../../');
                                                             <span class="text-muted"><?= $t['status'] ?? 'Status' ?></span>
                                                             <span class="ant-badge badge-<?= strtolower($c['status']) ?>"><?= $t[strtolower($c['status'])] ?? ucfirst($c['status']) ?></span>
                                                         </div>
-                                                        <div class="mb-0 d-flex justify-content-between border-bottom pb-2">
+                                                        <div class="mb-3 d-flex justify-content-between border-bottom pb-2">
                                                             <span class="text-muted"><?= $t['date'] ?? 'Date' ?></span>
                                                             <span class="small"><?= date('d M Y, h:i A', strtotime($c['created_at'])) ?></span>
+                                                        </div>
+                                                        <div class="mb-0">
+                                                            <span class="text-muted d-block mb-1"><?= $t['description'] ?? 'Description' ?> / Note</span>
+                                                            <div class="p-3 bg-light rounded" style="font-size: 14px;"><?= nl2br(htmlspecialchars($c['description'] ?: '-')) ?></div>
                                                         </div>
                                                     </div>
                                                     <div class="modal-footer border-top-0 pt-0 mt-3">
@@ -462,7 +454,7 @@ $loggedInUserPhoto = get_user_avatar_url('../../');
                                         </div>
                                     <?php endforeach; else: ?>
                                         <tr>
-                                            <td colspan="7" class="text-center py-5 text-muted small">
+                                            <td colspan="6" class="text-center py-5 text-muted small">
                                                 <i class="bi bi-box-x d-block fs-3 opacity-25 mb-2"></i>
                                                 <?= $t['no_contributions_history'] ?? 'No material contributions recorded yet.' ?>
                                             </td>

@@ -241,12 +241,12 @@ $result = mysqli_query($con, $sql);
                         </ul>
                     </div>
                 <?php endif; ?>
-                <div class="user-pill">
+                <div class="user-pill shadow-sm">
                     <img src="<?= $loggedInUserPhoto ?>" class="rounded-circle" width="28" height="28"
                         style="object-fit: cover;">
                     <span class="small fw-bold d-none d-md-inline"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
-                    <div class="vr mx-2 text-muted opacity-25"></div>
-                    <a href="../../auth/logout.php" class="text-danger"><i class="bi bi-power"></i></a>
+                    
+
                 </div>
             </div>
         </div>

@@ -3,105 +3,135 @@
    ========================================= */
 
 :root {
-    /* Default Theme (Blue/Light) - Override these in specific pages if needed */
-    --sb-width: 280px;
-    --sb-bg: #ffffff;
-    --sb-hover-bg: #f3f3f3;
-    --sb-active-bg: #e6f4ff;
-    --sb-active-text: #1677ff;
-    --sb-text: #4a4a4a;
-    --sb-text-hover: #000000;
-    --sb-border-color: #f0f0f0;
-    --sb-radius: 8px;
-    --sb-transition: all 0.25s ease-in-out;
-    --sb-top-offset: 0px; /* Change this if you have a fixed header (e.g., 64px) */
+  /* Default Theme (Blue/Light) - Override these in specific pages if needed */
+  --sb-width: 280px;
+  --sb-bg: #ffffff;
+  --sb-hover-bg: #f3f3f3;
+  --sb-active-bg: #e6f4ff;
+  --sb-active-text: #1677ff;
+  --sb-text: #4a4a4a;
+  --sb-text-hover: #000000;
+  --sb-border-color: #f0f0f0;
+  --sb-radius: 8px;
+  --sb-transition: all 0.25s ease-in-out;
+  --sb-top-offset: 0px; /* Change this if you have a fixed header (e.g., 64px) */
 }
 
 /* ===== LAYOUT CONTAINER ===== */
 .sb-sidebar {
-    background: var(--sb-bg);
-    height: 100vh;
-    height: calc(100vh - var(--sb-top-offset)); /* Adjusts height based on top offset */
-    position: sticky;
-    top: var(--sb-top-offset);
-    border-right: 1px solid var(--sb-border-color);
-    overflow-y: auto;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
+  background: var(--sb-bg);
+  height: 100vh;
+  height: calc(
+    100vh - var(--sb-top-offset)
+  ); /* Adjusts height based on top offset */
+  position: sticky;
+  top: var(--sb-top-offset);
+  border-right: 1px solid var(--sb-border-color);
+  overflow-y: hidden; /* Hide scroll on parent to keep logout sticky */
+  overflow-x: hidden; /* Prevent horizontal scroll */
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Custom Scrollbar */
-.sb-sidebar::-webkit-scrollbar { width: 5px; }
-.sb-sidebar::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 4px; }
-.sb-sidebar::-webkit-scrollbar-track { background: transparent; }
+/* Ensure mobile sidebar also hides horizontal scroll */
+.sb-offcanvas {
+  overflow-y: hidden;
+  overflow-x: hidden;
+}
+
+/* The inner navigation links wrapper should scroll vertically but not horizontally */
+.sb-sidebar .nav,
+.sb-offcanvas .nav {
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Optional: padding right to avoid scrollbar overlapping content */
+  padding-right: 2px;
+}
+
+/* Custom Scrollbar for the scrollable nav area */
+.sb-sidebar .nav::-webkit-scrollbar,
+.sb-offcanvas .nav::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sb-sidebar .nav::-webkit-scrollbar-thumb,
+.sb-offcanvas .nav::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 4px;
+}
+
+.sb-sidebar .nav::-webkit-scrollbar-track,
+.sb-offcanvas .nav::-webkit-scrollbar-track {
+  background: transparent;
+}
 
 /* ===== LINK ITEMS ===== */
 .sb-link {
-    padding: 10px 16px;
-    margin: 4px 16px;
-    color: var(--sb-text);
-    font-weight: 500;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    text-decoration: none;
-    border-radius: var(--sb-radius);
-    transition: var(--sb-transition);
-    border: none;
-    outline: none;
+  padding: 10px 16px;
+  margin: 4px 16px;
+  color: var(--sb-text);
+  font-weight: 500;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  border-radius: var(--sb-radius);
+  transition: var(--sb-transition);
+  border: none;
+  outline: none;
 }
 
 /* Icon Alignment */
 .sb-link i {
-    font-size: 1.1rem;
-    width: 24px; /* Fixed width ensures text aligns vertically */
-    text-align: center;
-    display: inline-block;
+  font-size: 1.1rem;
+  width: 24px; /* Fixed width ensures text aligns vertically */
+  text-align: center;
+  display: inline-block;
 }
 
 /* Hover State */
 .sb-link:hover {
-    color: var(--sb-text-hover);
-    background: var(--sb-hover-bg);
-    transform: translateX(3px);
+  color: var(--sb-text-hover);
+  background: var(--sb-hover-bg);
+  transform: translateX(3px);
 }
 
 /* Active State */
 .sb-link.sb-active {
-    color: var(--sb-active-text);
-    background: var(--sb-active-bg);
-    font-weight: 600;
+  color: var(--sb-active-text);
+  background: var(--sb-active-bg);
+  font-weight: 600;
 }
 
 /* Specific Utility: Logout/Danger Link */
 .sb-link.text-danger:hover {
-    background-color: #fff0f0; /* Light red background on hover */
-    color: #dc3545 !important;
+  background-color: #fff0f0; /* Light red background on hover */
+  color: #dc3545 !important;
 }
 
 /* ===== UTILITIES ===== */
 .sb-divider {
-    height: 1px;
-    background: var(--sb-border-color);
-    margin: 15px 24px;
-    opacity: 0.8;
+  height: 1px;
+  background: var(--sb-border-color);
+  margin: 15px 24px;
+  opacity: 0.8;
 }
 
 .sb-title {
-    font-size: 11px;
-    letter-spacing: 1.2px;
-    opacity: 0.6;
-    margin-top: 0;
-    display: block;
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  opacity: 0.6;
+  margin-top: 0;
+  display: block;
 }
 
 /* ===== MOBILE OFFCANVAS ADAPTERS ===== */
 .sb-offcanvas {
-    background-color: var(--sb-bg);
+  background-color: var(--sb-bg);
 }
 
 .sb-offcanvas .sb-link {
-    margin: 4px 10px; /* Slightly tighter margin for mobile screens */
+  margin: 4px 10px; /* Slightly tighter margin for mobile screens */
 }

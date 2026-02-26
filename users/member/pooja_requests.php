@@ -330,7 +330,6 @@ $userPhotoUrl = get_user_avatar_url('../../');
                                         <th><?php echo $t['date']; ?></th>
                                         <th><?php echo $t['time_slot']; ?></th>
                                         <th><?php echo $t['status']; ?></th>
-                                        <th class="text-end"><?php echo $t['action']; ?></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -344,7 +343,7 @@ $userPhotoUrl = get_user_avatar_url('../../');
                                                 default => 'status-pending'
                                             };
                                             ?>
-                                            <tr>
+                                            <tr style="cursor: pointer;" onclick="window.location.href='pooja_details.php?id=<?= $p['id'] ?>'">
                                                 <td class="fw-bold text-primary">
                                                     <?= htmlspecialchars($p['pooja_name']) ?>
                                                 </td>
@@ -367,16 +366,11 @@ $userPhotoUrl = get_user_avatar_url('../../');
                                                         <?= ucfirst($status) ?>
                                                     </span>
                                                 </td>
-                                                <td class="text-end">
-                                                    <a href="pooja_details.php?id=<?= $p['id'] ?>" class="ant-btn-primary">
-                                                        <?php echo $t['view_details']; ?>
-                                                    </a>
-                                                </td>
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
                                         <tr>
-                                            <td colspan="6" class="text-center py-5 text-muted">
+                                            <td colspan="5" class="text-center py-5 text-muted">
                                                 <i class="bi bi-calendar-x fs-1 opacity-25 d-block mb-2"></i>
                                                 <?php echo $t['no_pooja_requests_found']; ?>
                                             </td>

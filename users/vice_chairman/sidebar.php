@@ -14,6 +14,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         --sb-active-bg: #e6f4ff;
         /* Light Blue Background */
     }
+
+    /* Prevent full sidebar scroll to keep logout sticky */
+    .sb-sidebar, .sb-offcanvas {
+        overflow-y: hidden !important;
+    }
 </style>
 
 <nav class="col-lg-2 d-none d-lg-flex flex-column sb-sidebar shadow-sm p-0">

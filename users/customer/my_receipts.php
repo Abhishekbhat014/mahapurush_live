@@ -345,14 +345,15 @@ $userPhotoUrl = get_user_avatar_url('../../');
                                             <th><?php echo $t['type']; ?></th>
                                             <th><?php echo $t['amount']; ?></th>
                                             <th><?php echo $t['issued_date']; ?></th>
-                                            <th class="text-end"><?php echo $t['action']; ?></th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php if (!empty($receipts)): ?>
                                             <?php foreach ($receipts as $r):
-                                                $badgeClass = 'badge-' . $r['purpose']; ?>
-                                                <tr>
+                                                $badgeClass = 'badge-' . $r['purpose'];
+                                                $viewUrl = '../receipt/view.php?no=' . urlencode($r['receipt_no']); 
+                                                ?>
+                                                <tr style="cursor: pointer;" onclick="window.location.href='<?= $viewUrl ?>'">
                                                     <td data-label="<?php echo $t['receipt_no']; ?>" class="receipt-no">
                                                         #<?= htmlspecialchars($r['receipt_no']) ?></td>
                                                     <td data-label="<?php echo $t['type']; ?>">
@@ -366,18 +367,11 @@ $userPhotoUrl = get_user_avatar_url('../../');
                                                         class="text-secondary small">
                                                         <?= date("d M Y, h:i A", strtotime($r['issued_on'])) ?>
                                                     </td>
-                                                    <td data-label="<?php echo $t['action']; ?>" class="text-end">
-                                                        <a href="../receipt/view.php?no=<?= urlencode($r['receipt_no']) ?>"
-                                                            class="btn btn-light btn-sm border rounded-pill px-3 fw-medium">
-                                                            <i class="bi bi-file-earmark-text me-1"></i>
-                                                            <?php echo $t['view']; ?>
-                                                        </a>
-                                                    </td>
                                                 </tr>
                                             <?php endforeach; ?>
                                         <?php else: ?>
                                             <tr>
-                                                <td colspan="5" class="text-center py-5 text-muted">
+                                                <td colspan="4" class="text-center py-5 text-muted">
                                                     <i class="bi bi-file-earmark-x d-block fs-1 opacity-25 mb-3"></i>
                                                     <?php echo $t['no_receipts_found']; ?>
                                                 </td>

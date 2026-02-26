@@ -20,7 +20,11 @@ $userPhotoUrl = get_user_avatar_url('../../');
 
 $bookings = [];
 if ($con && $userId > 0) {
-    $stmt = $con->prepare("SELECT p.*, pt.type AS pooja_name FROM pooja p JOIN pooja_type pt ON pt.id = p.pooja_type_id WHERE p.user_id = ? ORDER BY p.created_at DESC");
+    $stmt = $con->prepare("SELECT p.*, pt.type AS pooja_name, p.performed_by 
+                           FROM pooja p 
+                           JOIN pooja_type pt ON pt.id = p.pooja_type_id 
+                           WHERE p.user_id = ? 
+                           ORDER BY p.created_at DESC");
     $stmt->bind_param("i", $userId);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -305,6 +309,7 @@ if ($con && $userId > 0) {
                                         <tr>
                                             <th><?php echo $t['pooja'] ?? 'Pooja'; ?></th>
                                             <th><?php echo $t['date'] ?? 'Date'; ?></th>
+                                            <th><?php echo $t['priest'] ?? 'Priest'; ?></th>
                                             <th><?php echo $t['fee'] ?? 'Fee'; ?></th>
                                             <th><?php echo $t['status'] ?? 'Status'; ?></th>
                                         </tr>
@@ -315,10 +320,12 @@ if ($con && $userId > 0) {
                                                 $statusKey = strtolower($b['status'] ?? 'pending');
                                                 $statusClass = ($statusKey === 'completed' || $statusKey === 'paid') ? 'status-success' : 'status-pending';
                                                 ?>
-                                                <tr>
-                                                    <td class="fw-bold"><?php echo htmlspecialchars($b['pooja_name'] ?? ''); ?>
+                                                <tr style="cursor: pointer;" onclick="showPoojaModal('<?= htmlspecialchars(addslashes($b['pooja_name'] ?? '')) ?>', '<?= !empty($b['pooja_date']) ? date('d M Y', strtotime($b['pooja_date'])) : '-' ?>', '<?= htmlspecialchars(addslashes($b['time_slot'] ?? '-')) ?>', '<?= isset($b['fee']) ? '₹' . number_format((float) $b['fee'], 0) : '-' ?>', '<?= htmlspecialchars(addslashes($b['performed_by'] ?? 'Not Assigned')) ?>', '<?= htmlspecialchars(addslashes($b['status'] ?? 'pending')) ?>', '<?= !empty($b['created_at']) ? date('d M Y, h:i A', strtotime($b['created_at'])) : '-' ?>')">
+                                                    <td class="fw-bold text-dark"><?php echo htmlspecialchars($b['pooja_name'] ?? ''); ?>
                                                     </td>
                                                     <td><?php echo !empty($b['pooja_date']) ? date('d M Y', strtotime($b['pooja_date'])) : '-'; ?>
+                                                    </td>
+                                                    <td><?php echo htmlspecialchars($b['performed_by'] ?? '-'); ?>
                                                     </td>
                                                     <td class="fw-bold">
                                                         <?php echo isset($b['fee']) ? '₹' . number_format((float) $b['fee'], 0) : '-'; ?>
@@ -331,7 +338,7 @@ if ($con && $userId > 0) {
                                             <?php endforeach; ?>
                                         <?php else: ?>
                                             <tr>
-                                                <td colspan="4" class="text-center py-5 text-muted small">
+                                                <td colspan="5" class="text-center py-5 text-muted small">
                                                     <?php echo $t['no_bookings_found'] ?? 'No bookings found.'; ?>
                                                 </td>
                                             </tr>
@@ -346,7 +353,75 @@ if ($con && $userId > 0) {
         </div>
     </div>
 
+    <!-- Pooja Details Modal -->
+    <div class="modal fade" id="poojaModal" tabindex="-1" aria-labelledby="poojaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="poojaModalLabel"><?php echo $t['pooja'] ?? 'Pooja Details'; ?></h5>
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4 py-4">
+                    <div class="p-3 bg-light rounded d-flex flex-column gap-3">
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted d-block"><?php echo $t['pooja'] ?? 'Pooja Type'; ?></small>
+                                <span class="fw-bold text-primary" id="modalPoojaName"></span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block"><?php echo $t['status'] ?? 'Status'; ?></small>
+                                <span class="badge bg-secondary text-uppercase" id="modalStatus"></span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted d-block"><?php echo $t['date'] ?? 'Date'; ?></small>
+                                <span class="fw-medium" id="modalDate"></span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Time Slot</small>
+                                <span class="fw-medium" id="modalTime"></span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted d-block"><?php echo $t['priest'] ?? 'Priest'; ?></small>
+                                <span class="fw-medium text-dark" id="modalPriest"></span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block"><?php echo $t['fee'] ?? 'Fee'; ?></small>
+                                <span class="fw-bold text-dark" id="modalFee"></span>
+                            </div>
+                        </div>
+                        <div class="row pt-2 border-top">
+                            <div class="col-12 text-center text-muted small">
+                                Booked On: <span id="modalBookedOn"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0 justify-content-center">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal"><?php echo $t['close'] ?? 'Close'; ?></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showPoojaModal(name, date, time, fee, priest, status, bookedOn) {
+            document.getElementById('modalPoojaName').innerText = name;
+            document.getElementById('modalDate').innerText = date;
+            document.getElementById('modalTime').innerText = time;
+            document.getElementById('modalFee').innerText = fee;
+            document.getElementById('modalPriest').innerText = priest;
+            document.getElementById('modalStatus').innerText = status;
+            document.getElementById('modalBookedOn').innerText = bookedOn;
+            
+            var modal = new bootstrap.Modal(document.getElementById('poojaModal'));
+            modal.show();
+        }
+    </script>
 </body>
 
 </html>

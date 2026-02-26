@@ -14,6 +14,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         --sb-active-bg: #e6f4ff;
         /* Light Blue Background */
     }
+
+    /* Prevent full sidebar scroll to keep logout sticky */
+    .sb-sidebar, .sb-offcanvas {
+        overflow-y: hidden !important;
+    }
 </style>
 
 <nav class="col-lg-2 d-none d-lg-flex flex-column sb-sidebar shadow-sm p-0">
@@ -24,7 +29,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         </small>
     </div>
 
-    <div class="nav flex-column flex-grow-1" style="overflow-y: auto;">
+    <div class="nav flex-column flex-nowrap flex-grow-1" style="overflow-y: auto; overflow-x: hidden; min-height: 0;">
         <a href="../../index.php" class="sb-link">
             <i class="bi bi-house"></i> <span><?php echo $t['home']; ?></span>
         </a>
@@ -39,10 +44,6 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
         <a href="donations.php" class="sb-link <?= ($currentPage == 'donations.php') ? 'sb-active' : '' ?>">
             <i class="bi bi-heart-fill"></i> <span><?php echo $t['donations']; ?></span>
-        </a>
-
-        <a href="receipts.php" class="sb-link <?= ($currentPage == 'receipts.php') ? 'sb-active' : '' ?>">
-            <i class="bi bi-receipt-cutoff"></i> <span><?php echo $t['receipts']; ?></span>
         </a>
 
         <a href="contributions.php" class="sb-link <?= ($currentPage == 'contributions.php') ? 'sb-active' : '' ?>">
@@ -77,7 +78,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     </div>
 
     <div class="offcanvas-body d-flex flex-column p-0 pt-3">
-        <div class="nav flex-column flex-grow-1" style="overflow-y: auto;">
+        <div class="nav flex-column flex-nowrap flex-grow-1" style="overflow-y: auto; overflow-x: hidden; min-height: 0;">
 
             <a href="../../index.php" class="sb-link">
                 <i class="bi bi-house"></i> <?php echo $t['home']; ?>
@@ -92,9 +93,6 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             </a>
             <a href="donations.php" class="sb-link <?= ($currentPage == 'donations.php') ? 'sb-active' : '' ?>">
                 <i class="bi bi-heart-fill"></i> <?php echo $t['donations']; ?>
-            </a>
-            <a href="receipts.php" class="sb-link <?= ($currentPage == 'receipts.php') ? 'sb-active' : '' ?>">
-                <i class="bi bi-receipt-cutoff"></i> <?php echo $t['receipts']; ?>
             </a>
             
             <a href="contributions.php" class="sb-link <?= ($currentPage == 'contributions.php') ? 'sb-active' : '' ?>">

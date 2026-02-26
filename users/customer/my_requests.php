@@ -23,7 +23,7 @@ $currentPage = 'my_requests.php';
 
 // Pending/rejected contributions
 $contributions = [];
-$q1 = $con->prepare("SELECT c.id, c.title, c.quantity, c.unit, c.status, c.created_at, ct.type FROM contributions c JOIN contribution_type ct ON ct.id = c.contribution_type_id WHERE c.added_by = ? AND c.status IN ('pending','rejected') ORDER BY c.created_at DESC");
+$q1 = $con->prepare("SELECT c.id, c.item_name AS title, c.quantity, c.unit, c.status, c.created_at, ct.type FROM contributions c JOIN contribution_type ct ON ct.id = c.contribution_type_id WHERE c.added_by = ? AND c.status IN ('pending','rejected') ORDER BY c.created_at DESC");
 $q1->bind_param("i", $uid);
 $q1->execute();
 $contributions = $q1->get_result()->fetch_all(MYSQLI_ASSOC);

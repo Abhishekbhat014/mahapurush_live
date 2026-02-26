@@ -262,7 +262,7 @@ $result = mysqli_query($con, $sql);
                                     <tbody>
                                         <?php if (mysqli_num_rows($result) > 0): ?>
                                             <?php while ($r = mysqli_fetch_assoc($result)): ?>
-                                                <tr>
+                                                <tr style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#donationModal<?= $r['id'] ?>">
                                                     <td class="fw-bold text-primary">
                                                         <?= htmlspecialchars($r['donor_name'] . ' ' . ($r['last_name'] ?? '')) ?>
                                                     </td>
@@ -279,6 +279,49 @@ $result = mysqli_query($con, $sql);
                                                         <?= date('d M Y, h:i A', strtotime($r['created_at'])) ?>
                                                     </td>
                                                 </tr>
+
+                                                <!-- Donation Details Modal -->
+                                                <div class="modal fade" id="donationModal<?= $r['id'] ?>" tabindex="-1" aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                                                            <div class="modal-header border-bottom-0 pb-0">
+                                                                <h5 class="modal-title fw-bold">
+                                                                    <i class="bi bi-gift text-primary me-2"></i><?php echo $t['donation_details'] ?? 'Donation Details'; ?>
+                                                                </h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body p-4">
+                                                                <div class="mb-3 d-flex justify-content-between border-bottom pb-2">
+                                                                    <span class="text-muted"><?php echo $t['receipt_no'] ?? 'Receipt No'; ?></span>
+                                                                    <span class="fw-bold text-primary">#<?= htmlspecialchars($r['receipt_no'] ?? 'N/A') ?></span>
+                                                                </div>
+                                                                <div class="mb-3 d-flex justify-content-between border-bottom pb-2">
+                                                                    <span class="text-muted"><?php echo $t['devotee'] ?? 'Devotee'; ?></span>
+                                                                    <span class="fw-bold"><?= htmlspecialchars($r['donor_name'] . ' ' . ($r['last_name'] ?? '')) ?></span>
+                                                                </div>
+                                                                <div class="mb-3 d-flex justify-content-between border-bottom pb-2">
+                                                                    <span class="text-muted"><?php echo $t['amount'] ?? 'Amount'; ?></span>
+                                                                    <span class="fw-bold text-success">₹<?= number_format($r['amount'], 2) ?></span>
+                                                                </div>
+                                                                <div class="mb-3 d-flex justify-content-between border-bottom pb-2">
+                                                                    <span class="text-muted"><?php echo $t['payment_method'] ?? 'Payment Mode'; ?></span>
+                                                                    <span class="badge border bg-light text-dark fw-bold px-2 py-1"><?= htmlspecialchars(ucfirst($r['payment_method'] ?? 'Cash')) ?></span>
+                                                                </div>
+                                                                <div class="mb-3 d-flex justify-content-between border-bottom pb-2">
+                                                                    <span class="text-muted"><?php echo $t['date'] ?? 'Date'; ?></span>
+                                                                    <span class="small fw-medium"><?= date('d M Y, h:i A', strtotime($r['created_at'])) ?></span>
+                                                                </div>
+                                                                <div class="mb-0">
+                                                                    <span class="text-muted d-block mb-1"><?php echo $t['remarks'] ?? 'Remarks / Note'; ?></span>
+                                                                    <div class="p-3 bg-light rounded" style="font-size: 14px;"><?= nl2br(htmlspecialchars($r['note'] ?: '-')) ?></div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="modal-footer border-top-0 pt-0 mt-3">
+                                                                <button type="button" class="btn btn-light rounded-pill w-100 fw-bold border shadow-sm" data-bs-dismiss="modal"><?php echo $t['close'] ?? 'Close'; ?></button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             <?php endwhile; ?>
                                         <?php else: ?>
                                             <tr>

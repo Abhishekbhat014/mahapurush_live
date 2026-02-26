@@ -31,8 +31,8 @@ if ($roleRes && mysqli_num_rows($roleRes) > 0) {
 // --- 2. HANDLE APPROVAL ACTION (Removed) ---
 
 // --- 3. FETCH PENDING REQUESTS ---
-$sql = "SELECT p.id, pt.type AS pooja_name, p.pooja_date, p.time_slot, 
-               p.status, p.fee, p.performed_by, u.first_name, u.last_name
+$sql = "SELECT p.id, pt.type AS pooja_name, p.pooja_date, p.time_slot, p.created_at, 
+               p.status, p.fee, p.performed_by, u.first_name, u.last_name, u.phone
         FROM pooja p
         JOIN pooja_type pt ON pt.id = p.pooja_type_id
         JOIN users u ON u.id = p.user_id
@@ -336,7 +336,7 @@ $result = mysqli_query($con, $sql);
                                                 default => 'badge-pending'
                                             };
                                         ?>
-                                            <tr>
+                                            <tr style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#poojaModal<?= $r['id'] ?>">
                                                 <td class="fw-bold">
                                                     <?= htmlspecialchars($r['first_name'] . ' ' . $r['last_name']) ?>
                                                 </td>
@@ -356,6 +356,57 @@ $result = mysqli_query($con, $sql);
                                                 <td class="fw-bold">&#8377;<?= number_format($r['fee'], 0) ?></td>
                                                 <td><span class="<?= $statusClass ?>"><?= htmlspecialchars($r['status']) ?></span></td>
                                             </tr>
+
+                                            <!-- Details Modal -->
+                                            <div class="modal fade" id="poojaModal<?= $r['id'] ?>" tabindex="-1" aria-hidden="true">
+                                                <div class="modal-dialog modal-dialog-centered">
+                                                    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                                                        <div class="modal-header border-bottom-0 pb-0">
+                                                            <h5 class="modal-title fw-bold">
+                                                                <i class="bi bi-calendar-check text-primary me-2"></i><?php echo $t['pooja_details'] ?? 'Pooja Details'; ?>
+                                                            </h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body p-4">
+                                                            <div class="mb-3 d-flex justify-content-between border-bottom pb-2">
+                                                                <span class="text-muted"><?php echo $t['devotee'] ?? 'Devotee'; ?></span>
+                                                                <span class="fw-bold"><?= htmlspecialchars($r['first_name'] . ' ' . $r['last_name']) ?></span>
+                                                            </div>
+                                                            <div class="mb-3 d-flex justify-content-between border-bottom pb-2">
+                                                                <span class="text-muted"><?php echo $t['phone'] ?? 'Phone'; ?></span>
+                                                                <span class="fw-bold"><?= htmlspecialchars($r['phone'] ?? '-') ?></span>
+                                                            </div>
+                                                            <div class="mb-3 d-flex justify-content-between border-bottom pb-2">
+                                                                <span class="text-muted"><?php echo $t['pooja_type'] ?? 'Pooja Type'; ?></span>
+                                                                <span class="fw-bold text-primary"><?= htmlspecialchars($r['pooja_name']) ?></span>
+                                                            </div>
+                                                            <div class="mb-3 d-flex justify-content-between border-bottom pb-2">
+                                                                <span class="text-muted"><?php echo $t['schedule'] ?? 'Schedule'; ?></span>
+                                                                <span class="fw-bold"><?= date('d M Y', strtotime($r['pooja_date'])) ?> (<?= htmlspecialchars($r['time_slot'] ?? 'Anytime') ?>)</span>
+                                                            </div>
+                                                            <div class="mb-3 d-flex justify-content-between border-bottom pb-2">
+                                                                <span class="text-muted"><?php echo $t['priest'] ?? 'Priest'; ?></span>
+                                                                <span class="fw-bold"><?= htmlspecialchars($r['performed_by'] ?? 'Not Assigned') ?></span>
+                                                            </div>
+                                                            <div class="mb-3 d-flex justify-content-between border-bottom pb-2">
+                                                                <span class="text-muted"><?php echo $t['fee'] ?? 'Fee'; ?></span>
+                                                                <span class="fw-bold">&#8377;<?= number_format($r['fee'], 0) ?></span>
+                                                            </div>
+                                                            <div class="mb-3 d-flex justify-content-between border-bottom pb-2">
+                                                                <span class="text-muted"><?php echo $t['status'] ?? 'Status'; ?></span>
+                                                                <span class="<?= $statusClass ?>"><?= htmlspecialchars($r['status']) ?></span>
+                                                            </div>
+                                                            <div class="mb-0 d-flex justify-content-between pb-2">
+                                                                <span class="text-muted"><?php echo $t['requested_on'] ?? 'Requested On'; ?></span>
+                                                                <span class="small"><?= date('d M Y, h:i A', strtotime($r['created_at'])) ?></span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer border-top-0 pt-0 mt-2">
+                                                            <button type="button" class="btn btn-light rounded-pill w-100 fw-bold border shadow-sm" data-bs-dismiss="modal"><?php echo $t['close'] ?? 'Close'; ?></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         <?php endwhile; ?>
                                     <?php else: ?>
                                         <tr>

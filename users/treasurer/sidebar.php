@@ -9,9 +9,14 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     :root {
         --sb-top-offset: 64px;
     }
+
+    /* Prevent full sidebar scroll to keep logout sticky */
+    .sb-sidebar, .sb-offcanvas {
+        overflow-y: hidden !important;
+    }
 </style>
 
-<nav class="col-lg-2 d-none d-lg-block sb-sidebar shadow-sm p-0">
+<nav class="col-lg-2 d-none d-lg-flex flex-column sb-sidebar shadow-sm p-0">
 
     <div class="px-4 py-4">
         <small class="text-uppercase text-muted fw-bold sb-title">
@@ -19,7 +24,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         </small>
     </div>
 
-    <div class="nav flex-column">
+    <div class="nav flex-column flex-nowrap flex-grow-1" style="overflow-y: auto; overflow-x: hidden; min-height: 0;">
         <a href="../../index.php" class="sb-link">
             <i class="bi bi-house"></i> <?php echo $t['home']; ?>
         </a>
@@ -49,8 +54,9 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <i class="bi bi-person-circle"></i> <span><?php echo $t['my_profile']; ?></span>
         </a>
 
-        <div class="sb-divider"></div>
+    </div>
 
+    <div class="mt-auto p-2 border-top">
         <a href="../../auth/logout.php" class="sb-link text-danger">
             <i class="bi bi-power"></i> <span><?php echo $t['logout']; ?></span>
         </a>
@@ -63,13 +69,14 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         <h5 class="offcanvas-title fw-bold"><?php echo $t['treasurer_menu']; ?></h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
-    <div class="offcanvas-body p-0 pt-3">
-        <a href="../../index.php" class="sb-link"><i class="bi bi-house"></i>
-            <?php echo $t['home']; ?>
-        </a>
-        <a href="dashboard.php" class="sb-link <?= ($currentPage == 'dashboard.php') ? 'sb-active' : '' ?>">
-            <i class="bi bi-grid-1x2"></i> <?php echo $t['dashboard']; ?>
-        </a>
+    <div class="offcanvas-body d-flex flex-column p-0 pt-3">
+        <div class="nav flex-column flex-nowrap flex-grow-1" style="overflow-y: auto; overflow-x: hidden; min-height: 0;">
+            <a href="../../index.php" class="sb-link"><i class="bi bi-house"></i>
+                <?php echo $t['home']; ?>
+            </a>
+            <a href="dashboard.php" class="sb-link <?= ($currentPage == 'dashboard.php') ? 'sb-active' : '' ?>">
+                <i class="bi bi-grid-1x2"></i> <?php echo $t['dashboard']; ?>
+            </a>
 
         <div class="sb-divider"></div>
         <small class="text-uppercase text-muted fw-bold px-3"
@@ -98,11 +105,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <i class="bi bi-person-circle"></i> <?php echo $t['my_profile']; ?>
         </a>
 
-        <div class="sb-divider"></div>
+        </div>
 
-        <a href="../../auth/logout.php" class="sb-link text-danger">
-            <i class="bi bi-power"></i> <?php echo $t['logout']; ?>
-        </a>
+        <div class="border-top p-2 bg-light">
+            <a href="../../auth/logout.php" class="sb-link text-danger">
+                <i class="bi bi-power"></i> <?php echo $t['logout']; ?>
+            </a>
+        </div>
     </div>
 </div>
 
