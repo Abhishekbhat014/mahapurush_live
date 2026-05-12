@@ -1,0 +1,236 @@
+@startuml Mahapurush_Mandir_ERD
+
+!theme plain
+skinparam linetype ortho
+
+' Entities
+entity "users" {
+  *id : INT <<PK>>
+  --
+  first_name : VARCHAR(100)
+  last_name : VARCHAR(100)
+  phone : VARCHAR(20)
+  photo : VARCHAR(255)
+  email : VARCHAR(150) <<UNIQUE>>
+  password : VARCHAR(255)
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "roles" {
+  *id : INT <<PK>>
+  --
+  name : VARCHAR(50)
+  description : TEXT
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "user_roles" {
+  *user_id : INT <<PK>> <<FK>>
+  *role_id : INT <<PK>> <<FK>>
+  --
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "contributions" {
+  *id : INT <<PK>>
+  --
+  receipt_id : INT <<FK>>
+  added_by : INT <<FK>>
+  contributor_name : VARCHAR(100)
+  contribution_type_id : INT <<FK>>
+  title : VARCHAR(150)
+  quantity : DECIMAL(10,2)
+  unit : VARCHAR(50)
+  description : TEXT
+  status : ENUM('pending','approved','rejected')
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "contribution_type" {
+  *id : INT <<PK>>
+  --
+  type : VARCHAR(50)
+  description : TEXT
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "donations" {
+  *id : INT <<PK>>
+  --
+  user_id : INT <<FK>>
+  full_name : VARCHAR(255)
+  note : VARCHAR(255)
+  donation_type_id : INT <<FK>>
+  amount : DECIMAL(10,2)
+  payment_id : INT <<FK>>
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "donation_type" {
+  *id : INT <<PK>>
+  --
+  type : VARCHAR(100)
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "events" {
+  *id : INT <<PK>>
+  --
+  name : VARCHAR(150)
+  duration : VARCHAR(50)
+  conduct_on : DATE
+  max_participants : INT
+  status : VARCHAR(255)
+  created_by : INT <<FK>>
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "event_participants" {
+  *id : INT <<PK>>
+  --
+  user_id : INT <<FK>>
+  event_id : INT <<FK>>
+  payment_id : INT <<FK>>
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "feedbacks" {
+  *id : INT <<PK>>
+  --
+  email : VARCHAR(255) <<FK_Logical>>
+  rating : ENUM('5','4','3','2','1')
+  message : VARCHAR(255)
+  created_at : TIMESTAMP
+}
+
+entity "gallery" {
+  *id : INT <<PK>>
+  --
+  gallery_category_id : INT <<FK>>
+  type : VARCHAR(50)
+  content : TEXT
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "gallery_category" {
+  *id : INT <<PK>>
+  --
+  type : VARCHAR(100)
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "payments" {
+  *id : INT <<PK>>
+  --
+  receipt_id : INT <<FK>>
+  user_id : INT <<FK>>
+  donor_name : VARCHAR(100)
+  amount : DECIMAL(10,2)
+  note : TEXT
+  payment_method : ENUM('upi','cash','card','netbanking')
+  transaction_ref : VARCHAR(100)
+  status : ENUM('pending','success','failed')
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "pooja" {
+  *id : INT <<PK>>
+  --
+  user_id : INT <<FK>>
+  pooja_type_id : INT <<FK>>
+  pooja_date : DATE
+  time_slot : ENUM('morning','afternoon','evening')
+  description : TEXT
+  fee : DECIMAL(10,2)
+  payment_id : INT <<FK>>
+  status : ENUM('pending','paid','cancelled','completed')
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "pooja_type" {
+  *id : INT <<PK>>
+  --
+  type : VARCHAR(100)
+  fee : DECIMAL(10,2)
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "receipt" {
+  *id : INT <<PK>>
+  --
+  user_id : INT <<FK>>
+  receipt_no : VARCHAR(50) <<UNIQUE>>
+  purpose : ENUM('donation','pooja','contribution')
+  amount : DECIMAL(10,2)
+  source_table : VARCHAR(50)
+  issued_on : DATETIME
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+  verified_by_secretary : INT <<FK>>
+  verified_at : DATETIME
+}
+
+entity "temple_info" {
+  *id : INT <<PK>>
+  --
+  temple_name : VARCHAR(255)
+  description : TEXT
+  photo : VARCHAR(255)
+  contact : VARCHAR(100)
+  time : VARCHAR(100)
+  address : VARCHAR(255)
+  location : VARCHAR(255)
+  updated_at : TIMESTAMP
+}
+
+' Relationships
+users ||--o{ user_roles : "has"
+roles ||--o{ user_roles : "assigned to"
+
+users ||--o{ contributions : "added (contributor)"
+users ||--o{ contributions : "managed by (admin)"
+contribution_type ||--o{ contributions : "categorizes"
+receipt ||--o{ contributions : "issued for"
+
+users ||--o{ donations : "makes"
+donation_type ||--o{ donations : "categorizes"
+payments ||--o{ donations : "pays via"
+
+users ||--o{ event_participants : "joins"
+events ||--o{ event_participants : "organizes"
+payments ||--o{ event_participants : "pays via"
+
+users ||--o{ events : "created by"
+
+gallery_category ||--o{ gallery : "categorizes"
+
+receipt ||--o{ payments : "linked to"
+users ||--o{ payments : "authorized by"
+
+users ||--o{ pooja : "books"
+pooja_type ||--o{ pooja : "defines"
+payments ||--o{ pooja : "pays via"
+
+users ||--o{ receipt : "received by"
+users ||--o{ receipt : "verified by (secretary)"
+
+' Logical context links (To ensure no standalone tables)
+temple_info ||..o{ users : "hosts / manages"
+users ||..o{ gallery : "uploads (Secretary/Admin)"
+users ||..o{ feedbacks : "submits (via email)"
+
+@enduml

@@ -118,7 +118,7 @@ $footerIsLoggedIn = $_SESSION['logged_in'] ?? false;
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
             <div class="small text-muted"><?php echo sprintf($t['copyright_footer'], date("Y")); ?></div>
             <div class="d-flex gap-3 small fw-bold">
-                <span class="text-primary">Developed By: Abhishek Bhat & Yojana Gawade</span>
+                <span class="text-primary">Developed By: Yojana Gawade</span>
             </div>
         </div>
     </div>

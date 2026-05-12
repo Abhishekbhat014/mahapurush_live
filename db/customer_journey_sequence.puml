@@ -1,0 +1,87 @@
+@startuml Customer_Journey_Sequence
+
+actor Customer
+participant "Mahapurush Mandir System" as System
+database "Database" as DB
+
+== Authentication (Login) ==
+
+Customer -> System: Provide Credentials (Email, Password)
+activate System
+System -> DB: Verify User Credentials
+activate DB
+DB --> System: User Identification & Roles
+deactivate DB
+System -> Customer: Redirect to Customer Dashboard
+
+== Information & Media ==
+
+Customer -> System: Browse Gallery Categories
+System -> DB: Fetch Categories & Images
+activate DB
+DB --> System: Image Data
+deactivate DB
+System -> Customer: Display Gallery
+
+== Rituals & Services (Pooja Booking) ==
+
+Customer -> System: Select Pooja Type & Date
+System -> DB: Fetch Fee and Check Availability
+activate DB
+DB --> System: Availability & Fee Data
+deactivate DB
+System -> Customer: Show Booking Form
+Customer -> System: Submit Booking Request
+System -> DB: Insert Booking Record (Status: Pending)
+activate DB
+DB --> System: Success
+deactivate DB
+System -> Customer: Confirm Booking Request
+
+== Devotion & Support (Donations) ==
+
+Customer -> System: Initiate Donation
+System -> DB: Record Donation Request
+activate DB
+DB --> System: Success
+deactivate DB
+System -> Customer: Navigate to Payment Gateway
+Customer -> System: Complete Payment Successfully
+System -> DB: Update Payment & Donation Status
+activate DB
+DB --> System: Success
+deactivate DB
+System -> Customer: Provide Donation Receipt
+
+== Community Engagement (Events) ==
+
+Customer -> System: View Upcoming Events
+System -> DB: Fetch Event List
+activate DB
+DB --> System: List of Active Events
+deactivate DB
+System -> Customer: Show Events
+Customer -> System: Register for an Event
+System -> DB: Insert Participant Record
+activate DB
+DB --> System: Success
+deactivate DB
+System -> Customer: Confirm Participation
+
+== Records & History ==
+
+Customer -> System: Request History (Pooja/Donations)
+System -> DB: Query History Tables
+activate DB
+DB --> System: Personal Usage Records
+deactivate DB
+System -> Customer: Display History & Downloadable Receipts
+
+== Termination (Logout) ==
+
+Customer -> System: Logout
+System -> System: Destroy Session
+System -> Customer: Redirect to Homepage
+deactivate System
+
+@enduml

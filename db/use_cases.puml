@@ -1,0 +1,79 @@
+@startuml Mahapurush_Mandir_UseCases
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Customer" as cu
+actor "Member" as me
+actor "Secretary" as se
+actor "Treasurer" as tr
+actor "Chairman" as ch
+actor "Vice Chairman" as vc
+
+' General User interactions
+package "Public/Customer Portal" {
+  usecase "Register/Login" as UC1
+  usecase "Book Pooja" as UC2
+  usecase "Make Donation" as UC3
+  usecase "Join Event" as UC4
+  usecase "View Gallery" as UC5
+  usecase "View History/Receipts" as UC16
+}
+
+package "Member Specific" {
+  usecase "View Committee Information" as UC6
+}
+
+package "Operations (Secretary)" {
+  usecase "Manage Pooja Requests" as UC7
+  usecase "Manage Events" as UC8
+  usecase "Manage Gallery" as UC9
+  usecase "Approve Contributions" as UC10
+}
+
+package "Financials (Treasurer)" {
+  usecase "Verify Donations" as UC11
+  usecase "Manage Receipts" as UC12
+  usecase "Generate Financial Reports" as UC13
+}
+
+package "Administration (Chairman/VC)" {
+  usecase "Manage Users & Roles" as UC14
+  usecase "System Settings" as UC15
+  usecase "Generate System Reports" as UC17
+}
+
+' Inheritance
+me --|> cu
+vc --|> me
+ch --|> me
+
+' Connect Actors to Use Cases
+cu --> UC1
+cu --> UC2
+cu --> UC3
+cu --> UC4
+cu --> UC5
+cu --> UC16
+
+me --> UC6
+
+se --> UC7
+se --> UC8
+se --> UC9
+se --> UC10
+
+tr --> UC11
+tr --> UC12
+tr --> UC13
+
+ch --> UC14
+ch --> UC15
+ch --> UC17
+ch --> UC7
+ch --> UC8
+
+vc --> UC14
+vc --> UC17
+
+@enduml

@@ -66,8 +66,7 @@ if ($con && $con !== false) {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--ant-bg-layout);
             color: var(--ant-text);
-            -webkit-user-select: none;
-            user-select: none;
+            
         }
 
         .ant-hero {

@@ -1,0 +1,36 @@
+@startuml Pooja_Booking_Sequence
+
+actor Customer
+participant "Mahapurush Mandir System" as System
+database "Database" as DB
+
+Customer -> System: Request Pooja Booking
+activate System
+
+System -> System: Validate User session
+System -> DB: Fetch Pooja Details (Types, Fees)
+activate DB
+DB --> System: Pooja Data
+deactivate DB
+
+System -> Customer: Display Booking Form
+Customer -> System: Submit Booking (Pooja Type, Date, Slot)
+
+System -> DB: Check Slot Availability
+activate DB
+DB --> System: Availability Status
+deactivate DB
+
+alt Slot Available
+    System -> DB: Save Booking Record (Status: Pending)
+    activate DB
+    DB --> System: Success
+    deactivate DB
+    System -> Customer: Provide Booking Confirmation
+else Slot Unavailable
+    System -> Customer: Show Availability Error
+end
+
+deactivate System
+
+@enduml

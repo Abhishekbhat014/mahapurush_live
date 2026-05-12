@@ -1,0 +1,124 @@
+@startuml Vice_Chairman_Oversight_Sequence
+
+!theme vibrant
+skinparam backgroundColor #FFFFFF
+skinparam sequence {
+    ArrowColor #1E8449
+    ActorBorderColor #1E8449
+    LifeLineBorderColor #1E8449
+    LifeLineBackgroundColor #E9F7EF
+    ParticipantBorderColor #1E8449
+    ParticipantBackgroundColor #D4EFDF
+    ParticipantFontName 'Verdana'
+    ParticipantFontSize 14
+    ActorBackgroundColor #D4EFDF
+    ActorFontName 'Verdana'
+    ActorFontSize 14
+}
+
+header Mahapurush Mandir Administration
+footer Page %page% of %lastpage%
+title Vice-Chairman Oversight & Reporting (Sequence Diagram)
+
+actor "Vice Chairman" as VC
+boundary "Admin Dashboard" as Dashboard
+control "System Controller" as Controller
+database "Database" as DB
+entity "Analytics Engine" as Analytics
+
+== Session Initialization ==
+
+VC -> Dashboard : Access Admin Portal
+activate Dashboard
+Dashboard -> Controller : Verify VC Credentials & Token
+activate Controller
+Controller -> DB : CHECK role: VICE_CHAIRMAN
+activate DB
+DB --> Controller : Credentials Valid | Role: VC
+deactivate DB
+Controller --> Dashboard : Display Management Interface
+deactivate Controller
+Dashboard --> VC : Access Granted
+deactivate Dashboard
+
+== System Monitoring & Analytics ==
+
+group Strategic Insight Flow
+    VC -> Dashboard : Request "Real-time System Status"
+    activate Dashboard
+    Dashboard -> Controller : Fetch Aggregated Stats
+    activate Controller
+    Controller -> DB : SELECT COUNT(*) FROM bookings, donations...
+    activate DB
+    DB --> Controller : Data Points
+    deactivate DB
+    Controller -> Analytics : Process Trends (Month-over-Month)
+    activate Analytics
+    Analytics --> Controller : Visual Trend JSON
+    deactivate Analytics
+    Controller --> Dashboard : Render Analytics Charts
+    deactivate Controller
+    Dashboard --> VC : View Engagement & Financial Trends
+    deactivate Dashboard
+end
+
+== User & Role Oversight Assistance ==
+
+group User Management Assistance
+    VC -> Dashboard : View "Recent User Registrations"
+    activate Dashboard
+    Dashboard -> Controller : GET /users?sort=newest
+    activate Controller
+    Controller -> DB : SELECT * FROM users
+    activate DB
+    DB --> Controller : User List
+    deactivate DB
+    Controller --> Dashboard : Render User Table
+    deactivate Controller
+    
+    opt Review & Verify Role
+        VC -> Dashboard : Inspect User (e.g., Verify Member Application)
+        activate Dashboard
+        Dashboard -> Controller : Fetch User Detail
+        activate Controller
+        Controller -> DB : Query User Metadata
+        activate DB
+        DB --> Controller : Profile Info
+        deactivate DB
+        Controller --> Dashboard : Display Profile
+        deactivate Controller
+        
+        VC -> Dashboard : Approve Status/Role Promotion
+        Dashboard -> Controller : UPDATE user_roles...
+        activate Controller
+        Controller -> DB : Persist Change
+        activate DB
+        DB --> Controller : DONE
+        deactivate DB
+        Controller --> Dashboard : "User Updated Successfully"
+        deactivate Controller
+    end
+end
+
+== Comprehensive System Reporting ==
+
+group Reporting Flow
+    VC -> Dashboard : Trigger "Quarterly System Performance Report"
+    activate Dashboard
+    Dashboard -> Controller : Generate Detailed Report
+    activate Controller
+    Controller -> DB : Query Full System Logs (Events + Services)
+    activate DB
+    DB --> Controller : Comprehensive Dataset
+    deactivate DB
+    Controller -> Analytics : Compile PDF/Excel Document
+    activate Analytics
+    Analytics --> Controller : File Stream
+    deactivate Analytics
+    Controller --> Dashboard : Provide Download Link
+    deactivate Controller
+    Dashboard --> VC : "Quarterly Report Ready"
+    deactivate Dashboard
+end
+
+@enduml

@@ -1,0 +1,110 @@
+@startuml Mahapurush_Mandir_Master_UseCases
+
+!theme vibrant
+left to right direction
+skinparam packageStyle rectangle
+skinparam actor {
+    BackgroundColor #FAD7A0
+    BorderColor #D35400
+}
+skinparam usecase {
+    BackgroundColor #D1F2EB
+    BorderColor #16A085
+}
+
+header Mahapurush Mandir Functional View
+footer Page %page% of %lastpage%
+title Master Use Case Diagram (All Roles)
+
+' External Actors
+actor "Customer / Devotee" as cu
+actor "Member" as me
+actor "Secretary" as se
+actor "Treasurer" as tr
+actor "Vice Chairman" as vc
+actor "Chairman" as ch
+
+actor "Payment Gateway" as Gateway <<External System>>
+
+' Actor Hierarchy
+me --|> cu
+vc --|> me
+ch --|> me
+
+rectangle "Mahapurush Mandir Management System" {
+    
+    ' --- Public/Customer Module ---
+    usecase "Authenticate (Login/Register)" as UC_Auth
+    usecase "View Temple Gallery" as UC_Gallery
+    usecase "View Event Calendar" as UC_Events
+    
+    usecase "Book Pooja Ritual" as UC_BookPooja
+    usecase "Make Financial Donation" as UC_Donation
+    usecase "Make Material Contribution" as UC_Material
+    
+    usecase "Process Payment" as UC_Payment
+    usecase "Handle Payment Failure" as UC_Fail
+    usecase "Generate Digital Receipt" as UC_Receipt
+    
+    ' --- Member Module ---
+    usecase "Access Committee Info" as UC_CommInfo
+    
+    ' --- Secretary Module ---
+    usecase "Orchestrate Ritual Slots" as UC_ManageSlots
+    usecase "Manage Website Content" as UC_ManageContent
+    usecase "Approve Material Contributions" as UC_ApproveMat
+    
+    ' --- Treasurer Module ---
+    usecase "Verify Payments" as UC_VerifyPay
+    usecase "Audit Fiscal Records" as UC_Audit
+    
+    ' --- Executive Module (VC/Chairman) ---
+    usecase "Monitor System Health" as UC_Monitor
+    usecase "Manage User Roles (RBAC)" as UC_RBAC
+    usecase "Configure Global System" as UC_GlobalCfg
+    usecase "Analyze Strategic Impact" as UC_Impact
+}
+
+' --- Relationships ---
+
+' Public flows
+cu --> UC_Auth
+cu --> UC_Gallery
+cu --> UC_Events
+cu --> UC_BookPooja
+cu --> UC_Donation
+cu --> UC_Material
+
+' Member flows
+me --> UC_CommInfo
+
+' Secretary flows
+se --> UC_ManageSlots
+se --> UC_ManageContent
+se --> UC_ApproveMat
+
+' Treasurer flows
+tr --> UC_VerifyPay
+tr --> UC_Audit
+
+' VC/Chairman flows
+vc --> UC_Monitor
+vc --> UC_Impact
+ch --> UC_RBAC
+ch --> UC_GlobalCfg
+
+' Shared/Admin Oversight
+ch --> UC_ManageSlots
+ch --> UC_VerifyPay
+
+' --- Include/Extend Logics ---
+UC_BookPooja ..> UC_Payment : <<include>>
+UC_Donation ..> UC_Payment : <<include>>
+
+UC_Payment ..> UC_Receipt : <<include>>
+UC_Fail ..> UC_Payment : <<extend>>
+
+' External connections
+UC_Payment -- Gateway
+
+@enduml

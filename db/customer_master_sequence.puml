@@ -1,0 +1,145 @@
+@startuml Customer_Master_Sequence
+
+!theme vibrant
+skinparam backgroundColor #FFFFFF
+skinparam sequence {
+    ArrowColor #2C3E50
+    ActorBorderColor #2C3E50
+    LifeLineBorderColor #2C3E50
+    LifeLineBackgroundColor #ECF0F1
+    ParticipantBorderColor #2C3E50
+    ParticipantBackgroundColor #D5DBDB
+    ParticipantFontName 'Verdana'
+    ParticipantFontSize 14
+    ActorBackgroundColor #D5DBDB
+    ActorFontName 'Verdana'
+    ActorFontSize 14
+}
+
+header Mahapurush Mandir Management System
+footer Page %page% of %lastpage%
+title Customer Interaction Lifecycle (Sequence Diagram)
+
+actor "Customer / Devotee" as Customer
+boundary "Web Interface / UI" as UI
+control "System Controller" as Controller
+database "Database / Ledger" as DB
+entity "Payment Gateway" as PG
+
+== Session Initialization ==
+
+Customer -> UI : Access Dashboard
+activate UI
+UI -> Controller : Check Auth Token
+activate Controller
+Controller -> DB : Validate Session
+activate DB
+DB --> Controller : User Data & Permissions
+deactivate DB
+Controller --> UI : Show Personalized View
+deactivate Controller
+UI --> Customer : Display Dashboard
+deactivate UI
+
+== Pooja Booking Workflow ==
+
+group Booking Process
+    Customer -> UI : Request "Special Pooja" Booking
+    activate UI
+    UI -> Controller : Fetch Availability (Date/Slot)
+    activate Controller
+    Controller -> DB : Query Slot Conflict
+    activate DB
+    DB --> Controller : Available / Booked Status
+    deactivate DB
+    
+    alt Slot is Available
+        Controller --> UI : Status: Green (Success)
+        deactivate Controller
+        UI --> Customer : Show Booking Fee & Form
+        Customer -> UI : Submit Details & Confirm
+        activate UI
+        UI -> Controller : Create Temporary Record
+        activate Controller
+        Controller -> DB : Insert (Status: PENDING)
+        activate DB
+        DB --> Controller : Record Created
+        deactivate DB
+        Controller --> UI : Prompt Payment
+        deactivate Controller
+        
+        UI -> PG : Redirect to Payment Gateway
+        activate PG
+        PG -> Customer : Request Credentials (UPI/Card)
+        Customer -> PG : Payment Confirmed
+        PG -> Controller : Webhook: Payment SUCCESS
+        deactivate PG
+        activate Controller
+        
+        Controller -> DB : Update Status: PAID
+        activate DB
+        DB --> Controller : Commit Changes
+        deactivate DB
+        Controller --> UI : Trigger Receipt Generation
+        deactivate Controller
+        
+        UI -> Customer : Success Notification & Download Receipt
+    else Slot is Booked
+        Controller --> UI : Status: Red (Conflict)
+        deactivate Controller
+        UI --> Customer : "Slot Unavailable - Please pick another"
+    end
+end
+
+== Donation Management ==
+
+Customer -> UI : Make Voluntary Donation
+activate UI
+UI -> Controller : Initiate Transaction
+activate Controller
+Controller -> DB : Log Intent (Donation Type)
+activate DB
+DB --> Controller : OK
+deactivate DB
+Controller --> UI : Show Payment Interface
+deactivate Controller
+UI -> PG : Process Donation Amount
+activate PG
+PG --> UI : Transaction Confirmation
+deactivate PG
+UI -> Customer : Display Thank You & Generate PDF Receipt
+deactivate UI
+
+== Community & Media Engagement ==
+
+opt View Gallery
+    Customer -> UI : Open Gallery
+    activate UI
+    UI -> Controller : Get Media Categories
+    activate Controller
+    Controller -> DB : SELECT * FROM Gallery
+    activate DB
+    DB --> Controller : Media File Paths
+    deactivate DB
+    Controller --> UI : Render Images
+    deactivate Controller
+    UI --> Customer : View Photos/Videos
+    deactivate UI
+end
+
+loop Activity History
+    Customer -> UI : View "My Records"
+    activate UI
+    UI -> Controller : Fetch Personal History
+    activate Controller
+    Controller -> DB : Query Bookings + Donations
+    activate DB
+    DB --> Controller : ResultSet
+    deactivate DB
+    Controller --> UI : Formatted Table
+    deactivate Controller
+    UI --> Customer : Display History List
+    deactivate UI
+end
+
+@enduml

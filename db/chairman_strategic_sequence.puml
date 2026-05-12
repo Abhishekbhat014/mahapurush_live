@@ -1,0 +1,119 @@
+@startuml Chairman_Executive_Sequence
+
+!theme vibrant
+skinparam backgroundColor #FFFFFF
+skinparam sequence {
+    ArrowColor #78281F
+    ActorBorderColor #78281F
+    LifeLineBorderColor #78281F
+    LifeLineBackgroundColor #F9EBEA
+    ParticipantBorderColor #78281F
+    ParticipantBackgroundColor #F2D7D5
+    ParticipantFontName 'Verdana'
+    ParticipantFontSize 14
+    ActorBackgroundColor #F2D7D5
+    ActorFontName 'Verdana'
+    ActorFontSize 14
+}
+
+header Mahapurush Mandir Executive Oversight
+footer Page %page% of %lastpage%
+title Chairman / Vice-Chairman Strategic Workflow (Sequence Diagram)
+
+actor "Chairman" as Chairman
+boundary "Admin Portal" as Portal
+control "Auth & Management Controller" as Controller
+database "System Database" as DB
+entity "External Audit/Report Engine" as Auditor
+
+== Executive Session Initialization ==
+
+Chairman -> Portal : Secure Executive Login
+activate Portal
+Portal -> Controller : Request Admin Access (MFA/Token)
+activate Controller
+Controller -> DB : Verify Chairman/VC Role Permissions
+activate DB
+DB --> Controller : Profile: EXEC_ADMIN | ID: 101
+deactivate DB
+Controller --> Portal : Display Executive Dashboard
+deactivate Controller
+Portal --> Chairman : Access Granted
+deactivate Portal
+
+== User & Role Governance (RBAC) ==
+
+group Role Management Flow
+    Chairman -> Portal : Open "User Hierarchy & Roles"
+    activate Portal
+    Portal -> Controller : Fetch User/Role Matrix
+    activate Controller
+    Controller -> DB : SELECT * FROM users JOIN roles JOIN user_roles
+    activate DB
+    DB --> Controller : Global User Data
+    deactivate DB
+    Controller --> Portal : Render Management Console
+    deactivate Controller
+    
+    Chairman -> Portal : Modify User Permissions (e.g., Promote to Treasurer)
+    activate Portal
+    Portal -> Controller : POST /admin/update-role
+    activate Controller
+    
+    alt Grant Higher Privilege
+        Controller -> DB : Log Permission Change & Update user_roles
+        activate DB
+        DB --> Controller : SUCCESS
+        deactivate DB
+        Controller --> Portal : Notification: Role Synced
+    else Revoke Access
+        Controller -> DB : Update Status: DISABLED
+        activate DB
+        DB --> Controller : User Logged Out
+        deactivate DB
+        Controller --> Portal : Notification: Access Revoked
+    end
+    deactivate Controller
+    Portal --> Chairman : Configuration Updated
+    deactivate Portal
+end
+
+== Strategic Monitoring & System Reporting ==
+
+group High-Level Oversight
+    Chairman -> Portal : Request "Annual Strategic Impact Report"
+    activate Portal
+    Portal -> Controller : Trigger Aggregated Analytics
+    activate Controller
+    Controller -> DB : Complex Query (Donations + Bookings + Events)
+    activate DB
+    DB --> Controller : Raw Fiscal & Engagement Data
+    deactivate DB
+    Controller -> Auditor : Process Data for Board Presentation
+    activate Auditor
+    Auditor --> Controller : Generated Strategic Report (PDF)
+    deactivate Auditor
+    Controller --> Portal : Display Report Preview
+    deactivate Controller
+    Portal --> Chairman : Download Strategic Insights
+    deactivate Portal
+end
+
+== Global System Settings ==
+
+opt Maintenance Mode / Global Config
+    Chairman -> Portal : Update Temple Operating Hours
+    activate Portal
+    Portal -> Controller : Update `temple_info`
+    activate Controller
+    Controller -> DB : SET address/time/location
+    activate DB
+    DB --> Controller : System Config Updated
+    deactivate DB
+    Controller --> Portal : Feedback: Live Update Complete
+    deactivate Controller
+    Portal --> Chairman : Changes Applied to Frontend
+    deactivate Portal
+end
+
+@enduml
